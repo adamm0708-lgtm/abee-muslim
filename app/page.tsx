@@ -22,9 +22,9 @@ import {
 } from "@/lib/data";
 import {
   CITIES,
-  daysToRamadhan,
+  getHijriToday,
+  getRamadhanInfo,
   getWeather,
-  hijriToday,
   type Weather,
 } from "@/lib/api";
 
@@ -36,6 +36,7 @@ const MISSIONS = [
 
 function greeting(): string {
   const h = new Date().getHours();
+  if (h < 5) return "Selamat malam";
   if (h < 11) return "Selamat pagi";
   if (h < 15) return "Selamat siang";
   if (h < 19) return "Selamat sore";
@@ -48,6 +49,7 @@ export default function Home() {
   const [weatherError, setWeatherError] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [ramadhanDays, setRamadhanDays] = useState<number | null>(null);
+  const [ramadhanError, setRamadhanError] = useState(false);
 
   const city = CITIES.find((c) => c.name === progress.city) ?? CITIES[0];
   const { level, title } = levelFromPoints(progress.points);
@@ -58,7 +60,9 @@ export default function Home() {
     getWeather(city.lat, city.lon)
       .then((w) => alive && setWeather(w))
       .catch(() => alive && setWeatherError(true));
-    setRamadhanDays(daysToRamadhan());
+    getRamadhanInfo()
+      .then((info) => alive && setRamadhanDays(info.days))
+      .catch(() => alive && setRamadhanError(true));
     return () => {
       alive = false;
     };
@@ -78,7 +82,10 @@ export default function Home() {
       {/* Sapaan & progres */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p
+            className="text-sm text-neutral-500 dark:text-neutral-400"
+            suppressHydrationWarning
+          >
             Assalamu&apos;alaikum, {greeting()}
           </p>
           <p className="mt-0.5 text-lg font-extrabold text-neutral-900 dark:text-neutral-100">
@@ -103,23 +110,11 @@ export default function Home() {
       {/* Kartu shalat berikutnya (gelap) */}
       <PrayerCard />
 
-      {/* Hijriah + cuaca */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card>
-          <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-            Hijriah hari ini
-          </p>
-          <p className="mt-1 text-base font-extrabold leading-snug text-neutral-900 dark:text-neutral-100">
-            {hijriToday()}
-          </p>
-          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
-          </p>
-        </Card>
-        <Card>
-          <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
-            Cuaca · {progress.city}
-          </p>
+      {/* Cuaca (tanggal Hijriah sudah ada di kartu hero di atas) */}
+      <Card>
+        <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+          Cuaca · {progress.city}
+        </p>
           {weather ? (
             <>
               <p className="mt-1 text-3xl font-extrabold text-neutral-900 dark:text-neutral-100">
@@ -135,8 +130,7 @@ export default function Home() {
           ) : (
             <p className="mt-2 text-sm text-neutral-500">Memuat cuaca…</p>
           )}
-        </Card>
-      </div>
+      </Card>
 
       {/* Road to Ramadhan */}
       <Link href="/ibadah/ramadhan">
@@ -146,7 +140,11 @@ export default function Home() {
               Road to Ramadhan
             </p>
             <p className="mt-1 text-sm font-bold">
-              {ramadhanDays === null ? "…" : `${ramadhanDays} hari lagi`}
+              {ramadhanError
+                ? "Tidak bisa dimuat"
+                : ramadhanDays === null
+                  ? "…"
+                  : `${ramadhanDays} hari lagi`}
             </p>
           </div>
           <span className="flex items-center gap-1 text-xs font-bold text-[#D4AF37]">
@@ -247,8 +245,9 @@ export default function Home() {
       </Card>
 
       <Note>
-        Jadwal shalat: Aladhan API (Metode Kemenag) · Cuaca: Open-Meteo · Foto fitur: Wikimedia
-        Commons · Data tersimpan di perangkatmu dan disinkronkan ke cloud.
+        Jadwal shalat: Kemenag (Bimas Islam) · Hijriah: Kemenag (MABIMS) · Waktu shalat
+        mengikuti mazhab Syafi'i · Cuaca: Open-Meteo · Foto fitur: Wikimedia Commons ·
+        Data tersimpan di perangkatmu dan disinkronkan ke cloud.
       </Note>
     </div>
   );

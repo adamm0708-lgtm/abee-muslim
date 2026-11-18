@@ -1,9 +1,9 @@
 "use client";
 // Tema otomatis siang/malam + pilihan manual.
 // - Otomatis (default): terang antara Terbit dan Maghrib, gelap antara Maghrib
-//   dan Terbit — memakai data matahari dari API Aladhan yang sama dengan
-//   jadwal shalat. Kalau API belum termuat/gagal: fallback jam lokal
-//   (terang 05:00–18:00, gelap 18:00–05:00).
+//   dan Terbit — memakai data matahari dari jadwal resmi Kemenag (MyQuran)
+//   yang sama dengan jadwal shalat. Kalau API belum termuat/gagal: fallback
+//   jam lokal (terang 05:00–18:00, gelap 18:00–05:00).
 // - Pilihan pengguna di Atur (Terang/Gelap) tersimpan dan mengalahkan otomatis.
 // Tema gelap: hijau zamrud gelap (#0B2E26) + aksen emas (#D4AF37).
 // Tema terang: putih bersih + hijau zamrud + aksen emas (bukan krem/beige).
@@ -96,6 +96,6 @@ export function useTheme(): ThemeCtx {
  * Skrip inline di <head> supaya tema benar sebelum React sempat render
  * (menghindari kedipan tema saat halaman pertama dibuka). Membaca pilihan
  * tema yang tersimpan di localStorage; mode otomatis memakai jam lokal
- * sebagai tebakan awal (data Aladhan menyusul setelah aplikasi jalan).
+ * sebagai tebakan awal (data jadwal Kemenag menyusul setelah aplikasi jalan).
  */
 export const THEME_INIT_SCRIPT = `(function(){try{var raw=localStorage.getItem('abee-muslim-progress-v1');var t='auto';if(raw){try{t=JSON.parse(raw).theme||'auto';}catch(e){}}var h=new Date().getHours();var dark=t==='dark'||(t==='auto'&&(h<5||h>=18));document.documentElement.classList.toggle('dark',dark);}catch(e){}})();`;

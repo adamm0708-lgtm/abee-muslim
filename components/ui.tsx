@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { IconName } from "@/lib/data";
 import { IBADAH_MENU, QURAN_MENU } from "@/lib/data";
-import { CITIES, PRAYER_ORDER, formatCountdown, getTimings, nextPrayer, type Timings } from "@/lib/api";
+import { CITIES, PRAYER_ORDER, formatCountdown, formatCountdownWords, getTimings, gregShortId, nextPrayer, pasaranJawa, type Timings } from "@/lib/api";
 import { useProgress } from "@/lib/store";
 
 // ---------- Ikon garis tipis (SVG, tanpa emoji) ----------
@@ -379,8 +379,18 @@ export function QuoteCard({ text, source }: { text: string; source: string }) {
           &ldquo;
         </span>
         <div className="flex-1">
-          <p className="text-sm italic leading-relaxed text-neutral-700 dark:text-neutral-300">{text}</p>
-          <p className="mt-2 text-right text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+          {/* suppressHydrationWarning: kutipan diputar per hari kalender —
+              server (UTC) dan klien (WIB) bisa berada di tanggal berbeda. */}
+          <p
+            className="text-sm italic leading-relaxed text-neutral-700 dark:text-neutral-300"
+            suppressHydrationWarning
+          >
+            {text}
+          </p>
+          <p
+            className="mt-2 text-right text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400"
+            suppressHydrationWarning
+          >
             — {source}
           </p>
         </div>
@@ -552,6 +562,86 @@ export function BottomNav() {
   );
 }
 
+// ---------- Jam analog (SVG, jarum hidup mengikuti jam perangkat) ----------
+
+function AnalogClock({ now }: { now: Date }) {
+  const s = now.getSeconds();
+  const m = now.getMinutes();
+  const h = now.getHours() % 12;
+  // r2: bulatkan ke 2 desimal — sin/cos & pembagian float bisa berbeda 1 ulp
+  // antara mesin JS server (Node) dan klien (Chrome) sehingga props x1/y1/
+  // transform tidak sama saat hydration; pembulatan membuat SSR = klien.
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const secDeg = r2(s * 6);
+  const minDeg = r2((m + s / 60) * 6);
+  const hourDeg = r2((h + m / 60) * 30);
+  const ticks = Array.from({ length: 12 }, (_, i) => i * 30);
+  return (
+    <svg
+      width="112"
+      height="112"
+      viewBox="0 0 120 120"
+      className="shrink-0"
+      role="img"
+      aria-label="Jam sekarang"
+      suppressHydrationWarning
+    >
+      <circle cx="60" cy="60" r="58" fill="#0B3D39" stroke="#D4AF37" strokeWidth="3" />
+      <circle cx="60" cy="60" r="52" fill="none" stroke="#D4AF37" strokeOpacity="0.25" strokeWidth="1" />
+      {ticks.map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        const x1 = r2(60 + Math.sin(rad) * 45);
+        const y1 = r2(60 - Math.cos(rad) * 45);
+        const x2 = r2(60 + Math.sin(rad) * 50);
+        const y2 = r2(60 - Math.cos(rad) * 50);
+        return (
+          <line
+            key={deg}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke="#D4AF37"
+            strokeWidth={deg % 90 === 0 ? 2.5 : 1.5}
+            strokeLinecap="round"
+          />
+        );
+      })}
+      <line
+        x1="60"
+        y1="60"
+        x2="60"
+        y2="32"
+        stroke="#F7F2E7"
+        strokeWidth="4"
+        strokeLinecap="round"
+        transform={`rotate(${hourDeg} 60 60)`}
+      />
+      <line
+        x1="60"
+        y1="60"
+        x2="60"
+        y2="22"
+        stroke="#F7F2E7"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        transform={`rotate(${minDeg} 60 60)`}
+      />
+      <line
+        x1="60"
+        y1="67"
+        x2="60"
+        y2="20"
+        stroke="#D4AF37"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        transform={`rotate(${secDeg} 60 60)`}
+      />
+      <circle cx="60" cy="60" r="3.5" fill="#D4AF37" />
+    </svg>
+  );
+}
+
 // ---------- Kartu shalat berikutnya (kartu gelap besar) ----------
 
 function toMinutes(hhmm: string): number {
@@ -565,6 +655,10 @@ export function PrayerCard() {
   const [error, setError] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const [showCities, setShowCities] = useState(false);
+  // Jam analog hanya dirender setelah mount: jarumnya mengikuti jam perangkat
+  // (server render dalam UTC, klien dalam zona lokal — mustahil sama saat SSR).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000);
@@ -604,78 +698,154 @@ export function PrayerCard() {
     return Math.min(100, Math.max(0, ((nowMin - prevMin) / span) * 100));
   }, [timings, next, now]);
 
+  const weekday = now.toLocaleDateString("id-ID", { weekday: "long" });
+
   return (
-    <div className="rounded-2xl bg-[#0A0A0A] p-5 text-white shadow-md">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/60">
-          Menuju waktu
-        </p>
-        <span className="flex items-center gap-1 text-xs font-semibold text-white/70">
-          <Icon name="pin" className="h-3.5 w-3.5" />
-          {progress.city}
-        </span>
+    // suppressHydrationWarning: isi kartu bergantung jam perangkat (server
+    // render dalam UTC, klien dalam zona lokal) — nilainya benar setelah hydrate.
+    <div className="flex flex-col gap-3" suppressHydrationWarning>
+      {/* Kartu hero gelap: kotak tanggal + jam analog + shalat berikut */}
+      <div className="rounded-2xl bg-[#0A0A0A] p-5 text-white shadow-md">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p
+              className="text-lg font-extrabold leading-tight"
+              suppressHydrationWarning
+            >
+              {gregShortId(now)}
+            </p>
+            <p
+              className="mt-0.5 text-sm font-bold text-white/80"
+              suppressHydrationWarning
+            >
+              {weekday} {pasaranJawa(now)}
+            </p>
+            <p className="mt-0.5 text-sm font-bold text-[#D4AF37]">
+              {timings
+                ? timings.dateHijri || "Tanggal Hijriah tidak bisa dimuat"
+                : error
+                  ? "Tanggal Hijriah tidak bisa dimuat"
+                  : "Memuat tanggal Hijriah…"}
+            </p>
+          </div>
+          {mounted ? (
+            <AnalogClock now={now} />
+          ) : (
+            <div className="h-[112px] w-[112px] shrink-0" aria-hidden />
+          )}
+        </div>
+
+        {timings && next ? (
+          <div className="mt-4 border-t border-white/10 pt-4">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/60">
+              Selanjutnya: {next.label}
+            </p>
+            <p
+              className="mt-1 text-4xl font-extrabold"
+              suppressHydrationWarning
+            >
+              {timings[next.name]}
+            </p>
+            <p className="mt-1 text-xs text-white/50">Waktu Indonesia Barat (WIB)</p>
+          </div>
+        ) : error ? (
+          <p className="mt-4 text-sm text-white/80">
+            Jadwal shalat tidak bisa dimuat (periksa koneksi internet). Coba lagi nanti.
+          </p>
+        ) : (
+          <p className="mt-4 text-sm text-white/80">Memuat jadwal shalat…</p>
+        )}
       </div>
 
-      {timings && next ? (
-        <>
-          <p className="mt-2 text-2xl font-extrabold">
-            {next.label}{" "}
-            <span className="text-white/60">{timings[next.name]}</span>
+      {/* Kartu putih: hitung mundur menuju waktu shalat */}
+      <div className="rounded-2xl bg-white p-5 text-neutral-900 shadow-sm ring-1 ring-black/5 dark:bg-[#171717] dark:text-neutral-100 dark:ring-white/10">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-neutral-500 dark:text-neutral-400">
+            Menuju waktu
           </p>
-          <p className="mt-1 font-mono text-4xl font-extrabold tracking-wider text-[#D4AF37]">
-            {countdown}
-          </p>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/15">
-            <div className="h-full rounded-full bg-[#D4AF37]" style={{ width: `${intervalPct}%` }} />
-          </div>
-          <div className="mt-4 grid grid-cols-6 gap-1.5">
-            {PRAYER_ORDER.map((name) => (
+          <span className="flex items-center gap-1 text-xs font-semibold text-neutral-500 dark:text-neutral-400">
+            <Icon name="pin" className="h-3.5 w-3.5" />
+            {progress.city}
+          </span>
+        </div>
+
+        {timings && next ? (
+          <>
+            <p className="mt-2 text-2xl font-extrabold">
+              {next.label}{" "}
+              <span className="text-neutral-400 dark:text-neutral-500">{timings[next.name]}</span>
+            </p>
+            {/* Hitung mundur dengan kata-kata — bukan angka HH:MM:SS yang mirip jam. */}
+            <p
+              className="mt-1 text-3xl font-extrabold tracking-tight text-[#0B3D39] dark:text-[#D4AF37]"
+              suppressHydrationWarning
+            >
+              {formatCountdownWords(next.at.getTime() - now.getTime())}
+            </p>
+            <p
+              className="mt-1 font-mono text-sm font-bold text-neutral-400 dark:text-neutral-500"
+              suppressHydrationWarning
+            >
+              {countdown}
+            </p>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/15">
               <div
-                key={name}
-                className={`rounded-xl px-1 py-2 text-center ${
-                  next.name === name ? "bg-[#D4AF37] text-[#0A0A0A]" : "bg-white/10"
+                className="h-full rounded-full bg-[#D4AF37]"
+                style={{ width: `${intervalPct}%` }}
+                suppressHydrationWarning
+              />
+            </div>
+            <div className="mt-4 grid grid-cols-7 gap-1">
+              {PRAYER_ORDER.map((name) => (
+                <div
+                  key={name}
+                  className={`rounded-xl px-0.5 py-2 text-center ${
+                    next.name === name
+                      ? "bg-[#D4AF37] text-[#0A0A0A]"
+                      : "bg-[#F5F5F4] dark:bg-white/5"
+                  }`}
+                >
+                  <p className="text-[9px] font-semibold opacity-80">{name}</p>
+                  <p className="text-[11px] font-extrabold">{timings[name]}</p>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : error ? (
+          <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">
+            Jadwal shalat tidak bisa dimuat (periksa koneksi internet). Coba lagi nanti.
+          </p>
+        ) : (
+          <p className="mt-3 text-sm text-neutral-500 dark:text-neutral-400">Memuat jadwal shalat…</p>
+        )}
+
+        <button
+          onClick={() => setShowCities((v) => !v)}
+          className="mt-4 rounded-full bg-[#0A0A0A] px-4 py-2 text-xs font-extrabold text-white transition active:scale-95 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+        >
+          Ubah Kota
+        </button>
+        {showCities && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {CITIES.map((c) => (
+              <button
+                key={c.name}
+                onClick={() => {
+                  setCity(c.name);
+                  setShowCities(false);
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                  c.name === progress.city
+                    ? "bg-[#D4AF37] text-[#0A0A0A]"
+                    : "bg-black/5 text-neutral-600 hover:bg-black/10 dark:bg-white/10 dark:text-neutral-300 dark:hover:bg-white/20"
                 }`}
               >
-                <p className="text-[10px] font-semibold opacity-80">{name}</p>
-                <p className="text-xs font-extrabold">{timings[name]}</p>
-              </div>
+                {c.name}
+              </button>
             ))}
           </div>
-        </>
-      ) : error ? (
-        <p className="mt-3 text-sm text-white/80">
-          Jadwal shalat tidak bisa dimuat (periksa koneksi internet). Coba lagi nanti.
-        </p>
-      ) : (
-        <p className="mt-3 text-sm text-white/80">Memuat jadwal shalat…</p>
-      )}
-
-      <button
-        onClick={() => setShowCities((v) => !v)}
-        className="mt-4 rounded-full bg-white px-4 py-2 text-xs font-extrabold text-[#0A0A0A] transition active:scale-95"
-      >
-        Ubah Kota
-      </button>
-      {showCities && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {CITIES.map((c) => (
-            <button
-              key={c.name}
-              onClick={() => {
-                setCity(c.name);
-                setShowCities(false);
-              }}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                c.name === progress.city
-                  ? "bg-[#D4AF37] text-[#0A0A0A]"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

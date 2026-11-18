@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ProgressProvider } from "@/lib/store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import { BottomNav, SiteHeader } from "@/components/ui";
+import { PwaRegister } from "@/components/pwa";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -9,6 +10,12 @@ export const metadata: Metadata = {
   description:
     "Aplikasi belajar Islam dan ibadah untuk semua orang: jadwal shalat, doa harian, dzikir, tasbih digital, hafalan Juz 30, dan misi harian. Oleh ABEE MotionVerse.",
   manifest: "/manifest.json",
+  icons: { apple: "/apple-touch-icon.png" },
+  appleWebApp: {
+    capable: true,
+    title: "ABEE Muslim",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 export const viewport: Viewport = {
@@ -36,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <SiteHeader />
             <main className="mx-auto w-full max-w-md px-4 pb-24 pt-4">{children}</main>
             <BottomNav />
+            <PwaRegister />
           </ThemeProvider>
         </ProgressProvider>
       </body>

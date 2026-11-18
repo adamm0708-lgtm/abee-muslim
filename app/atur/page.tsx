@@ -3,7 +3,8 @@ import { useState } from "react";
 import { Card, Icon, Note, PageHeader } from "@/components/ui";
 import { useProgress, levelFromPoints, type ThemeChoice } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
-import { CITIES } from "@/lib/api";
+import { CITIES, QURAN_SOURCE_NOTE } from "@/lib/api";
+import { InstallButton } from "@/components/pwa";
 import { supabaseConfigured } from "@/lib/supabase";
 import type { IconName } from "@/lib/data";
 
@@ -32,6 +33,8 @@ export default function AturPage() {
   return (
     <div>
       <PageHeader title="Pengaturan" subtitle="Profil, kota, dan data aplikasi" backHref="/" />
+      <Note>Panduan ibadah dalam aplikasi ini mengikuti mazhab Syafi&apos;i.</Note>
+      <Note>{QURAN_SOURCE_NOTE}.</Note>
       <div className="flex flex-col gap-4">
         <Card>
           <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Nama tampilan</p>
@@ -109,6 +112,11 @@ export default function AturPage() {
         </Card>
 
         <Card>
+          <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Install aplikasi</p>
+          <InstallButton />
+        </Card>
+
+        <Card>
           <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Penyimpanan</p>
           <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             {supabaseConfigured()
@@ -121,8 +129,9 @@ export default function AturPage() {
           <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Tentang aplikasi</p>
           <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             ABEE Muslim v0.1 — aplikasi belajar Islam & ibadah untuk semua orang, oleh ABEE
-            MotionVerse. Jadwal shalat dari Aladhan API, cuaca dari Open-Meteo, teks Al-Qur&apos;an
-            dari AlQuran Cloud API.
+            MotionVerse. Jadwal shalat resmi Kemenag (Bimas Islam) lewat MyQuran, Hijriah
+            Kemenag (MABIMS), teks Al-Qur&apos;an Mushaf Uthmani + terjemahan Kemenag 2019
+            lewat Quran.com, cuaca dari Open-Meteo.
           </p>
         </Card>
 

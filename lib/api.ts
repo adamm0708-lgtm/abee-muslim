@@ -1,24 +1,30 @@
-// Data live: jadwal shalat (Aladhan API), cuaca (Open-Meteo), Hijriah (Intl),
-// hitung mundur Ramadhan, dan arah kiblat. Tidak ada data yang dikarang.
+// Data live: jadwal shalat resmi Kemenag (MyQuran API; fallback Aladhan),
+// Hijriah Kemenag/MABIMS (Aladhan API, kalender Umm al-Qura), cuaca
+// (Open-Meteo), hitung mundur Ramadhan, dan arah kiblat.
+// TANGGAL HIJRIAH TIDAK PERNAH dihitung dari Intl di perangkat — selalu
+// dari API Aladhan, supaya tidak bisa jatuh ke bulan Masehi. Kalau API
+// gagal, UI menampilkan status memuat/error, bukan tanggal tebakan.
 
 import { JUZ30_SURAHS } from "./data";
 
-export type City = { name: string; lat: number; lon: number };
+export type City = { name: string; lat: number; lon: number; myquranId: string };
 
 export const CITIES: City[] = [
-  { name: "Bangil", lat: -7.6, lon: 112.82 },
-  { name: "Mojokerto", lat: -7.47, lon: 112.43 },
-  { name: "Surabaya", lat: -7.26, lon: 112.75 },
-  { name: "Jakarta", lat: -6.21, lon: 106.85 },
-  { name: "Bandung", lat: -6.91, lon: 107.61 },
-  { name: "Yogyakarta", lat: -7.8, lon: 110.36 },
-  { name: "Medan", lat: 3.59, lon: 98.68 },
-  { name: "Makassar", lat: -5.15, lon: 119.44 },
+  { name: "Bangil", lat: -7.6, lon: 112.82, myquranId: "1620" }, // KAB. PASURUAN
+  { name: "Mojokerto", lat: -7.47, lon: 112.43, myquranId: "1635" }, // KOTA MOJOKERTO
+  { name: "Surabaya", lat: -7.26, lon: 112.75, myquranId: "1638" }, // KOTA SURABAYA
+  { name: "Jakarta", lat: -6.21, lon: 106.85, myquranId: "1301" }, // KOTA JAKARTA
+  { name: "Bandung", lat: -6.91, lon: 107.61, myquranId: "1219" }, // KOTA BANDUNG
+  { name: "Yogyakarta", lat: -7.8, lon: 110.36, myquranId: "1505" }, // KOTA YOGYAKARTA
+  { name: "Medan", lat: 3.59, lon: 98.68, myquranId: "0228" }, // KOTA MEDAN
+  { name: "Makassar", lat: -5.15, lon: 119.44, myquranId: "2622" }, // KOTA MAKASSAR
 ];
 
 export type Timings = {
+  Imsak: string;
   Subuh: string;
   Terbit: string;
+  Dhuha: string;
   Dzuhur: string;
   Ashar: string;
   Maghrib: string;
@@ -27,39 +33,236 @@ export type Timings = {
   dateHijri: string;
 };
 
-const timingCache = new Map<string, { at: number; data: Timings }>();
+/** Tanggal hari ini di zona Asia/Jakarta (bukan UTC perangkat). */
+export function todayJakarta(now = new Date()): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return { y: get("year"), m: get("month"), d: get("day") };
+}
 
-/** Jadwal shalat hari ini dari Aladhan API (method 20 = Kemenag RI). */
-export async function getTimings(city: string): Promise<Timings> {
-  const key = city.toLowerCase();
-  const cached = timingCache.get(key);
+const pad2 = (n: number) => String(n).padStart(2, "0");
+const strip = (s: string) => s.slice(0, 5);
+
+function addMinutes(hhmm: string, mins: number): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = (((h * 60 + m + mins) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+async function fetchJson(url: string, timeoutMs = 12000): Promise<unknown> {
+  const res = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+  if (!res.ok) throw new Error(`${url} -> ${res.status}`);
+  return res.json();
+}
+
+// ---------- Tanggal Hijriah (API Aladhan, Umm al-Qura / MABIMS) ----------
+
+export const HIJRI_MONTHS_ID = [
+  "Muharram",
+  "Safar",
+  "Rabiulawal",
+  "Rabiulakhir",
+  "Jumadilawal",
+  "Jumadilakhir",
+  "Rajab",
+  "Syakban",
+  "Ramadan",
+  "Syawal",
+  "Zulkaidah",
+  "Zulhijah",
+];
+
+export const HIJRI_MONTHS_SHORT_ID = [
+  "Muh",
+  "Saf",
+  "Rab. Awal",
+  "Rab. Akhir",
+  "Jum. Awal",
+  "Jum. Akhir",
+  "Raj",
+  "Syak",
+  "Ram",
+  "Syaw",
+  "Zulka",
+  "Zulhi",
+];
+
+export function formatHijri(day: number, month: number, year: number): string {
+  const name = HIJRI_MONTHS_ID[month - 1] ?? "";
+  return `${day} ${name} ${year} H`;
+}
+
+/** Pasaran Jawa (Legi–Pahing–Pon–Wage–Kliwon). Jangkar terverifikasi: 19 Nov 2026 = Kliwon. */
+export const PASARAN = ["Legi", "Pahing", "Pon", "Wage", "Kliwon"];
+export function pasaranJawa(d = new Date()): string {
+  const anchor = new Date(2026, 10, 19); // 19 Nov 2026 = Kliwon
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = Math.round((day.getTime() - anchor.getTime()) / 86400000);
+  return PASARAN[(((4 + diff) % 5) + 5) % 5];
+}
+
+const BULAN_SINGKAT_ID = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "Mei",
+  "Jun",
+  "Jul",
+  "Agu",
+  "Sep",
+  "Okt",
+  "Nop",
+  "Des",
+];
+
+/** Tanggal Masehi singkat Indonesia, mis. "19 Nop 2026". */
+export function gregShortId(d = new Date()): string {
+  return `${d.getDate()} ${BULAN_SINGKAT_ID[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+export type HijriParts = { day: number; month: number; year: number };
+
+const hijriCache = new Map<string, { at: number; data: HijriParts }>();
+
+async function fetchHijriParts(now = new Date()): Promise<HijriParts> {
+  const { y, m, d } = todayJakarta(now);
+  const key = `${y}-${m}-${d}`;
+  const cached = hijriCache.get(key);
   if (cached && Date.now() - cached.at < 1000 * 60 * 60 * 6) return cached.data;
-  const url = `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(
-    city
-  )}&country=Indonesia&method=20`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Aladhan ${res.status}`);
-  const json = await res.json();
-  const t = json.data.timings as Record<string, string>;
-  const strip = (s: string) => s.slice(0, 5);
-  const data: Timings = {
-    Subuh: strip(t.Fajr),
-    Terbit: strip(t.Sunrise),
-    Dzuhur: strip(t.Dhuhr),
-    Ashar: strip(t.Asr),
-    Maghrib: strip(t.Maghrib),
-    Isya: strip(t.Isha),
-    dateGregorian: json.data.date.gregorian.date,
-    dateHijri: `${json.data.date.hijri.day} ${json.data.date.hijri.month.en} ${json.data.date.hijri.year} H`,
+  const json = (await fetchJson(
+    `https://api.aladhan.com/v1/gToH/${pad2(d)}-${pad2(m)}-${y}`
+  )) as {
+    data?: { hijri?: { day?: string; month?: { number?: number }; year?: string } };
   };
-  timingCache.set(key, { at: Date.now(), data });
+  const h = json.data?.hijri;
+  if (!h?.day || !h.month?.number || !h.year) {
+    throw new Error("Format gToH tidak dikenal");
+  }
+  const data: HijriParts = {
+    day: Number(h.day),
+    month: Number(h.month.number),
+    year: Number(h.year),
+  };
+  hijriCache.set(key, { at: Date.now(), data });
   return data;
 }
 
-export type PrayerName = keyof Omit<Timings, "dateGregorian" | "dateHijri">;
+/**
+ * Tanggal Hijriah hari ini, dari Aladhan (kalender Umm al-Qura / MABIMS).
+ * Satu-satunya sumber tanggal Hijriah di aplikasi — TIDAK ADA fallback ke
+ * Intl, supaya tidak pernah tampil bulan Masehi. Gagal = throw, UI
+ * menampilkan status memuat/error.
+ */
+export async function getHijriToday(now = new Date()): Promise<string> {
+  const h = await fetchHijriParts(now);
+  return formatHijri(h.day, h.month, h.year);
+}
+
+const timingCache = new Map<string, { at: number; data: Timings }>();
+
+/**
+ * Jadwal shalat hari ini — sumber utama jadwal RESMI Kemenag (Bimas Islam)
+ * lewat MyQuran API; tanggal Hijriah dari Aladhan gToH. Fallback kalau
+ * MyQuran gagal: Aladhan method 20 (Kemenag) + ihtiyat 2 menit untuk 5
+ * waktu shalat (Terbit tanpa ihtiyat), Imsak = Subuh − 10 menit,
+ * Dhuha = Terbit + 30 menit (perkiraan; hanya di jalur fallback).
+ */
+export async function getTimings(city: string): Promise<Timings> {
+  const { y, m, d } = todayJakarta();
+  const key = `${city.toLowerCase()}|${y}-${m}-${d}`;
+  const cached = timingCache.get(key);
+  if (cached && Date.now() - cached.at < 1000 * 60 * 60 * 6) return cached.data;
+  const c = CITIES.find((x) => x.name === city) ?? CITIES[0];
+  const greg = `${y}-${pad2(m)}-${pad2(d)}`;
+
+  // Tanggal Hijriah (Aladhan gToH) dimuat paralel dengan jadwal.
+  const hijriP = fetchHijriParts().catch(() => null);
+
+  try {
+    const json = (await fetchJson(
+      `https://api.myquran.com/v1/sholat/jadwal/${c.myquranId}/${y}/${m}/${d}`
+    )) as { data?: { jadwal?: Record<string, string> } };
+    const j = json.data?.jadwal;
+    if (!j?.subuh || !j?.maghrib) throw new Error("Format MyQuran tidak dikenal");
+    const h = await hijriP;
+    const data: Timings = {
+      Imsak: strip(j.imsak),
+      Subuh: strip(j.subuh),
+      Terbit: strip(j.terbit),
+      Dhuha: strip(j.dhuha),
+      Dzuhur: strip(j.dzuhur),
+      Ashar: strip(j.ashar),
+      Maghrib: strip(j.maghrib),
+      Isya: strip(j.isya),
+      dateGregorian: greg,
+      dateHijri: h ? formatHijri(h.day, h.month, h.year) : "",
+    };
+    timingCache.set(key, { at: Date.now(), data });
+    return data;
+  } catch {
+    // Fallback: Aladhan method 20 + ihtiyat 2 menit.
+    // school=0 = Syafi'i (bayangan 1x panjang benda) — JANGAN ubah ke Hanafi (school=1).
+    const json = (await fetchJson(
+      `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(
+        city
+      )}&country=Indonesia&method=20&school=0`
+    )) as {
+      data?: {
+        timings?: Record<string, string>;
+        date?: {
+          hijri?: { day?: string; month?: { number?: number }; year?: string };
+          gregorian?: { date?: string };
+        };
+      };
+    };
+    const t = json.data?.timings;
+    const h = json.data?.date?.hijri;
+    if (!t?.Fajr || !t?.Maghrib) throw new Error("Aladhan gagal");
+    const subuh = addMinutes(strip(t.Fajr), 2);
+    const data: Timings = {
+      Imsak: addMinutes(subuh, -10),
+      Subuh: subuh,
+      Terbit: strip(t.Sunrise),
+      Dhuha: addMinutes(strip(t.Sunrise), 30),
+      Dzuhur: addMinutes(strip(t.Dhuhr), 2),
+      Ashar: addMinutes(strip(t.Asr), 2),
+      Maghrib: addMinutes(strip(t.Maghrib), 2),
+      Isya: addMinutes(strip(t.Isha), 2),
+      dateGregorian: json.data?.date?.gregorian?.date ?? greg,
+      dateHijri:
+        h?.day && h.month?.number && h.year
+          ? formatHijri(Number(h.day), Number(h.month.number), Number(h.year))
+          : "",
+    };
+    timingCache.set(key, { at: Date.now(), data });
+    return data;
+  }
+}
+
+export type PrayerName = keyof Omit<Timings, "dateGregorian" | "dateHijri" | "Dhuha">;
+/** Urutan target hitung mundur: Imsak → Subuh → Terbit → Dzuhur → Ashar → Maghrib → Isya → Imsak besok. */
 export const PRAYER_ORDER: PrayerName[] = [
+  "Imsak",
   "Subuh",
   "Terbit",
+  "Dzuhur",
+  "Ashar",
+  "Maghrib",
+  "Isya",
+];
+
+/** Urutan lengkap untuk halaman Jadwal Shalat (termasuk Dhuha). */
+export const JADWAL_ORDER: (keyof Omit<Timings, "dateGregorian" | "dateHijri">)[] = [
+  "Imsak",
+  "Subuh",
+  "Terbit",
+  "Dhuha",
   "Dzuhur",
   "Ashar",
   "Maghrib",
@@ -70,6 +273,7 @@ export function nextPrayer(
   timings: Timings,
   now = new Date()
 ): { name: PrayerName; at: Date; label: string } {
+  // Jam perangkat lokal (bukan UTC): getHours()/getMinutes() sudah lokal.
   const [h, m] = [now.getHours(), now.getMinutes()];
   const nowMin = h * 60 + m;
   for (const name of PRAYER_ORDER) {
@@ -80,12 +284,12 @@ export function nextPrayer(
       return { name, at, label: name === "Terbit" ? "Terbit (Syuruq)" : name };
     }
   }
-  // Setelah Isya: Subuh besok
-  const [ph, pm] = timings.Subuh.split(":").map(Number);
+  // Setelah Isya: Imsak besok.
+  const [ph, pm] = timings.Imsak.split(":").map(Number);
   const at = new Date(now);
   at.setDate(at.getDate() + 1);
   at.setHours(ph, pm, 0, 0);
-  return { name: "Subuh", at, label: "Subuh (besok)" };
+  return { name: "Imsak", at, label: "Imsak (besok)" };
 }
 
 export function formatCountdown(ms: number): string {
@@ -96,39 +300,102 @@ export function formatCountdown(ms: number): string {
   return `${hh}:${mm}:${ss}`;
 }
 
-/** Tanggal Hijriah hari ini, dihitung dari Intl (kalender islamic). */
-export function hijriToday(now = new Date()): string {
-  try {
-    return new Intl.DateTimeFormat("id-ID-u-ca-islamic", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(now);
-  } catch {
-    return "";
-  }
+/**
+ * Hitung mundur dengan kata-kata ("3 jam 5 menit lagi") — bukan angka
+ * HH:MM:SS besar yang bisa dikira jam sekarang.
+ */
+export function formatCountdownWords(ms: number): string {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return m > 0 ? `${h} jam ${m} menit lagi` : `${h} jam lagi`;
+  if (m > 0) return `${m} menit lagi`;
+  if (sec > 0) return `${sec} detik lagi`;
+  return "Sekarang";
 }
 
-export function hijriParts(d: Date): { day: number; month: number; year: number } {
-  const parts = new Intl.DateTimeFormat("en-u-ca-islamic", {
+// ---------- Kalender Hijriah sebulan & hitung mundur Ramadhan (API) ----------
+
+const hijriCalCache = new Map<string, { at: number; data: Map<number, HijriParts> }>();
+
+/**
+ * Kalender Hijriah sebulan penuh (bulan Masehi y-m) dari Aladhan
+ * gToHCalendar. Mengembalikan peta tanggal Masehi -> tanggal Hijriah.
+ */
+export async function getHijriMonthCalendar(
+  y: number,
+  m: number
+): Promise<Map<number, HijriParts>> {
+  const key = `${y}-${m}`;
+  const cached = hijriCalCache.get(key);
+  if (cached && Date.now() - cached.at < 1000 * 60 * 60 * 6) return cached.data;
+  const json = (await fetchJson(
+    `https://api.aladhan.com/v1/gToHCalendar/${m}/${y}`
+  )) as {
+    data?: {
+      gregorian?: { day?: string };
+      hijri?: { day?: string; month?: { number?: number }; year?: string };
+    }[];
+  };
+  if (!Array.isArray(json.data) || json.data.length === 0) {
+    throw new Error("Format gToHCalendar tidak dikenal");
+  }
+  const map = new Map<number, HijriParts>();
+  for (const x of json.data) {
+    const gd = Number(x.gregorian?.day ?? 0);
+    const h = x.hijri;
+    if (gd && h?.day && h.month?.number && h.year) {
+      map.set(gd, {
+        day: Number(h.day),
+        month: Number(h.month.number),
+        year: Number(h.year),
+      });
+    }
+  }
+  hijriCalCache.set(key, { at: Date.now(), data: map });
+  return map;
+}
+
+export type RamadhanInfo = { days: number; date: Date; dateText: string };
+
+const ramadhanCache = new Map<string, { at: number; data: RamadhanInfo }>();
+
+/**
+ * Hitung mundur ke 1 Ramadan berikutnya. Tanggal 1 Ramadan diambil dari
+ * Aladhan hToG (Hijri -> Masehi, kalender Umm al-Qura / MABIMS).
+ * Terverifikasi: 1 Ramadan 1448 = 8 Feb 2027, jadi dari 19 Nov 2026
+ * = 81 hari (dari 20 Nov 2026 = 80 hari).
+ */
+export async function getRamadhanInfo(now = new Date()): Promise<RamadhanInfo> {
+  const { y, m, d } = todayJakarta(now);
+  const key = `${y}-${m}-${d}`;
+  const cached = ramadhanCache.get(key);
+  if (cached && Date.now() - cached.at < 1000 * 60 * 60 * 6) return cached.data;
+  const h = await fetchHijriParts(now);
+  let targetYear = h.year;
+  if (h.month > 9 || (h.month === 9 && h.day > 1)) targetYear = h.year + 1;
+  const json = (await fetchJson(
+    `https://api.aladhan.com/v1/hToG/01-09-${targetYear}`
+  )) as {
+    data?: { gregorian?: { day?: string; month?: { number?: number }; year?: string } };
+  };
+  const g = json.data?.gregorian;
+  if (!g?.day || !g.month?.number || !g.year) {
+    throw new Error("Format hToG tidak dikenal");
+  }
+  const target = new Date(Number(g.year), Number(g.month.number) - 1, Number(g.day));
+  const start = new Date(y, m - 1, d);
+  const days = Math.round((target.getTime() - start.getTime()) / 86400000);
+  const dateText = target.toLocaleDateString("id-ID", {
+    weekday: "long",
     day: "numeric",
-    month: "numeric",
+    month: "long",
     year: "numeric",
-  }).formatToParts(d);
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
-  return { day: get("day"), month: get("month"), year: get("year") };
-}
-
-/** Jumlah hari menuju 1 Ramadhan berikutnya (dihitung dengan kalender Hijriah Intl). */
-export function daysToRamadhan(now = new Date()): number {
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  for (let i = 0; i < 400; i++) {
-    const d = new Date(start);
-    d.setDate(d.getDate() + i);
-    const h = hijriParts(d);
-    if (h.month === 9 && h.day === 1) return i;
-  }
-  return -1;
+  });
+  const data: RamadhanInfo = { days, date: target, dateText };
+  ramadhanCache.set(key, { at: Date.now(), data });
+  return data;
 }
 
 export type Weather = {
@@ -158,10 +425,10 @@ const WMO: Record<number, string> = {
   95: "Badai Petir",
 };
 
-/** Cuaca saat ini dari Open-Meteo (gratis, tanpa API key). */
+/** Cuaca saat ini dari Open-Meteo (gratis, tanpa API key). Timeout 10 detik supaya tidak loading selamanya. */
 export async function getWeather(lat: number, lon: number): Promise<Weather> {
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`;
-  const res = await fetch(url);
+  const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
   const json = await res.json();
   const c = json.current;
@@ -241,4 +508,94 @@ export function embeddedSurahMeta(): SurahMeta[] {
     numberOfAyahs: s.ayahs,
     revelationType: revelation[s.no] ?? "Meccan",
   }));
+}
+
+// ---------- Teks Al-Qur'an (sumber yang bisa dipertanggungjawabkan) ----------
+
+/** Catatan sumber yang ditampilkan di aplikasi (halaman baca + Atur). */
+export const QURAN_SOURCE_NOTE =
+  "Teks Arab: Mushaf Uthmani (Tanzil) · Terjemahan: Kemenag RI (Edisi Penyempurnaan 2019)";
+
+export type SurahText = { arabic: string[]; translation: string[] };
+
+function stripTranslationHtml(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const DIACRITIC_RE = /[\u064B-\u0654\u0670\u0640\u06D6-\u06ED]/; // tanpa flag g: .test() stateless
+
+/** Hapus Basmalah di awal ayat 1 (edisi AlQuran Cloud menempelkannya di ayat 1). */
+function stripLeadingBismillah(text: string): string {
+  const skeleton = "بسماللهالرحمنالرحيم"; // 19 huruf
+  let letters = 0;
+  let cut = -1;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (DIACRITIC_RE.test(ch)) continue;
+    const base =
+      ch === "ٱ" || ch === "أ" || ch === "إ" || ch === "آ" ? "ا" : ch === "ة" ? "ه" : ch;
+    if (base !== skeleton[letters]) return text;
+    letters++;
+    if (letters === skeleton.length) {
+      cut = i + 1;
+      break;
+    }
+  }
+  if (cut < 0) return text;
+  return text.slice(cut).trim();
+}
+
+/**
+ * Ambil teks satu surah: Arab Uthmani + terjemahan Kemenag 2019.
+ * Utama: Quran.com API v4 — fields=text_uthmani (Mushaf Uthmani, Tanzil) +
+ * translations=33 ("Indonesian Islamic Affairs Ministry" = Kemenag RI
+ * Edisi Penyempurnaan 2019). Satu panggilan untuk Arab + terjemahan;
+ * per_page=300 menutupi surah terpanjang (286 ayat).
+ * Cadangan kalau Quran.com gagal: AlQuran Cloud edisi "quran-uthmani"
+ * (standar, BUKAN edisi default "quran-uthmani-quran-academy") +
+ * "id.indonesian" (terjemahan Kemenag edisi lama — tetap valid, hanya cadangan).
+ * Ayat 1 dari cadangan dibersihkan dari Basmalah yang menempel, karena
+ * Basmalah ditampilkan sebagai baris tersendiri di atas teks (kecuali
+ * surah 1 yang Basmalah-nya memang ayat 1, dan surah 9 yang tanpa Basmalah).
+ */
+export async function fetchSurahText(surahNo: number): Promise<SurahText> {
+  try {
+    const json = (await fetchJson(
+      `https://api.quran.com/api/v4/verses/by_chapter/${surahNo}?translations=33&fields=text_uthmani&per_page=300`
+    )) as {
+      verses?: {
+        verse_number?: number;
+        text_uthmani?: string;
+        translations?: { text?: string }[];
+      }[];
+    };
+    const verses = json.verses;
+    if (!verses || verses.length === 0) throw new Error("Quran.com: tidak ada ayat");
+    const arabic = verses.map((v) => (v.text_uthmani ?? "").trim());
+    const translation = verses.map((v) =>
+      stripTranslationHtml(v.translations?.[0]?.text ?? "")
+    );
+    if (arabic.some((a) => !a)) throw new Error("Quran.com: teks ayat kosong");
+    return { arabic, translation };
+  } catch {
+    const [ar, id] = (await Promise.all([
+      fetchJson(`https://api.alquran.cloud/v1/surah/${surahNo}/quran-uthmani`),
+      fetchJson(`https://api.alquran.cloud/v1/surah/${surahNo}/id.indonesian`),
+    ])) as {
+      code?: number;
+      data?: { ayahs?: { text?: string }[] };
+    }[];
+    if (ar.code !== 200 || id.code !== 200) throw new Error("Surah tidak ditemukan");
+    let arabic = (ar.data?.ayahs ?? []).map((a) => (a.text ?? "").trim());
+    const translation = (id.data?.ayahs ?? []).map((a) => (a.text ?? "").trim());
+    if (arabic.length === 0) throw new Error("Surah tidak ditemukan");
+    if (surahNo !== 1 && arabic[0]) arabic = [stripLeadingBismillah(arabic[0]), ...arabic.slice(1)];
+    return { arabic, translation };
+  }
 }

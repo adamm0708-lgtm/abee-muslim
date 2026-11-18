@@ -13,6 +13,7 @@ import {
   ShalatWudhuPage,
   TahlilPage,
   TasbihPage,
+  YasinTahlilPage,
 } from "@/components/ibadah";
 
 export function generateStaticParams() {
@@ -28,6 +29,7 @@ const PAGES: Record<string, () => JSX.Element> = {
   "shalat-wudhu": ShalatWudhuPage,
   dzikir: DzikirPage,
   tahlil: TahlilPage,
+  "yasin-tahlil": YasinTahlilPage,
   masjid: MasjidPage,
   kiblat: KiblatPage,
   amal: AmalPage,

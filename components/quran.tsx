@@ -13,7 +13,13 @@ import {
   surahAudioUrl,
   surahsInJuz,
 } from "@/lib/data";
-import { embeddedSurahMeta, getSurahList, type SurahMeta } from "@/lib/api";
+import {
+  QURAN_SOURCE_NOTE,
+  embeddedSurahMeta,
+  fetchSurahText,
+  getSurahList,
+  type SurahMeta,
+} from "@/lib/api";
 
 // ---------- Hafalan Juz 30 ----------
 export function HafalanPage() {
@@ -231,17 +237,19 @@ export function BacaPage() {
     let alive = true;
     setLoading(true);
     setError("");
-    Promise.all([
-      fetch(`https://api.alquran.cloud/v1/surah/${readerSurah}`).then((r) => r.json()),
-      fetch(`https://api.alquran.cloud/v1/surah/${readerSurah}/id.indonesian`).then((r) => r.json()),
-    ])
-      .then(([ar, id]) => {
+    fetchSurahText(readerSurah)
+      .then(({ arabic, translation }) => {
         if (!alive) return;
-        if (ar.code !== 200 || id.code !== 200) throw new Error("Surah tidak ditemukan");
-        setApiSurah(ar.data);
-        setApiTrans(id.data.ayahs.map((a: { text: string }) => a.text));
+        setApiSurah({ ayahs: arabic.map((text) => ({ text })) } as never);
+        setApiTrans(translation);
       })
-      .catch(() => alive && setError("Tidak bisa memuat surah dari AlQuran Cloud API. Periksa koneksi internet."))
+      .catch(
+        () =>
+          alive &&
+          setError(
+            "Tidak bisa memuat surah dari Quran.com API (cadangan AlQuran Cloud juga gagal). Periksa koneksi internet."
+          )
+      )
       .finally(() => alive && setLoading(false));
     return () => {
       alive = false;
@@ -513,7 +521,7 @@ export function BacaPage() {
         <Card className="px-4 py-6 sm:px-6">
           {loading ? (
             <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
-              Memuat surah dari AlQuran Cloud API…
+              Memuat surah dari Quran.com API…
             </p>
           ) : error ? (
             <div className="text-center">
@@ -527,7 +535,7 @@ export function BacaPage() {
             </div>
           ) : (
             <>
-              {embedded && readerSurah !== 1 && readerSurah !== 9 && (
+              {readerSurah !== 1 && readerSurah !== 9 && (
                 <p className="arabic mb-5 text-center text-2xl text-neutral-900 dark:text-neutral-100">
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </p>
@@ -564,8 +572,7 @@ export function BacaPage() {
           )}
         </Card>
         <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
-          Ketuk sebuah ayat untuk menandainya sebagai terakhir dibaca. Teks Arab Uthmani dari
-          AlQuran Cloud API; terjemahan Indonesia (Kemenag).
+          Ketuk sebuah ayat untuk menandainya sebagai terakhir dibaca. {QURAN_SOURCE_NOTE}.
         </p>
       </div>
     );

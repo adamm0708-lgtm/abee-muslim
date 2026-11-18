@@ -55,6 +55,7 @@ export type MenuEntry = { slug: string; label: string; icon: IconName };
 
 export const IBADAH_MENU: MenuEntry[] = [
   { slug: "doa", label: "Doa Harian", icon: "hands" },
+  { slug: "yasin-tahlil", label: "Yasin & Tahlil", icon: "quote" },
   { slug: "tasbih", label: "Tasbih Digital", icon: "beads" },
   { slug: "jadwal", label: "Jadwal Shalat", icon: "mosque" },
   { slug: "ramadhan", label: "Road to Ramadhan", icon: "moon" },
@@ -107,6 +108,17 @@ export const DUAS: Dua[] = [
     translation:
       "Aku bersaksi bahwa tidak ada Tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya, dan aku bersaksi bahwa Muhammad adalah hamba dan utusan-Nya. Ya Allah, jadikanlah aku termasuk orang-orang yang bertaubat dan jadikanlah aku termasuk orang-orang yang bersuci.",
     source: "HR. Muslim 234, Tirmidzi 55",
+  },
+  {
+    id: "qunut-subuh",
+    title: "Doa Qunut Subuh",
+    arabic:
+      "اللَّهُمَّ اهْدِنِي فِيمَنْ هَدَيْتَ، وَعَافِنِي فِيمَنْ عَافَيْتَ، وَتَوَلَّنِي فِيمَنْ تَوَلَّيْتَ، وَبَارِكْ لِي فِيمَا أَعْطَيْتَ، وَقِنِي شَرَّ مَا قَضَيْتَ، فَإِنَّكَ تَقْضِي وَلَا يُقْضَى عَلَيْكَ، وَإِنَّهُ لَا يَذِلُّ مَنْ وَالَيْتَ، وَلَا يَعِزُّ مَنْ عَادَيْتَ، تَبَارَكْتَ رَبَّنَا وَتَعَالَيْتَ، فَلَكَ الْحَمْدُ عَلَى مَا قَضَيْتَ، أَسْتَغْفِرُكَ وَأَتُوبُ إِلَيْكَ، وَصَلَّى اللَّهُ عَلَى سَيِّدِنَا مُحَمَّدٍ النَّبِيِّ الْأُمِّيِّ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلَّمَ",
+    latin:
+      "Allahummahdini fiman hadait, wa 'afini fiman 'afait, wa tawallani fiman tawallait, wa barik li fima a'thait, wa qini syarra ma qadhait, fa innaka taqdhi wa la yuqdha 'alaik, wa innahu la yadzillu man walait, wa la ya'izzu man 'adait, tabarakta rabbana wa ta'alait, fa lakal hamdu 'ala ma qadhait, wa astaghfiruka wa atubu ilaik, wa shallallahu 'ala sayyidina Muhammadin nabiyyil ummiyyi wa 'ala alihi wa shahbihi wa sallam.",
+    translation:
+      "Ya Allah, berilah aku petunjuk sebagaimana orang-orang yang telah Engkau beri petunjuk. Berilah aku kesehatan sebagaimana orang-orang yang telah Engkau beri kesehatan. Pimpinlah aku sebagaimana orang-orang yang telah Engkau pimpin. Berkahilah apa yang telah Engkau berikan kepadaku. Lindungilah aku dari keburukan yang telah Engkau tetapkan. Sungguh Engkau yang memutuskan dan tidak diputuskan atas-Mu. Tidak hina orang yang Engkau pimpin, dan tidak mulia orang yang Engkau musuhi. Maha Suci Engkau, Tuhan kami, dan Maha Tinggi. Segala puji bagi-Mu atas apa yang telah Engkau tetapkan. Aku memohon ampun dan bertaubat kepada-Mu. Semoga shalawat dan salam tercurah kepada Nabi Muhammad, nabi yang ummi, beserta keluarga dan sahabatnya.",
+    source: "NU Online (Al-Adzkar Imam An-Nawawi); HR. Abu Dawud, Tirmidzi",
   },
   {
     id: "sebelum-makan",
@@ -208,6 +220,223 @@ export const TAHLIL_TEXT = {
     "Tidak ada Tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya. Milik-Nya kerajaan dan bagi-Nya segala pujian. Dia menghidupkan dan mematikan, dan Dia Maha Kuasa atas segala sesuatu.",
   note: "Tahlil dibaca berulang-ulang, umumnya 100 kali, sebagai dzikir dan doa untuk orang yang telah wafat.",
 };
+
+// ---------- Susunan bacaan tahlil (NU Online) ----------
+// Sumber: NU Online, "Surat Yasin, Susunan Tahlil Singkat, dan Doa Arwah"
+// (LBM PBNU, 11 Juni 2019) — dikutip lewat Telkomsel. Teks Arab disalin
+// dari sumber tersebut; ejaan Latin disederhanakan mengikuti gaya aplikasi.
+export type TahlilStep = {
+  no: number;
+  title: string;
+  count?: string;
+  arabic: string;
+  latin: string;
+  translation: string;
+};
+
+export const TAHLIL_STEPS: TahlilStep[] = [
+  {
+    no: 1,
+    title: "Pengantar Al-Fatihah (Tawassul)",
+    arabic:
+      "إِلَى حَضْرَةِ النَّبِيِّ الْمُصْطَفَى سَيِّدِنَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ وَاٰلِهِ وَأَزْوَاجِهِ وَأَوْلَادِهِ وَذُرِّيَّاتِهِ الْفَاتِحَةُ\n\nثُمَّ إِلَى حَضْرَةِ إِخْوَانِهِ مِنَ الْأَنْبِيَاءِ وَالْمُرْسَلِيْنَ وَالْأَوْلِيَاءِ وَالشُّهَدَاءِ وَالصَّالِحِيْنَ وَالصَّحَابَةِ وَالتَّابِعِيْنَ وَالْعُلَمَاءِ الْعَامِلِيْنَ وَالْمُصَنِّفِيْنَ الْمُخْلِصِيْنَ وَجَمِيْعِ الْمَلَائِكَةِ الْمُقَرَّبِيْنَ، خُصُوْصًا إِلَى سَيِّدِنَا الشَّيْخِ عَبْدِ الْقَادِرِ الْجِيْلَانِي وَخُصُوْصًا إِلَى مُؤَسِّسِيْ جَمْعِيَّةِ نَهْضَةِ الْعُلَمَاءِ الْفَاتِحَةُ\n\nثُمَّ إِلَى جَمِيْعِ أَهْلِ الْقُبُوْرِ مِنَ الْمُسْلِمِيْنَ وَالْمُسْلِمَاتِ وَالْمُؤْمِنِيْنَ وَالْمُؤْمِنَاتِ مِنْ مَشَارِقِ الْأَرْضِ إِلَى مَغَارِبِهَا بَرِّهَا وَبَحْرِهَا خُصُوْصًا إِلَى اٰبَائِنَا وَأُمَّهَاتِنَا وَأَجْدَادِنَا وَجَدَّاتِنَا وَمَشَايِخِنَا وَمَشَايِخِ مَشَايِخِنَا وَأَسَاتِذَتِنَا وَأَسَاتِذَةِ أَسَاتِذَتِنَا وَلِمَنْ أَحْسَنَ إِلَيْنَا وَلِمَنِ اجْتَمَعْنَا هٰهُنَا بِسَبَبِهِ الْفَاتِحَةُ\n\nثُمَّ إِلَى جَمِيْعِ أَهْلِ الْقُبُوْرِ مِمَّنْ ذُكِرَتْ أَسْمَاؤُهُ فِيْ هٰذِهِ الرِّسَالَةِ حَضْرَةِ رُوْحِ … وَحَضْرَةِ رُوْحِ … وَحَضْرَةِ رُوْحِ … رَحِمَهُمُ اللهُ وَغَفَرَهُمْ، الْفَاتِحَةُ",
+    latin:
+      "Ila hadratin-nabiyyil-musthafa sayyidina Muhammadin shallallahu 'alaihi wa sallama wa alihi wa azwajihi wa awladihi wa dzurriyyatihi, al-Fatihah. Tsumma ila hadrati ikhwanihi minal-anbiya'i wal-mursalina wal-auliya'i wasy-syuhada'i wash-shalihina wash-shahabati wat-tabi'ina wal-'ulama'il-'amilina wal-mushannifinal-mukhlishina wa jami'il-malaikatil-muqarrabin, khushushan ila sayyidinasy-syaikh 'Abdil Qadir al-Jilani wa khushushan ila mu'assisi jam'iyyah Nahdlatil Ulama, al-Fatihah. Tsumma ila jami'i ahlil-quburi minal-muslimina wal-muslimati wal-mu'minina wal-mu'minati min masyariqil-ardhi ila magharibiha barriha wa bahriha, khushushan ila aba'ina wa ummahatina wa ajdadina wa jaddatina wa masyayikhina wa masyayikhi masyayikhina wa asatidzatina wa asatidzatina wa liman ahsana ilaina wa liman ijtama'na hahuna bisababihi, al-Fatihah. (Sebutkan nama arwah pada bagian keempat.)",
+    translation:
+      "Untuk yang terhormat Nabi Muhammad SAW, segenap keluarga, istri-istrinya, anak-anaknya, dan keturunannya; lalu kepada segenap saudara beliau dari kalangan para nabi, rasul, wali, syuhada, orang-orang saleh, sahabat, tabi'in, ulama yang mengamalkan ilmunya, ulama penulis yang ikhlas, dan semua malaikat Muqarrabin, terkhusus kepada Syekh Abdul Qadir al-Jilani dan para pendiri Nahdlatul Ulama; kemudian kepada semua ahli kubur Muslimin, Muslimat, Mukminin, Mukminat dari Timur ke Barat, baik di laut dan di darat, khususnya bapak kami, ibu kami, kakek kami, nenek kami, guru kami, pengajar dari guru kami, mereka yang telah berbuat baik kepada kami, dan bagi ahli kubur yang menjadi sebab kami berkumpul di sini; serta kepada arwah yang namanya disebutkan. Bacaan Al-Fatihah ini kami tujukan kepada Allah dan pahalanya untuk mereka semua. Al-Fatihah.",
+  },
+  {
+    no: 2,
+    title: "Surat Al-Fatihah",
+    arabic:
+      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيْمِ. اَلْحَمْدُ لِلهِ رَبِّ الْعَالَمِيْنَ. اَلرَّحْمَنِ الرَّحِيْمِ. مَالِكِ يَوْمِ الدِّيْنِ. اِيَّاكَ نَعْبُدُ وَاِيَّاكَ نَسْتَعِيْنُ. اِهْدِنَا الصِّرَاطَ الَّمُسْتَقِيْمَ. صِرَاطَ الَّذِيْنَ اَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوْبِ عَلَيْهِمْ وَلَا الضَّالِّيْنَ. اَمِينْ",
+    latin:
+      "Bismillahirrahmanirrahim. Alhamdulillahi rabbil 'alamin. Ar-rahmanir-rahim. Maliki yaumiddin. Iyyaka na'budu wa iyyaka nasta'in. Ihdinash-shirathal-mustaqim. Shirathal-ladzina an'amta 'alaihim ghairil-maghdhubi 'alaihim wa ladh-dhallin. Amin.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Segala puji bagi Allah, Tuhan semesta alam. Yang Maha Pengasih lagi Maha Penyayang. Yang menguasai hari pembalasan. Hanya kepada-Mu kami menyembah. Hanya kepada-Mu pula kami memohon pertolongan. Tunjukkanlah kami ke jalan yang lurus, yaitu jalan orang-orang yang telah Kauanugerahi nikmat kepada mereka, bukan jalan mereka yang dimurkai dan bukan pula jalan mereka yang sesat. Semoga Kaukabulkan permohonan kami.",
+  },
+  {
+    no: 3,
+    title: "Surat Al-Ikhlas",
+    count: "3x",
+    arabic:
+      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيْمِ. قُلْ هُوَ اللهُ اَحَدٌ. اَللهُ الصَّمَدُ. لَمْ يَلِدْ وَلَمْ يُوْلَدْ. وَلَمْ يَكٌنْ لَهُ كُفُوًا اَحَدٌ",
+    latin:
+      "Bismillahirrahmanirrahim. Qul huwallahu ahad, Allahush-shamad, lam yalid wa lam yulad, wa lam yakul lahu kufuwan ahad. (3 kali)",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Katakanlah, Dialah yang Maha Esa. Allah adalah Tuhan tempat bergantung oleh segala sesuatu. Dia tidak beranak dan tidak diperanakkan. Dan tidak ada seorang pun yang setara dengan-Nya. (3 kali)",
+  },
+  {
+    no: 4,
+    title: "Tahlil dan Takbir",
+    arabic: "لاَ اِلَهَ اِلاَّ اللهُ وَاللهُ اَكْبَرُ",
+    latin: "La ilaha illallah, Allahu Akbar.",
+    translation: "Tiada tuhan yang layak disembah kecuali Allah. Allah Maha Besar.",
+  },
+  {
+    no: 5,
+    title: "Surat Al-Falaq",
+    count: "3x",
+    arabic:
+      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيْمِ. قُلْ اَعُوْذُ بِرَبِّ الْفَلَقِ. مِنْ شَرِّ مَا خَلَقَ. وَمِنْ شَرِّ غَاسِقٍ اِذَا وَقَبَ. وَمِنْ شَرِّ النَّفَاثاتِ فِى الْعُقَدِ. وَمِنْ شَرِّ حَاسِدٍ اِذَا حَسَدَ",
+    latin:
+      "Bismillahirrahmanirrahim. Qul a'udzu bi rabbil-falaq. Min syarri ma khalaq. Wa min syarri ghasiqin idza waqab. Wa min syarrin-naffatsati fil-'uqad. Wa min syarri hasidin idza hasad. (3 kali)",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Katakanlah, 'Aku berlindung kepada Tuhan yang menguasai waktu subuh dari kejahatan makhluk-Nya. Dari kejahatan malam apabila telah gelap gulita. Dan dari kejahatan wanita-wanita tukang sihir yang mengembus nafasnya pada buhul-buhul. Dan dari kejahatan orang-orang yang dengki apabila ia mendengki.' (3 kali)",
+  },
+  {
+    no: 6,
+    title: "Tahlil dan Takbir",
+    arabic: "لاَ اِلَهَ اِلاَّ اللهُ وَاللهُ اَكْبَرُ",
+    latin: "La ilaha illallah, Allahu Akbar.",
+    translation: "Tiada tuhan yang layak disembah kecuali Allah. Allah Maha Besar.",
+  },
+  {
+    no: 7,
+    title: "Surat An-Nas",
+    count: "3x",
+    arabic:
+      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيْمِ. قُلْ اَعُوْذُ بِرَبِّ النَّاسِ. مَلِكِ النَّاسِ. اِلَهِ النَّاسِ. مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ. الَّذِى يُوَسْوِسُ فِى صُدُوْرِ النَّاسِ. مِنَ الْجِنَّةِ وَالنَّاسِ",
+    latin:
+      "Bismillahirrahmanirrahim. Qul a'udzu bi rabbin-nas. Malikin-nas. Ilahin-nas. Min syarril-waswasil-khannas. Alladzi yuwaswisu fi shudurin-nas. Minal-jinnati wan-nas. (3 kali)",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Katakanlah, 'Aku berlindung kepada Tuhan manusia, Raja manusia, Sesembahan manusia, dari kejahatan bisikan setan yang biasa bersembunyi. Yang membisikkan kejahatan ke dalam dada manusia. Dari setan dan manusia.' (3 kali)",
+  },
+  {
+    no: 8,
+    title: "Tahlil dan Takbir",
+    arabic: "لاَ اِلَهَ اِلاَّ اللهُ وَاللهُ اَكْبَرُ",
+    latin: "La ilaha illallah, Allahu Akbar.",
+    translation: "Tiada tuhan yang layak disembah kecuali Allah. Allah Maha Besar.",
+  },
+  {
+    no: 9,
+    title: "Surat Al-Fatihah",
+    arabic:
+      "بِسْمِ اللهِ الرَّحْمَنِ الرَّحِيْمِ. اَلْحَمْدُ لِلهِ رَبِّ الْعَالَمِيْنَ. اَلرَّحْمَنِ الرَّحِيْمِ. مَالِكِ يَوْمِ الدِّيْنِ. اِيَّاكَ نَعْبُدُ وَاِيَّاكَ نَسْتَعِيْنُ. اِهْدِنَا الصِّرَاطَ الَّمُسْتَقِيْمَ. صِرَاطَ الَّذِيْنَ اَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوْبِ عَلَيْهِمْ وَلَا الضَّالِّيْنَ. اَمِينْ",
+    latin:
+      "Bismillahirrahmanirrahim. Alhamdulillahi rabbil 'alamin. Ar-rahmanir-rahim. Maliki yaumiddin. Iyyaka na'budu wa iyyaka nasta'in. Ihdinash-shirathal-mustaqim. Shirathal-ladzina an'amta 'alaihim ghairil-maghdhubi 'alaihim wa ladh-dhallin. Amin.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Segala puji bagi Allah, Tuhan semesta alam. Yang Maha Pengasih lagi Maha Penyayang. Yang menguasai hari pembalasan. Hanya kepada-Mu kami menyembah. Hanya kepada-Mu pula kami memohon pertolongan. Tunjukkanlah kami ke jalan yang lurus, yaitu jalan orang-orang yang telah Kauanugerahi nikmat kepada mereka, bukan jalan mereka yang dimurkai dan bukan pula jalan mereka yang sesat. Semoga Kaukabulkan permohonan kami.",
+  },
+  {
+    no: 10,
+    title: "Surat Al-Baqarah Ayat 1–5",
+    arabic:
+      "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ، الۤمّۤ، ذٰلِكَ الْكِتٰبُ لَا رَيْبَ فِيْهِ هُدًى لِّلْمُتَّقِيْنَ، الَّذِيْنَ يُؤْمِنُوْنَ بِالْغَيْبِ وَيُقِيْمُوْنَ الصَّلٰوةَ وَمِمَّا رَزَقْنٰهُمْ يُنْفِقُوْنَ، وَالَّذِيْنَ يُؤْمِنُوْنَ بِمَآ اُنْزِلَ اِلَيْكَ وَمَآ اُنْزِلَ مِنْ قَبْلِكَ وَبِالْاٰخِرَةِ هُمْ يُوْقِنُوْنَ، اُولٰۤىِٕكَ عَلٰى هُدًى مِّنْ رَّبِّهِمْ وَاُولٰۤىِٕكَ هُمُ الْمُفْلِحُوْنَ",
+    latin:
+      "Bismillahirrahmanirrahim. Alif lam mim. Dzalikal-kitabu la raiba fihi, hudal-lilmuttaqin. Alladzina yu'minuna bil-ghaibi wa yuqimunash-shalata wa mimma razaqnahum yunfiqun. Wal-ladzina yu'minuna bima unzila ilaika wa ma unzila min qablika, wa bil-akhirati hum yuqinun. Ula'ika 'ala hudam-mir-rabbihim wa ula'ika humul-muflihun.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Alif lam mim. Demikian itu kitab ini tidak ada keraguan padanya. Sebagai petunjuk bagi mereka yang bertakwa. Yaitu mereka yang beriman kepada yang gaib, yang mendirikan shalat, dan menafkahkan sebagian rezeki yang kami anugerahkan kepada mereka. Dan mereka yang beriman kepada kitab Al-Qur'an yang telah diturunkan kepadamu (Muhammad SAW) dan kitab-kitab yang telah diturunkan sebelumnya, serta mereka yakin akan adanya kehidupan akhirat. Mereka itulah yang tetap mendapat petunjuk dari Tuhannya. Merekalah orang-orang yang beruntung.",
+  },
+  {
+    no: 11,
+    title: "Surat Al-Baqarah Ayat 163",
+    arabic: "وَاِلَهُكُمْ اِلَهٌ وَّاحِدٌ لاَ اِلَهَ اِلاَّ هُوَ الرَّحْمَنُ الرَّحِيْمُ",
+    latin: "Wa ilahukum ilahun wahid, la ilaha illa huwar-rahmanur-rahim.",
+    translation:
+      "Dan Tuhan kalian adalah Tuhan yang Maha Esa. Tiada tuhan yang layak disembah kecuali Dia yang Maha Pengasih lagi Maha Penyayang.",
+  },
+  {
+    no: 12,
+    title: "Ayat Kursi (Surat Al-Baqarah Ayat 255)",
+    arabic:
+      "اللهُ لاَ اِلَهَ اِلاَّ هُوَ الْحَىُّ الْقَيُّومُ، لاَ تَأْخُذُهُ سِنَةٌ وَلاَ نَوْمٌ، لَّهُ مَا فِى السَّمَوَاتِ وَمَا فِى الْاَرْضِ، مَنْ ذَا الَّذِى يَشْفَعُ عِنْدَهُ اِلاَّ بِاِذْنِهِ، يَعْلَمُ مَا بَينَ اَيْدِيْهِمِ وَمَا خَلْفَهُمْ، وَلاَ يُحِيْطُونَ بِشَيْءٍ مِّنْ عِلْمِهِ اِلاَّ بِمَا شَاءَ، وَسِعَ كُرْسِيُّهُ السَّمَوَاتِ وَالْاَرْضَ، وَلاَ يَئُودُهُ حِفْظُهُمُا، وَهُوَ الْعَلِىُّ الْعَظِيْمُ",
+    latin:
+      "Allahu la ilaha illa huwal-hayyul-qayyum, la ta'khudzuhu sinatun wa la naum, lahu ma fis-samawati wa ma fil-ardh, man dzal-ladzi yasyfa'u 'indahu illa bi idznih, ya'lamu ma baina aidihim wa ma khalfahum, wa la yuhithuna bi syai'im min 'ilmihi illa bima sya', wasi'a kursiyyuhus-samawati wal-ardh, wa la ya'uduhu hifzhuhuma, wa huwal-'aliyyul-'azhim.",
+    translation:
+      "Allah, tiada yang layak disembah kecuali Dia yang hidup kekal lagi berdiri sendiri. Tidak mengantuk dan tidak tidur. Milik-Nya apa yang ada di langit dan di bumi. Tiada yang dapat memberikan syafa'at di sisi-Nya kecuali dengan izin-Nya. Dia mengetahui apa yang ada di hadapan dan di belakang mereka. Mereka tidak mengetahui sesuatu dari ilmu-Nya kecuali apa yang dikehendaki-Nya. Kursi Allah meliputi langit dan bumi. Dia tidak merasa berat menjaga keduanya. Dia Maha Tinggi lagi Maha Agung.",
+  },
+  {
+    no: 13,
+    title: "Dzikir",
+    arabic:
+      "أَسْتَغْفِرُ اللهَ الْعَظِيْمَ ×٣\n\nأَفْضَلُ الذِّكْرِ فَاعْلَمْ أَنَّهُ لَا إِلٰهَ إِلَّا اللهُ، حَيٌّ مَوْجُوْدٌ\n\nلَا إِلٰهَ إِلَّا اللهُ، حَيٌّ مَعْبُوْدٌ\n\nلَا إِلٰهَ إِلَّا اللهُ، حَيٌّ بَاقٍ\n\nلَا إِلٰهَ إِلَّا اللهُ ×١٠٠",
+    latin:
+      "Astaghfirullahal 'azhim (3 kali). Afdhaludz-dzikri fa'lam annahu la ilaha illallah, hayyun maujud. La ilaha illallah, hayyun ma'bud. La ilaha illallah, hayyun baqin. La ilaha illallah (100 kali).",
+    translation:
+      "Saya mohon ampun kepada Allah yang Maha Agung (3 kali). Sebaik-baik dzikir — ketahuilah — adalah lafal 'La ilaha illallah', tiada tuhan selain Allah, Dzat yang Mahahidup dan Wujud. Tiada tuhan selain Allah, Dzat yang Mahahidup dan disembah. Tiada tuhan selain Allah, Dzat yang Mahahidup dan kekal. Tiada tuhan selain Allah (100 kali).",
+  },
+  {
+    no: 14,
+    title: "Shalawat Nabi",
+    count: "2x",
+    arabic: "اَللّٰهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ اَللّٰهُمَّ صَلِّ عَلَيْهِ وَسَلِّمْ",
+    latin: "Allahumma shalli 'ala sayyidina Muhammad, Allahumma shalli 'alaihi wa sallim. (2 kali)",
+    translation:
+      "Ya Allah, limpahkan rahmat takzim dan keselamatan kepada pemimpin kami, Nabi Muhammad. (2 kali)",
+  },
+  {
+    no: 15,
+    title: "Tasbih",
+    arabic:
+      "سُبْحَانَ اللهِ عَدَدَ مَا خَلَقَ اللهُ ×٧\n\nسُبْحَانَ اللهِ وَبِحَمْدِهِ سُبْحَانَ اللهِ الْعَظِيْمِ ×٣٣",
+    latin:
+      "Subhanallahi 'adada ma khalaqallah (7 kali). Subhanallahi wa bihamdihi, subhanallahil 'azhim (33 kali).",
+    translation:
+      "Mahasuci Allah sebanyak makhluk yang Allah ciptakan (7 kali). Mahasuci Allah dengan segala pujian untuk-Nya. Mahasuci Allah yang Mahaagung (33 kali).",
+  },
+  {
+    no: 16,
+    title: "Shalawat Nabi (Penutup)",
+    count: "2x",
+    arabic:
+      "اَللّٰهُمَّ صَلِّ عَلَى حَبِيْبِكَ سَيِّدِنَا مُحَمَّدٍ وَعَلَى اٰلِهِ وَصَحْبِهِ وَسَلِّمْ ×٢\n\nاَللّٰهُمَّ صَلِّ عَلَى حَبِيْبِكَ سَيِّدِنَا مُحَمَّدٍ وَعَلَى اٰلِهِ وَصَحْبِهِ وَبَارِكْ وَسَلِّمْ أَجْمَعِيْنَ",
+    latin:
+      "Allahumma shalli 'ala habibika sayyidina Muhammadin wa 'ala alihi wa shahbihi wa sallim (2 kali). Allahumma shalli 'ala habibika sayyidina Muhammadin wa 'ala alihi wa shahbihi wa barik wa sallim ajma'in.",
+    translation:
+      "Ya Allah, limpahkan rahmat takzim dan keselamatan kepada kekasih-Mu, pemimpin kami, Nabi Muhammad, berikut keluarga dan sahabatnya (2 kali). Ya Allah, limpahkanlah rahmat kepada kekasih-Mu, pemimpin kami, Nabi Muhammad, berikut keluarga dan sahabatnya. Limpahkanlah pula berkah dan keselamatan kepada mereka semua.",
+  },
+];
+
+// ---------- Doa Tahlil / Doa Arwah (NU Online) ----------
+// Sumber: NU Online, "Surat Yasin, Susunan Tahlil Singkat, dan Doa Arwah"
+// (LBM PBNU, 11 Juni 2019). Dibaca setelah rangkaian tahlil selesai.
+export type DoaTahlilPart = {
+  title: string;
+  arabic: string;
+  latin: string;
+  translation: string;
+};
+
+export const DOA_TAHLIL: DoaTahlilPart[] = [
+  {
+    title: "Pembuka: Ta'awudz, Basmalah, Hamdalah dan Shalawat",
+    arabic:
+      "أَعُوْذُ بِاللهِ مِنَ الشَّيْطَانِ الرَّجِيْمِ، بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ، الْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ، حَمْدَ الشَّاكِرِيْنَ حَمْدَ النَّاعِمِيْنَ، حَمْدًا يُّوَافِي نِعَمَهُ وَيُكَافِئُ مَزِيْدَهُ، يَا رَبَّنَا لَكَ الْحَمْدُ كَمَا يَنْبَغِيْ لِجَلَالِ وَجْهِكَ وَعَظِيْمِ سُلْطَانِكَ، اللّٰهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَّعَلَى اٰلِ سَيِّدِنَا مُحَمَّدٍ",
+    latin:
+      "A'udzubillahi minasy-syaithanir-rajim, bismillahirrahmanirrahim, alhamdulillahi rabbil-'alamin, hamdasy-syakirin, hamdan-na'imin, hamdan yuwafi ni'amahu wa yukafi'u mazidah, ya rabbana lakal-hamdu kama yanbaghi li jalali wajhika wa 'azhimi sulthanik, Allahumma shalli 'ala sayyidina Muhammadin wa 'ala ali sayyidina Muhammadin.",
+    translation:
+      "Aku berlindung kepada Allah dari setan yang terkutuk. Dengan nama Allah yang Maha Pengasih lagi Maha Penyayang. Segala puji bagi Allah, Tuhan semesta alam, sebagaimana orang-orang yang bersyukur dan orang yang memperoleh nikmat sama memuji, dengan pujian yang sesuai dengan nikmat-Nya dan memungkinkan ditambah nikmat-Nya. Tuhan kami, hanya bagi-Mu segala puji, sebagaimana yang patut terhadap kemuliaan-Mu dan keagungan-Mu. Ya Allah, limpahkanlah rahmat dan keselamatan kepada penghulu kami Nabi Muhammad dan kepada keluarganya.",
+  },
+  {
+    title: "Mengirim Pahala Bacaan",
+    arabic:
+      "اَللّٰهُمَّ تَقَبَّلْ وَأَوْصِلْ ثَوَابَ مَا قَرَاْنَاهُ مِنَ الْقُرْآنِ الْعَظِيْمِ وَمَا هَلَّلْنَا وَمَا سَبَّحْنَا وَمَا اسْتَغْفَرْنَا وَمَا صَلَّيْنَا عَلَى سَيِّدِنَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ هَدِيَّةً وَاصِلَةً وَرَحْمَةً نَازِلَةً وَبَرَكَةً شَامِلَةً إِلَى حَضَرَةِ حَبِيْبِنَا وَشَفِيْعِنَا وَقُرَّةِ أَعْيُنِنَا سَيِّدِنَا وَمَوْلَانَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ، وَإِلَى جَمِيْعِ إِخْوَانِهِ مِنَ الْأَنْبِيَاءِ وَالْمُرْسَلِيْنَ وَالْأَوْلِيَاءِ وَالشُّهَدَاءِ وَالصَّالِحِيْنَ وَالصَّحَابَةِ وَالتَّابِعِيْنَ وَالْعُلَمَاءِ الْعَامِلِيْنَ وَالْمُصَنِّفِيْنَ الْمُخْلِصِيْنَ وَجَمِيْعِ الْمُجَاهِدِيْنَ فِي سَبِيْلِ اللهِ رَبِّ الْعَلَمِيْنَ وَالْمَلَائِكَةِ الْمُقَرَّبِيْن، خُصُوْصًا إِلَى سَيِّدِنَا الشَّيْخِ عَبْدِ الْقَادِرِ الْجِيْلَانِيّ، ثُمَّ إِلَى أَرْوَاحِ جَمِيْعِ أَهْلِ الْقُبُوْرِ مِنَ الْمُسْلِمِيْنَ وَالْمُسْلِمَاتِ وَالْمُؤْمِنِيْنَ وَالْمُؤْمِنَاتِ مِنْ مَشَارِقِ الْأَرْضِ وَمَغَارِبِهَا بَرِّهَا وَبَحْرِهَا خُصُوْصًا إِلَى آبَائِنَا وَاُمَّهَاتِنَا وَأَجْدَادِنَا وَجَدَّاتِنَا، وَنَخَصُّ خَصُوْصًا إِلَى مَنِ اجْتَمَعْنَا هٰهُنَا بِسَبَبِهِ وَلِأَجْلِهِ",
+    latin:
+      "Allahumma taqabbal wa aushil tsawaba ma qara'nahu minal-qur'anil-'azhimi wa ma hallalna wa ma sabbahna wa mastaghfarna wa ma shallaina 'ala sayyidina Muhammadin shallallahu 'alaihi wa sallama hadiyyatan washilan wa rahmatan nazilan wa barakatan syamilatan ila hadrati habibina wa syafi'ina wa qurrati a'yunina sayyidina wa maulana Muhammadin shallallahu 'alaihi wa sallama, wa ila jami'i ikhwanihi minal-anbiya'i wal-mursalina wal-auliya'i wasy-syuhada'i wash-shalihina wash-shahabati wat-tabi'ina wal-'ulama'il-'amilina wal-mushannifinal-mukhlishina wa jami'il-mujahidina fi sabilillahi rabbil-'alamina wal-malaikatil-muqarrabin, khushushan ila sayyidinasy-syaikhi 'Abdil Qadir al-Jilani, tsumma ila arwahi jami'i ahlil-quburi minal-muslimina wal-muslimati wal-mu'minina wal-mu'minati min masyariqil-ardhi wa magharibiha barriha wa bahriha, khushushan ila aba'ina wa ummahatina wa ajdadina wa jaddatina, wa nakhushshu khushushan ila man ijtama'na hahuna bisababihi wa li ajlihi.",
+    translation:
+      "Ya Allah, terimalah dan sampaikanlah pahala ayat-ayat Al-Qur'an yang telah kami baca, tahlil kami, tasbih dan istighfar kami, dan bacaan shalawat kami kepada penghulu kami Nabi Muhammad SAW. Sebagai hadiah yang sampai, rahmat yang turun, dan berkah yang meliputi, kepada kekasih kami, penolong dan penyejuk mata kami, penghulu dan pemimpin kami, yaitu Nabi Muhammad SAW; kepada semua saudara beliau dari para nabi dan para utusan, kepada para wali, para syuhada, orang-orang saleh, para sahabat, dan tabi'in; kepada para ulama yang mengamalkan ilmunya, para penulis yang ikhlas, kepada semua pejuang di jalan Allah, Tuhan semesta alam; dan kepada para malaikat Muqarrabin, terutama Syekh Abdul Qadir al-Jilani; kemudian kepada arwah semua ahli kubur, Muslimin dan Muslimat, Mukminin dan Mukminat, dari Timur dan Barat, di darat dan di laut, terutama lagi kepada bapak-bapak kami, ibu-ibu kami, kakek-nenek kami, dan lebih terutama lagi kepada orang yang menyebabkan kami berkumpul di sini dan untuk keperluannya.",
+  },
+  {
+    title: "Mohon Ampunan untuk Ahli Kubur",
+    arabic:
+      "اَللّٰهُمَّ اغْفِرْ لَهُمْ وَارْحَمْهُمْ وَعَافِهِمْ وَاعْفُ عَنْهُمْ، اَللّٰهُمَّ أَنْزِلِ الرَّحْمَةَ وَالْمَغْفِرَةَ عَلَى أَهْلِ الْقُبُوْرِ مِنْ أَهْلِ لَا إِلٰهَ إِلَّا اللهُ مُحَمَّدٌ رَّسُوْلُ اللهِ",
+    latin:
+      "Allahummaghfir lahum warhamhum wa 'afihim wa'fu 'anhum, Allahumma anzilir-rahmata wal-maghfirata 'ala ahlil-quburi min ahli la ilaha illallahu Muhammadur-rasulullah.",
+    translation:
+      "Ya Allah, ampunilah mereka, kasihanilah mereka, sehatkanlah mereka, dan maafkanlah mereka. Ya Allah, turunkanlah rahmat dan ampunan kepada ahli kubur yang ahli mengucapkan 'La ilaha illallah, Muhammadur rasulullah' (Tidak ada tuhan selain Allah, Muhammad utusan Allah).",
+  },
+  {
+    title: "Penutup",
+    arabic:
+      "رَبَّنَا أَرِنَا الْحَقَّ حَقًّا وَّارْزُقْنَا اتِّبَاعَهُ، وَأَرِنَا الْبَاطِلَ بَاطِلًا وَّارْزُقْنَا اجْتِنَابَهُ، رَبَّنَا اٰتِنَا فِي الدُّنْيَا حَسَنَةً وَّفِي الْآخِرَةِ حَسَنَةً وَّقِنَا عَذَابَ النَّارِ، سُبْحَانَ رَبِّكَ رَبِّ الْعِزَّةِ عَمَّا يَصِفُوْنَ وَسَلَامٌ عَلَى الْمُرْسَلِيْنَ وَالْحَمْدُ لِلّٰهِ رَبِّ الْعَلَمِيْنَ، اَلْفَاتِحَة",
+    latin:
+      "Rabbana arinal-haqqa haqqan warzuqnat-tiba'ah, wa arinal-bathila bathilan warzuqnaj-tinabah. Rabbana atina fid-dunya hasanatan wa fil-akhirati hasanatan wa qina 'adzaban-nar. Subhana rabbika rabbil-'izzati 'amma yashifun, wa salamun 'alal-mursalin, wal-hamdulillahi rabbil-'alamin. Al-Fatihah.",
+    translation:
+      "Tuhan kami, tunjukkanlah kami kebenaran dengan jelas, jadikanlah kami pengikutnya; tunjukkanlah kami perkara batil dengan jelas, dan jadikanlah kami menjauhinya. Tuhan kami, berikanlah kami kebaikan di dunia dan kebaikan di akhirat, dan jagalah kami dari siksa api neraka. Maha Suci Tuhanmu, Tuhan yang Maha Mulia, dari sifat yang mereka berikan. Semoga keselamatan tetap tercurah kepada para utusan, dan segala puji bagi Allah, Tuhan semesta alam. Al-Fatihah.",
+  },
+];
 
 export type AsmaulHusna = { no: number; arabic: string; latin: string; meaning: string };
 
@@ -369,8 +598,8 @@ export const JUZ30_SURAHS: SurahShort[] = [
     ],
     translation: [
       "Demi masa.",
-      "Sesungguhnya manusia benar-benar dalam kerugian,",
-      "kecuali orang-orang yang beriman dan mengerjakan amal saleh serta saling menasihati dalam kebenaran dan kesabaran.",
+      "Sungguh, manusia berada dalam kerugian,",
+      "kecuali orang-orang yang beriman dan mengerjakan kebajikan serta saling menasihati untuk kebenaran dan saling menasihati untuk kesabaran.",
     ],
   },
   {
@@ -384,9 +613,9 @@ export const JUZ30_SURAHS: SurahShort[] = [
       "إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ",
     ],
     translation: [
-      "Sesungguhnya Kami telah memberimu (Muhammad) nikmat yang banyak.",
-      "Maka dirikanlah shalat karena Tuhanmu dan berkurbanlah.",
-      "Sesungguhnya orang yang membencimu, dialah yang terputus (dari rahmat Allah).",
+      "Sungguh, Kami telah memberimu (Muhammad) nikmat yang banyak.",
+      "Maka laksanakanlah salat karena Tuhanmu, dan berkurbanlah (sebagai ibadah dan mendekatkan diri kepada Allah).",
+      "Sungguh, orang-orang yang membencimu dialah yang terputus (dari rahmat Allah).",
     ],
   },
   {
@@ -403,12 +632,12 @@ export const JUZ30_SURAHS: SurahShort[] = [
       "لَكُمْ دِينُكُمْ وَلِيَ دِينِ",
     ],
     translation: [
-      "Katakanlah (Muhammad), 'Wahai orang-orang kafir,",
-      "Aku tidak akan menyembah apa yang kamu sembah,",
-      "dan kamu bukan penyembah Tuhan yang aku sembah,",
+      "Katakanlah (Muhammad), \"Wahai orang-orang kafir!",
+      "aku tidak akan menyembah apa yang kamu sembah,",
+      "dan kamu bukan penyembah apa yang aku sembah,",
       "dan aku tidak pernah menjadi penyembah apa yang kamu sembah,",
-      "dan kamu tidak pernah (pula) menjadi penyembah Tuhan yang aku sembah.",
-      "Untukmu agamamu, dan untukku agamaku.'",
+      "dan kamu tidak pernah (pula) menjadi penyembah apa yang aku sembah.",
+      "Untukmu agamamu, dan untukku agamaku.\"",
     ],
   },
   {
@@ -423,8 +652,8 @@ export const JUZ30_SURAHS: SurahShort[] = [
     ],
     translation: [
       "Apabila telah datang pertolongan Allah dan kemenangan,",
-      "dan engkau melihat manusia berbondong-bondong masuk agama Allah,",
-      "maka bertasbihlah dengan memuji Tuhanmu dan mohonlah ampunan kepada-Nya. Sesungguhnya Dia Maha Penerima tobat.",
+      "dan engkau melihat manusia berbondong-bondong masuk agama Allah.",
+      "maka bertasbihlah dengan memuji Tuhanmu dan mohonlah ampunan kepada-Nya. Sungguh, Dia Maha Penerima tobat.",
     ],
     video: "https://youtube.com/shorts/3-FS1OiMGu4",
   },
@@ -440,10 +669,10 @@ export const JUZ30_SURAHS: SurahShort[] = [
       "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ",
     ],
     translation: [
-      "Katakanlah (Muhammad), 'Dialah Allah, Yang Maha Esa.",
+      "Katakanlah (Muhammad), \"Dialah Allah, Yang Maha Esa.",
       "Allah tempat meminta segala sesuatu.",
-      "Dia tidak beranak dan tidak pula diperanakkan.",
-      "Dan tidak ada sesuatu yang setara dengan Dia.'",
+      "(Allah) tidak beranak dan tidak pula diperanakkan.",
+      "Dan tidak ada sesuatu yang setara dengan Dia.\"",
     ],
     video: "https://www.youtube.com/shorts/4Luw2oF6M-4",
   },
@@ -460,11 +689,11 @@ export const JUZ30_SURAHS: SurahShort[] = [
       "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
     ],
     translation: [
-      "Katakanlah, 'Aku berlindung kepada Tuhan yang menguasai subuh (fajar),",
-      "dari kejahatan makhluk yang Dia ciptakan,",
-      "dari kejahatan malam apabila telah gelap gulita,",
-      "dari kejahatan perempuan-perempuan (penyihir) yang meniup pada buhul-buhul (talinya),",
-      "dan dari kejahatan orang yang dengki apabila dia dengki.'",
+      "Katakanlah, \"Aku berlindung kepada Tuhan yang menguasai subuh (fajar),",
+      "dari kejahatan (makhluk yang) Dia ciptakan,",
+      "dan dari kejahatan malam apabila telah gelap gulita,",
+      "dan dari kejahatan (perempuan-perempuan) penyihir yang meniup pada buhul-buhul (talinya),",
+      "dan dari kejahatan orang yang dengki apabila dia dengki.\"",
     ],
     video: "https://youtube.com/shorts/mqCP5tvL2xo",
   },
@@ -482,12 +711,12 @@ export const JUZ30_SURAHS: SurahShort[] = [
       "مِنَ الْجِنَّةِ وَالنَّاسِ",
     ],
     translation: [
-      "Katakanlah, 'Aku berlindung kepada Tuhan (yang memelihara dan menguasai) manusia,",
+      "Katakanlah, \"Aku berlindung kepada Tuhannya manusia,",
       "Raja manusia,",
       "sembahan manusia,",
       "dari kejahatan (bisikan) setan yang bersembunyi,",
       "yang membisikkan (kejahatan) ke dalam dada manusia,",
-      "dari (golongan) jin dan manusia.'",
+      "dari (golongan) jin dan manusia.\"",
     ],
     video: "https://youtube.com/shorts/JeNtPihTyXk",
   },
@@ -543,9 +772,10 @@ export const WUDHU_STEPS = [
   "Membersihkan hidung (istinsyaq) 3 kali.",
   "Membasuh wajah 3 kali, dari dahi sampai dagu.",
   "Membasuh kedua tangan sampai siku 3 kali, kanan dulu.",
-  "Mengusap kepala 1 kali.",
+  "Mengusap sebagian kepala 1 kali (cukup sebagian kepala, mis. ubun-ubun; mengusap seluruh kepala lebih utama).",
   "Membasuh kedua telinga 1 kali.",
   "Membasuh kedua kaki sampai mata kaki 3 kali, kanan dulu.",
+  "Semua langkah dilakukan berurutan (tertib) — dalam mazhab Syafi'i, tertib termasuk rukun wudhu.",
 ];
 
 export const SHALAT_STEPS = [
@@ -556,7 +786,9 @@ export const SHALAT_STEPS = [
   "I'tidal: berdiri tegak, baca Sami'allahu liman hamidah.",
   "Sujud: dahi, hidung, kedua tangan, lutut, dan ujung kaki menyentuh lantai. Baca Subhana rabbiyal a'la 3 kali.",
   "Duduk di antara dua sujud, lalu sujud kedua.",
-  "Berdiri untuk rakaat berikutnya. Pada rakaat terakhir, duduk tasyahud akhir lalu salam ke kanan dan ke kiri.",
+  "Setelah sujud kedua rakaat kedua, duduk tasyahud awal (tahiyat awal), lalu berdiri untuk rakaat berikutnya.",
+  "Pada shalat Subuh, setelah i'tidal rakaat kedua, membaca doa Qunut (sunnah muakkad menurut mazhab Syafi'i; lihat Doa Qunut di Doa Harian).",
+  "Pada rakaat terakhir, duduk tasyahud akhir (tawarruk) lalu salam ke kanan dan ke kiri.",
 ];
 
 // ---------- Mutiara Hari Ini ----------
@@ -610,6 +842,13 @@ export const FITUR_UTAMA: FiturUtama[] = [
     photo:
       "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/The_Holy_Qur%27an_placed_on_a_Rehal_at_the_Abuja_National_Mosque.jpg/960px-The_Holy_Qur%27an_placed_on_a_Rehal_at_the_Abuja_National_Mosque.jpg",
     credit: "Al-Qur'an di atas rehal — Wikimedia Commons",
+  },
+  {
+    href: "/ibadah/yasin-tahlil",
+    label: "Yasin & Tahlil",
+    photo:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/68/A_Man_Reading_Holy_Quran_inside_the_Mosque.jpg/960px-A_Man_Reading_Holy_Quran_inside_the_Mosque.jpg",
+    credit: "Membaca Al-Qur'an di masjid — Wikimedia Commons",
   },
   {
     href: "/ibadah/doa",

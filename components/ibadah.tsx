@@ -3,22 +3,30 @@ import { useEffect, useMemo, useState } from "react";
 import { Card, Icon, Note, PageHeader, ProgressBar } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 import {
-  PRAYER_ORDER,
-  daysToRamadhan,
+  HIJRI_MONTHS_SHORT_ID,
+  JADWAL_ORDER,
+  QURAN_SOURCE_NOTE,
+  fetchSurahText,
+  getHijriMonthCalendar,
+  getHijriToday,
+  getRamadhanInfo,
   getTimings,
-  hijriParts,
-  hijriToday,
   qiblaBearing,
+  type HijriParts,
   type Timings,
 } from "@/lib/api";
 import {
   AMAL_HARIAN,
   ASMAUL_HUSNA,
+  DOA_TAHLIL,
   DUAS,
   DZIKIR,
+  QARIS,
   SHALAT_STEPS,
+  TAHLIL_STEPS,
   TAHLIL_TEXT,
   WUDHU_STEPS,
+  surahAudioUrl,
 } from "@/lib/data";
 
 // ---------- Doa Harian ----------
@@ -125,12 +133,17 @@ export function JadwalPage() {
   }, [progress.city]);
   return (
     <div>
-      <PageHeader title="Jadwal Shalat" subtitle={`Kota: ${progress.city} · Metode Kemenag (Aladhan API)`} backHref="/ibadah" />
+      <PageHeader title="Jadwal Shalat" subtitle={`Kota: ${progress.city} · Jadwal resmi Kemenag (Bimas Islam)`} backHref="/ibadah" />
       <Card>
-        <p className="mb-3 text-sm text-neutral-500 dark:text-neutral-400">Hijriah: {hijriToday()}</p>
+        <p className="mb-3 text-sm text-neutral-500 dark:text-neutral-400">
+          Hijriah:{" "}
+          {timings
+            ? timings.dateHijri || "Tanggal Hijriah tidak bisa dimuat"
+            : "Memuat tanggal Hijriah…"}
+        </p>
         {timings ? (
           <div className="flex flex-col divide-y divide-black/5 dark:divide-white/10">
-            {PRAYER_ORDER.map((name) => (
+            {JADWAL_ORDER.map((name) => (
               <div key={name} className="flex items-center justify-between py-3">
                 <span className="font-bold text-neutral-900 dark:text-neutral-100">{name === "Terbit" ? "Terbit (Syuruq)" : name}</span>
                 <span className="font-mono text-lg font-extrabold text-[#0B3D39] dark:text-[#D4AF37]">{timings[name]}</span>
@@ -145,8 +158,10 @@ export function JadwalPage() {
       </Card>
       <div className="mt-3">
         <Note>
-          Waktu shalat diambil langsung dari Aladhan API (api.aladhan.com) dengan metode 20
-          (Kementerian Agama RI). Ganti kota di menu Atur.
+          Waktu shalat dari jadwal resmi Kemenag (Bimas Islam) lewat MyQuran API. Kalau
+          MyQuran tidak bisa dijangkau, dipakai Aladhan (metode Kemenag) + ihtiyat 2 menit.
+          Waktu shalat mengikuti mazhab Syafi'i (Ashar: bayangan 1x panjang benda).
+          Ganti kota di menu Atur.
         </Note>
       </div>
     </div>
@@ -156,29 +171,31 @@ export function JadwalPage() {
 // ---------- Road to Ramadhan ----------
 export function RamadhanPage() {
   const [days, setDays] = useState<number | null>(null);
+  const [error, setError] = useState(false);
   const [dateStr, setDateStr] = useState("");
   useEffect(() => {
-    setDays(daysToRamadhan());
-    const start = new Date();
-    for (let i = 0; i < 400; i++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + i);
-      const h = hijriParts(d);
-      if (h.month === 9 && h.day === 1) {
-        setDateStr(
-          d.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-        );
-        break;
-      }
-    }
+    let alive = true;
+    getRamadhanInfo()
+      .then((info) => {
+        if (!alive) return;
+        setDays(info.days);
+        setDateStr(info.dateText);
+      })
+      .catch(() => alive && setError(true));
+    return () => {
+      alive = false;
+    };
   }, []);
   return (
     <div>
       <PageHeader title="Road to Ramadhan" subtitle="Hitung mundur menuju bulan suci" backHref="/ibadah" />
       <div className="rounded-2xl bg-[#0A0A0A] p-6 text-center text-white shadow-md">
-        <p className="text-6xl font-extrabold text-[#D4AF37]">{days === null ? "…" : days}</p>
+        <p className="text-6xl font-extrabold text-[#D4AF37]">{error ? "—" : days === null ? "…" : days}</p>
         <p className="mt-1 text-lg font-bold">hari lagi menuju 1 Ramadhan</p>
         {dateStr && <p className="mt-1 text-sm text-white/70">Diperkirakan: {dateStr}</p>}
+        {error && (
+          <p className="mt-1 text-sm text-white/70">Hitung mundur tidak bisa dimuat. Periksa koneksi internet.</p>
+        )}
       </div>
       <div className="mt-3">
         <Card>
@@ -193,8 +210,8 @@ export function RamadhanPage() {
       </div>
       <div className="mt-3">
         <Note>
-          Tanggal 1 Ramadhan dihitung dari kalender Hijriah (Intl) dan bisa bergeser 1 hari mengikuti
-          keputusan pemerintah / rukyatul hilal.
+          Tanggal 1 Ramadhan dihitung dari kalender Hijriah Umm al-Qura (Aladhan, MABIMS)
+          dan bisa bergeser mengikuti keputusan pemerintah / rukyatul hilal.
         </Note>
       </div>
     </div>
@@ -209,19 +226,36 @@ export function KalenderPage() {
   const first = new Date(year, month, 1);
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const startWeekday = (first.getDay() + 6) % 7; // Senin = 0
-  const cells: { g: number; h: number; hm: string }[] = [];
+  const [hijriMap, setHijriMap] = useState<Map<number, HijriParts> | null>(null);
+  const [hijriError, setHijriError] = useState(false);
+  const [hijriTodayText, setHijriTodayText] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getHijriMonthCalendar(year, month + 1)
+      .then((m) => alive && setHijriMap(m))
+      .catch(() => alive && setHijriError(true));
+    getHijriToday()
+      .then((t) => alive && setHijriTodayText(t))
+      .catch(() => alive && setHijriTodayText(""));
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const cells: { g: number; h: string }[] = [];
   for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(year, month, d);
-    const h = hijriParts(date);
-    const hm = new Intl.DateTimeFormat("id-ID-u-ca-islamic", { month: "short" }).format(date);
-    cells.push({ g: d, h: h.day, hm });
+    const h = hijriMap?.get(d);
+    cells.push({
+      g: d,
+      h: h ? `${h.day} ${HIJRI_MONTHS_SHORT_ID[h.month - 1]}` : hijriError ? "—" : "…",
+    });
   }
   const blanks = Array.from({ length: startWeekday }, (_, i) => i);
   return (
     <div>
       <PageHeader
         title="Kalender Hijriyah"
-        subtitle={`${now.toLocaleDateString("id-ID", { month: "long", year: "numeric" })} · ${hijriToday()}`}
+        subtitle={`${now.toLocaleDateString("id-ID", { month: "long", year: "numeric" })} · ${hijriTodayText ?? "Memuat tanggal Hijriah…"}`}
         backHref="/ibadah"
       />
       <Card>
@@ -243,14 +277,14 @@ export function KalenderPage() {
             >
               <p className="text-sm font-extrabold">{c.g}</p>
               <p className={`text-[10px] ${c.g === now.getDate() ? "text-white/80 dark:text-[#0A0A0A]/70" : "text-[#0B3D39] dark:text-[#D4AF37]"}`}>
-                {c.h} {c.hm}
+                {c.h}
               </p>
             </div>
           ))}
         </div>
         <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-          Angka besar = tanggal Masehi, angka kecil = tanggal Hijriah. Kalender Hijriah
-          dihitung otomatis dari perangkatmu.
+          Angka besar = tanggal Masehi, angka kecil = tanggal Hijriah (Aladhan, Umm al-Qura /
+          MABIMS). Kalau tanggal Hijriah belum tampil, periksa koneksi internet.
         </p>
       </Card>
     </div>
@@ -264,6 +298,9 @@ export function ShalatWudhuPage() {
   return (
     <div>
       <PageHeader title="Belajar Shalat & Wudhu" subtitle="Langkah demi langkah" backHref="/ibadah" />
+      <div className="mb-3">
+        <Note>Panduan ibadah dalam aplikasi ini mengikuti mazhab Syafi&apos;i.</Note>
+      </div>
       <div className="mb-3 flex gap-2">
         <button onClick={() => setTab("wudhu")} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "wudhu" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}>
           <Icon name="droplet" className="h-4 w-4" /> Wudhu
@@ -557,6 +594,355 @@ export function AsmaulHusnaPage() {
         ))}
         {filtered.length === 0 && <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">Tidak ditemukan. Coba kata lain.</p>}
       </div>
+    </div>
+  );
+}
+
+// ---------- Yasin & Tahlil ----------
+
+type YasinAyah = { numberInSurah: number; text: string };
+
+function YasinReader() {
+  const { progress, setLastRead } = useProgress();
+  const [ayahs, setAyahs] = useState<YasinAyah[]>([]);
+  const [trans, setTrans] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [qari, setQari] = useState(QARIS[0]);
+  const [audioError, setAudioError] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(true);
+  const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("lg");
+  const audioUrl = surahAudioUrl(qari.edition, 36);
+  const lastReadAyah = progress.lastRead?.surahNo === 36 ? progress.lastRead.ayah : null;
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetchSurahText(36)
+      .then(({ arabic, translation }) => {
+        if (!alive) return;
+        setAyahs(arabic.map((text, i) => ({ numberInSurah: i + 1, text })));
+        setTrans(translation);
+      })
+      .catch(
+        () =>
+          alive &&
+          setError(
+            "Tidak bisa memuat Surat Yasin dari Quran.com API (cadangan AlQuran Cloud juga gagal). Periksa koneksi internet."
+          )
+      )
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (progress.lastRead?.surahNo !== 36) {
+      setLastRead({ surahNo: 36, surahName: "Yaseen", ayah: 1, at: new Date().toISOString() });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const markAyah = (ayah: number) => {
+    setLastRead({ surahNo: 36, surahName: "Yaseen", ayah, at: new Date().toISOString() });
+  };
+
+  const jumpToAyah = (ayah: number) => {
+    markAyah(ayah);
+    document
+      .getElementById(`yasin-ayah-${ayah}`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const fontSizeClass =
+    fontSize === "md" ? "text-[24px]" : fontSize === "xl" ? "text-[32px]" : "text-[28px]";
+
+  return (
+    <div>
+      <Card className="mb-3">
+        <p className="mb-1 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+          Surat Yasin · 83 ayat · Makkiyah
+        </p>
+        <p className="mb-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+          {QURAN_SOURCE_NOTE}. Ketuk sebuah ayat untuk menandainya sebagai terakhir dibaca.
+        </p>
+        <p className="mb-2 flex items-center gap-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">
+          <Icon name="audio" className="h-4 w-4 text-[#0B3D39] dark:text-[#D4AF37]" />
+          Dengarkan — {qari.name}
+        </p>
+        <div className="mb-3 flex flex-wrap gap-2">
+          {QARIS.map((q) => (
+            <button
+              key={q.id}
+              onClick={() => {
+                setQari(q);
+                setAudioError(false);
+              }}
+              className={`rounded-full px-3 py-1.5 text-xs font-bold ${
+                qari.id === q.id
+                  ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+                  : "bg-[#F5F5F4] text-neutral-600 dark:bg-white/10 dark:text-neutral-300"
+              }`}
+            >
+              {q.name}
+            </button>
+          ))}
+        </div>
+        <audio
+          key={audioUrl}
+          controls
+          preload="none"
+          className="w-full"
+          src={audioUrl}
+          onError={() => setAudioError(true)}
+        />
+        {audioError && (
+          <p className="mt-2 text-xs leading-relaxed text-red-600 dark:text-red-400">
+            Audio tidak bisa dimuat dari server (periksa koneksi internet atau coba qari lain).
+            Pemutar hanya memutar rekaman asli dari CDN.
+          </p>
+        )}
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/5 pt-3 dark:border-white/10">
+          <button
+            onClick={() => setShowTranslation((v) => !v)}
+            className="flex items-center gap-2 text-sm font-bold text-neutral-700 dark:text-neutral-300"
+          >
+            <Icon name="eye" className="h-4 w-4" /> Terjemahan
+            <span className="text-xs text-[#0B3D39] dark:text-[#D4AF37]">
+              {showTranslation ? "Tampil" : "Sembunyi"}
+            </span>
+          </button>
+          <span className="flex items-center gap-1">
+            <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Ukuran teks</span>
+            {(["md", "lg", "xl"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setFontSize(s)}
+                className={`rounded-lg px-2.5 py-1 text-xs font-extrabold ${
+                  fontSize === s
+                    ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+                    : "bg-black/5 dark:bg-white/10"
+                }`}
+              >
+                {s === "md" ? "A-" : s === "lg" ? "A" : "A+"}
+              </button>
+            ))}
+          </span>
+        </div>
+      </Card>
+
+      {lastReadAyah != null && (
+        <button
+          onClick={() => jumpToAyah(lastReadAyah)}
+          className="mb-3 flex w-full items-center justify-between rounded-2xl bg-[#0B3D39]/5 px-4 py-3 text-left ring-1 ring-[#0B3D39]/20 dark:bg-[#D4AF37]/10 dark:ring-[#D4AF37]/25"
+        >
+          <span className="text-sm font-bold text-[#0B3D39] dark:text-[#D4AF37]">
+            Terakhir dibaca: Ayat {lastReadAyah}
+          </span>
+          <span className="text-xs font-bold text-[#0B3D39] dark:text-[#D4AF37]">Lanjutkan</span>
+        </button>
+      )}
+
+      <Card className="px-4 py-6 sm:px-6">
+        {loading ? (
+          <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">
+            Memuat Surat Yasin dari AlQuran Cloud API…
+          </p>
+        ) : error ? (
+          <p className="text-center text-sm text-red-600 dark:text-red-400">{error}</p>
+        ) : (
+          <>
+            <p className="arabic mb-5 text-center text-2xl text-neutral-900 dark:text-neutral-100">
+              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+            </p>
+            <p className={`mushaf ${fontSizeClass} text-neutral-900 dark:text-neutral-100`}>
+              {ayahs.map((a) => (
+                <span
+                  key={a.numberInSurah}
+                  id={`yasin-ayah-${a.numberInSurah}`}
+                  onClick={() => markAyah(a.numberInSurah)}
+                  className={`ayah ${lastReadAyah === a.numberInSurah ? "last-read" : ""}`}
+                  title={`Ketuk untuk menandai Ayat ${a.numberInSurah} sebagai terakhir dibaca`}
+                >
+                  {a.text}{" "}
+                  <span className="ayah-mark">
+                    ۝<span className="ayah-no">{a.numberInSurah}</span>
+                  </span>{" "}
+                </span>
+              ))}
+            </p>
+            {showTranslation && trans.length > 0 && (
+              <div className="mt-6 border-t border-black/5 pt-4 dark:border-white/10">
+                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
+                  Terjemahan
+                </p>
+                {trans.map((t, i) => (
+                  <p
+                    key={i}
+                    className="mb-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400"
+                  >
+                    <span className="font-extrabold text-[#C9A227]">{i + 1}.</span> {t}
+                  </p>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function TahlilSteps() {
+  const { progress, setTasbih } = useProgress();
+  const [open, setOpen] = useState<number | null>(1);
+  const count = progress.tasbihCounts["tahlil"] ?? 0;
+  const target = 100;
+  return (
+    <div>
+      <div className="mb-3">
+        <Note>
+          Susunan bacaan tahlil singkat menurut NU Online — &quot;Surat Yasin, Susunan Tahlil
+          Singkat, dan Doa Arwah&quot; (LBM PBNU, 11 Juni 2019). Ketuk tiap langkah untuk
+          membaca teksnya.
+        </Note>
+      </div>
+      <div className="flex flex-col gap-2">
+        {TAHLIL_STEPS.map((s) => (
+          <Card key={s.no}>
+            <button
+              className="flex w-full items-center gap-3 text-left"
+              onClick={() => setOpen(open === s.no ? null : s.no)}
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+                {s.no}
+              </span>
+              <span className="flex-1 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+                {s.title}
+                {s.count && (
+                  <span className="ml-2 rounded-full bg-[#0B3D39]/10 px-2 py-0.5 text-[11px] font-extrabold text-[#0B3D39] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37]">
+                    {s.count}
+                  </span>
+                )}
+              </span>
+              <span className="text-neutral-400 dark:text-neutral-500">{open === s.no ? "▾" : "▸"}</span>
+            </button>
+            {open === s.no && (
+              <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
+                <p className="arabic whitespace-pre-line text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+                  {s.arabic}
+                </p>
+                <p className="mt-2 text-sm italic leading-relaxed text-neutral-600 dark:text-neutral-400">
+                  {s.latin}
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+                  {s.translation}
+                </p>
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
+
+      <Card className="mt-3">
+        <p className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+          Hitung tahlil — {TAHLIL_TEXT.title} 100x
+        </p>
+        <p className="arabic mt-2 text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+          {TAHLIL_TEXT.arabic}
+        </p>
+        <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{TAHLIL_TEXT.latin}</p>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+          {TAHLIL_TEXT.translation}
+        </p>
+        <div className="mt-4 flex items-center gap-2">
+          <button
+            onClick={() => count < target && setTasbih("tahlil", count + 1)}
+            className="flex-1 rounded-2xl bg-[#0A0A0A] py-3 text-sm font-bold text-white active:scale-95 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+          >
+            Hitung ({count}/{target})
+          </button>
+          <button
+            onClick={() => setTasbih("tahlil", 0)}
+            className="rounded-2xl bg-[#F5F5F4] px-4 py-3 text-sm font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300"
+          >
+            Ulang
+          </button>
+        </div>
+        <div className="mt-2">
+          <ProgressBar value={count} max={target} />
+        </div>
+      </Card>
+      <div className="mt-3">
+        <Note>{TAHLIL_TEXT.note}</Note>
+      </div>
+    </div>
+  );
+}
+
+function DoaTahlil() {
+  return (
+    <div>
+      <div className="mb-3">
+        <Note>
+          Doa penutup tahlil (doa arwah) menurut NU Online — &quot;Surat Yasin, Susunan
+          Tahlil Singkat, dan Doa Arwah&quot; (LBM PBNU, 11 Juni 2019). Dibaca setelah
+          rangkaian tahlil selesai.
+        </Note>
+      </div>
+      <div className="flex flex-col gap-3">
+        {DOA_TAHLIL.map((d) => (
+          <Card key={d.title}>
+            <h2 className="font-extrabold text-neutral-900 dark:text-neutral-100">{d.title}</h2>
+            <p className="arabic mt-3 text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+              {d.arabic}
+            </p>
+            <p className="mt-2 text-sm italic leading-relaxed text-neutral-600 dark:text-neutral-400">
+              {d.latin}
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+              {d.translation}
+            </p>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function YasinTahlilPage() {
+  const [tab, setTab] = useState<"yasin" | "tahlil" | "doa">("yasin");
+  const tabs = [
+    { id: "yasin", label: "Surat Yasin" },
+    { id: "tahlil", label: "Tahlil" },
+    { id: "doa", label: "Doa Tahlil" },
+  ] as const;
+  return (
+    <div>
+      <PageHeader
+        title="Yasin & Tahlil"
+        subtitle="Surat Yasin, susunan tahlil, dan doa arwah"
+        backHref="/ibadah"
+      />
+      <div className="mb-3 flex gap-2">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={`flex-1 rounded-2xl py-3 text-sm font-bold ${
+              tab === t.id
+                ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+                : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/10"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {tab === "yasin" && <YasinReader />}
+      {tab === "tahlil" && <TahlilSteps />}
+      {tab === "doa" && <DoaTahlil />}
     </div>
   );
 }
