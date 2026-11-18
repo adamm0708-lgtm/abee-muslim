@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #ffffff;
+  color: #12211f;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.dark body {
+  background: #0b2e26;
+  color: #f7f2e7;
+}
+
+.arabic {
+  font-family: "Amiri", "Traditional Arabic", "Scheherazade", serif;
+  line-height: 2;
+  direction: rtl;
+}

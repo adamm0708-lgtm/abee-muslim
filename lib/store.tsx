@@ -1,0 +1,247 @@
+"use client";
+// Progres pengguna: poin, streak, level, misi, tasbih, amal harian,
+// hafalan, dan kelompok mengaji. Disimpan di localStorage dan — kalau
+// Supabase dikonfigurasi — disinkronkan ke tabel user_progress.
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { deviceId, getSupabase } from "./supabase";
+
+export type ThemeChoice = "auto" | "light" | "dark";
+
+export type Progress = {
+  name: string;
+  city: string;
+  theme: ThemeChoice;
+  points: number;
+  streak: number;
+  lastActiveDate: string; // YYYY-MM-DD
+  missionsDone: Record<string, number>; // "YYYY-MM-DD" -> jumlah misi selesai
+  missionProgress: Record<string, Record<string, number>>; // tanggal -> misi -> nilai
+  tasbihCounts: Record<string, number>;
+  amalDone: Record<string, boolean>; // "YYYY-MM-DD:amal" -> true
+  hafalanDone: Record<number, boolean>; // no surah -> hafal
+  groups: string[];
+};
+
+const DEFAULT_PROGRESS: Progress = {
+  name: "Teman ABEE",
+  city: "Bangil",
+  theme: "auto",
+  points: 0,
+  streak: 0,
+  lastActiveDate: "",
+  missionsDone: {},
+  missionProgress: {},
+  tasbihCounts: {},
+  amalDone: {},
+  hafalanDone: {},
+  groups: [],
+};
+
+const KEY = "abee-muslim-progress-v1";
+
+export function todayKey(d = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function levelFromPoints(points: number): { level: number; title: string; nextAt: number } {
+  const levels = [
+    { at: 0, title: "Pemula" },
+    { at: 100, title: "Pelajar" },
+    { at: 300, title: "Pelajar Cerdas" },
+    { at: 600, title: "Penghafal" },
+    { at: 1000, title: "Bintang ABEE" },
+    { at: 2000, title: "Teladan" },
+  ];
+  let level = 1;
+  let title = levels[0].title;
+  let nextAt = levels[1].at;
+  for (let i = 0; i < levels.length; i++) {
+    if (points >= levels[i].at) {
+      level = i + 1;
+      title = levels[i].title;
+      nextAt = levels[i + 1]?.at ?? levels[i].at;
+    }
+  }
+  return { level, title, nextAt };
+}
+
+type Store = {
+  progress: Progress;
+  loaded: boolean;
+  addPoints: (n: number) => void;
+  setName: (name: string) => void;
+  setCity: (city: string) => void;
+  setTheme: (theme: ThemeChoice) => void;
+  setMissionProgress: (missionId: string, value: number) => void;
+  completeMission: (missionId: string) => void;
+  setTasbih: (id: string, count: number) => void;
+  toggleAmal: (id: string) => void;
+  toggleHafalan: (no: number) => void;
+  addGroup: (name: string) => void;
+  removeGroup: (name: string) => void;
+  resetProgress: () => void;
+};
+
+const Ctx = createContext<Store | null>(null);
+
+async function syncToSupabase(p: Progress) {
+  const sb = getSupabase();
+  if (!sb) return;
+  try {
+    await sb.from("user_progress").upsert(
+      {
+        device_id: deviceId(),
+        name: p.name,
+        city: p.city,
+        points: p.points,
+        streak: p.streak,
+        last_active_date: p.lastActiveDate || null,
+        data: p,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "device_id" }
+    );
+  } catch {
+    // Sinkronisasi gagal diam-diam — localStorage tetap sumber utama.
+  }
+}
+
+export function ProgressProvider({ children }: { children: ReactNode }) {
+  const [progress, setProgress] = useState<Progress>(DEFAULT_PROGRESS);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Progress;
+        setProgress({ ...DEFAULT_PROGRESS, ...parsed });
+      }
+    } catch {
+      // abaikan data rusak
+    }
+    setLoaded(true);
+  }, []);
+
+  // Perbarui streak sekali per hari saat aplikasi dibuka
+  useEffect(() => {
+    if (!loaded) return;
+    const today = todayKey();
+    if (progress.lastActiveDate === today) return;
+    setProgress((prev) => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const cont = prev.lastActiveDate === todayKey(yesterday);
+      const next = {
+        ...prev,
+        lastActiveDate: today,
+        streak: cont ? prev.streak + 1 : 1,
+      };
+      localStorage.setItem(KEY, JSON.stringify(next));
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+
+  const update = (fn: (p: Progress) => Progress) => {
+    setProgress((prev) => {
+      const next = fn(prev);
+      try {
+        localStorage.setItem(KEY, JSON.stringify(next));
+      } catch {
+        // penyimpanan penuh / privat — abaikan
+      }
+      void syncToSupabase(next);
+      return next;
+    });
+  };
+
+  const store: Store = useMemo(
+    () => ({
+      progress,
+      loaded,
+      addPoints: (n) => update((p) => ({ ...p, points: p.points + n })),
+      setName: (name) => update((p) => ({ ...p, name })),
+      setCity: (city) => update((p) => ({ ...p, city })),
+      setTheme: (theme) => update((p) => ({ ...p, theme })),
+      setMissionProgress: (missionId, value) =>
+        update((p) => {
+          const t = todayKey();
+          return {
+            ...p,
+            missionProgress: {
+              ...p.missionProgress,
+              [t]: { ...(p.missionProgress[t] ?? {}), [missionId]: value },
+            },
+          };
+        }),
+      completeMission: (missionId) =>
+        update((p) => {
+          const t = todayKey();
+          const done = p.missionsDone[t] ?? 0;
+          const already = (p.missionProgress[t]?.[missionId] ?? 0) >= 1;
+          if (already) return p;
+          return {
+            ...p,
+            points: p.points + 20,
+            missionsDone: { ...p.missionsDone, [t]: done + 1 },
+            missionProgress: {
+              ...p.missionProgress,
+              [t]: { ...(p.missionProgress[t] ?? {}), [missionId]: 1 },
+            },
+          };
+        }),
+      setTasbih: (id, count) =>
+        update((p) => ({ ...p, tasbihCounts: { ...p.tasbihCounts, [id]: count } })),
+      toggleAmal: (id) =>
+        update((p) => {
+          const k = `${todayKey()}:${id}`;
+          const next = { ...p.amalDone };
+          if (next[k]) delete next[k];
+          else next[k] = true;
+          return { ...p, amalDone: next };
+        }),
+      toggleHafalan: (no) =>
+        update((p) => {
+          const next = { ...p.hafalanDone };
+          if (next[no]) delete next[no];
+          else next[no] = true;
+          return { ...p, hafalanDone: next };
+        }),
+      addGroup: (name) =>
+        update((p) =>
+          p.groups.includes(name) ? p : { ...p, groups: [...p.groups, name] }
+        ),
+      removeGroup: (name) =>
+        update((p) => ({ ...p, groups: p.groups.filter((g) => g !== name) })),
+      resetProgress: () => {
+        try {
+          localStorage.removeItem(KEY);
+        } catch {
+          // abaikan
+        }
+        setProgress({ ...DEFAULT_PROGRESS, name: progress.name, city: progress.city });
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [progress, loaded]
+  );
+
+  return <Ctx.Provider value={store}>{children}</Ctx.Provider>;
+}
+
+export function useProgress(): Store {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useProgress harus dipakai di dalam ProgressProvider");
+  return ctx;
+}
