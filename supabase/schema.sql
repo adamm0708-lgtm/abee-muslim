@@ -31,9 +31,14 @@ drop policy if exists "anon update" on public.user_progress;
 create policy "anon update" on public.user_progress
   for update using (true);
 
+-- Policy saja tidak cukup: peran anon juga butuh hak akses tabel.
+grant select, insert, update on public.user_progress to anon;
+
 -- Peringkat (opsional): view 10 besar berdasarkan poin.
 create or replace view public.leaderboard_top10 as
 select device_id, name, points, streak
 from public.user_progress
 order by points desc
 limit 10;
+
+grant select on public.leaderboard_top10 to anon;
