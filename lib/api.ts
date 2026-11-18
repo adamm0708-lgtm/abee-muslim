@@ -1,6 +1,8 @@
 // Data live: jadwal shalat (Aladhan API), cuaca (Open-Meteo), Hijriah (Intl),
 // hitung mundur Ramadhan, dan arah kiblat. Tidak ada data yang dikarang.
 
+import { JUZ30_SURAHS } from "./data";
+
 export type City = { name: string; lat: number; lon: number };
 
 export const CITIES: City[] = [
@@ -185,4 +187,58 @@ export function qiblaBearing(lat: number, lon: number): number {
     Math.cos(toRad(lat)) * Math.tan(toRad(kaabaLat)) -
     Math.sin(toRad(lat)) * Math.cos(dLon);
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+// ---------- Daftar 114 surah ----------
+
+export type SurahMeta = {
+  number: number;
+  name: string; // nama Arab
+  englishName: string; // nama Latin
+  englishNameTranslation: string;
+  numberOfAyahs: number;
+  revelationType: "Meccan" | "Medinan";
+};
+
+const surahListCache = new Map<string, { at: number; data: SurahMeta[] }>();
+
+/** Daftar 114 surah dari AlQuran Cloud API (nama Latin/Arab, jumlah ayat, tempat turun). */
+export async function getSurahList(): Promise<SurahMeta[]> {
+  const cached = surahListCache.get("all");
+  if (cached && Date.now() - cached.at < 1000 * 60 * 60 * 6) return cached.data;
+  const res = await fetch("https://api.alquran.cloud/v1/surah");
+  if (!res.ok) throw new Error(`AlQuran Cloud ${res.status}`);
+  const json = await res.json();
+  if (json.code !== 200 || !Array.isArray(json.data)) throw new Error("Format surah tidak dikenal");
+  const data: SurahMeta[] = json.data.map((s: SurahMeta) => ({
+    number: s.number,
+    name: s.name,
+    englishName: s.englishName,
+    englishNameTranslation: s.englishNameTranslation,
+    numberOfAyahs: s.numberOfAyahs,
+    revelationType: s.revelationType,
+  }));
+  surahListCache.set("all", { at: Date.now(), data });
+  return data;
+}
+
+/** Cadangan saat offline: 7 surah Juz 30 yang sudah tertanam di aplikasi. */
+export function embeddedSurahMeta(): SurahMeta[] {
+  const revelation: Record<number, "Meccan" | "Medinan"> = {
+    103: "Meccan",
+    108: "Meccan",
+    109: "Meccan",
+    110: "Medinan",
+    112: "Meccan",
+    113: "Meccan",
+    114: "Meccan",
+  };
+  return JUZ30_SURAHS.map((s) => ({
+    number: s.no,
+    name: s.arabicName,
+    englishName: s.name,
+    englishNameTranslation: "",
+    numberOfAyahs: s.ayahs,
+    revelationType: revelation[s.no] ?? "Meccan",
+  }));
 }

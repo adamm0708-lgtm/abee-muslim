@@ -1,15 +1,16 @@
 "use client";
 import { useState } from "react";
-import { Card, Note, PageHeader } from "@/components/ui";
+import { Card, Icon, Note, PageHeader } from "@/components/ui";
 import { useProgress, levelFromPoints, type ThemeChoice } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { CITIES } from "@/lib/api";
 import { supabaseConfigured } from "@/lib/supabase";
+import type { IconName } from "@/lib/data";
 
-const THEME_OPTIONS: { value: ThemeChoice; label: string; desc: string }[] = [
-  { value: "auto", label: "🌓 Otomatis", desc: "Terang siang, gelap malam (dari Terbit & Maghrib)" },
-  { value: "light", label: "☀️ Terang", desc: "Selalu tema terang" },
-  { value: "dark", label: "🌙 Gelap", desc: "Selalu tema gelap" },
+const THEME_OPTIONS: { value: ThemeChoice; label: string; desc: string; icon: IconName }[] = [
+  { value: "auto", label: "Otomatis", desc: "Terang siang, gelap malam (dari Terbit & Maghrib)", icon: "half" },
+  { value: "light", label: "Terang", desc: "Selalu tema terang", icon: "sun" },
+  { value: "dark", label: "Gelap", desc: "Selalu tema gelap", icon: "moon" },
 ];
 
 export default function AturPage() {
@@ -30,35 +31,45 @@ export default function AturPage() {
 
   return (
     <div>
-      <PageHeader title="⚙️ Atur" subtitle="Profil, kota, dan data aplikasi" backHref="/" />
+      <PageHeader title="Pengaturan" subtitle="Profil, kota, dan data aplikasi" backHref="/" />
       <div className="flex flex-col gap-4">
         <Card>
-          <p className="mb-2 text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">Nama tampilan</p>
+          <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Nama tampilan</p>
           <div className="flex gap-2">
             <input
               value={name}
               onChange={(e) => setNameInput(e.target.value)}
               placeholder="Namamu"
-              className="flex-1 rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-3 text-sm font-bold ring-1 ring-black/10 dark:ring-white/15 outline-none"
+              className="flex-1 rounded-2xl bg-[#F5F5F4] px-4 py-3 text-sm font-bold ring-1 ring-black/10 outline-none dark:bg-white/5 dark:ring-white/15"
             />
-            <button onClick={saveName} className="rounded-2xl bg-abee-green dark:bg-[#D4AF37] px-4 py-3 text-sm font-bold text-white dark:text-[#0B2E26]">
+            <button onClick={saveName} className="rounded-2xl bg-[#0A0A0A] px-4 py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
               Simpan
             </button>
           </div>
-          {saved && <p className="mt-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">Nama tersimpan ✓</p>}
-          <p className="mt-3 text-sm text-slate-600 dark:text-[#B9D2C6]">
-            Level {level} · {title} · ⭐ {progress.points} poin · 🔥 streak {progress.streak} hari
+          {saved && (
+            <p className="mt-2 flex items-center gap-1 text-xs font-bold text-[#0B3D39] dark:text-[#D4AF37]">
+              <Icon name="check" className="h-3.5 w-3.5" /> Nama tersimpan
+            </p>
+          )}
+          <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-neutral-600 dark:text-neutral-400">
+            <span>Level {level} · {title}</span>
+            <span className="flex items-center gap-1">
+              <Icon name="star" className="h-3.5 w-3.5 text-[#C9A227]" /> {progress.points} poin
+            </span>
+            <span className="flex items-center gap-1">
+              <Icon name="flame" className="h-3.5 w-3.5 text-[#C9A227]" /> streak {progress.streak} hari
+            </span>
           </p>
         </Card>
 
         <Card>
-          <p className="mb-2 text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">Kota (untuk jadwal shalat & cuaca)</p>
+          <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Kota (untuk jadwal shalat & cuaca)</p>
           <div className="flex flex-wrap gap-2">
             {CITIES.map((c) => (
               <button
                 key={c.name}
                 onClick={() => setCity(c.name)}
-                className={`rounded-full px-3 py-2 text-xs font-bold ${progress.city === c.name ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26]" : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-[#B9D2C6]"}`}
+                className={`rounded-full px-3 py-2 text-xs font-bold ${progress.city === c.name ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-[#F5F5F4] text-neutral-600 dark:bg-white/10 dark:text-neutral-300"}`}
               >
                 {c.name}
               </button>
@@ -67,36 +78,39 @@ export default function AturPage() {
         </Card>
 
         <Card>
-          <p className="mb-2 text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">Tema tampilan</p>
+          <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Tema tampilan</p>
           <div className="flex flex-col gap-2">
             {THEME_OPTIONS.map((o) => (
               <button
                 key={o.value}
                 onClick={() => setChoice(o.value)}
-                className={`flex items-center justify-between rounded-2xl px-4 py-3 text-left ring-1 ${
+                className={`flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left ring-1 ${
                   choice === o.value
-                    ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26] ring-abee-green dark:ring-[#D4AF37]"
-                    : "bg-slate-50 dark:bg-white/5 text-abee-ink dark:text-[#F7F2E7] ring-black/10 dark:ring-white/15"
+                    ? "bg-[#0A0A0A] text-white ring-[#0A0A0A] dark:bg-[#D4AF37] dark:text-[#0A0A0A] dark:ring-[#D4AF37]"
+                    : "bg-[#F5F5F4] text-neutral-900 ring-black/10 dark:bg-white/5 dark:text-neutral-100 dark:ring-white/15"
                 }`}
               >
-                <span>
-                  <span className="block text-sm font-bold">{o.label}</span>
-                  <span className={`block text-xs ${choice === o.value ? "text-white/80 dark:text-[#0B2E26]/70" : "text-slate-500 dark:text-[#A8C3B5]"}`}>{o.desc}</span>
+                <span className="flex items-center gap-3">
+                  <Icon name={o.icon} className="h-5 w-5 shrink-0 opacity-80" />
+                  <span>
+                    <span className="block text-sm font-bold">{o.label}</span>
+                    <span className={`block text-xs ${choice === o.value ? "text-white/80 dark:text-[#0A0A0A]/70" : "text-neutral-500 dark:text-neutral-400"}`}>{o.desc}</span>
+                  </span>
                 </span>
-                {choice === o.value && <span className="text-lg">✓</span>}
+                {choice === o.value && <Icon name="check" className="h-5 w-5 shrink-0" />}
               </button>
             ))}
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-slate-500 dark:text-[#A8C3B5]">
+          <p className="mt-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
             {choice === "auto"
-              ? `Mode otomatis aktif — tema sekarang ${effective === "dark" ? "gelap 🌙 (Maghrib–Terbit)" : "terang ☀️ (Terbit–Maghrib)"}. Kalau jadwal shalat belum termuat, dipakai jam lokal (terang 05:00–18:00).`
+              ? `Mode otomatis aktif — tema sekarang ${effective === "dark" ? "gelap (Maghrib–Terbit)" : "terang (Terbit–Maghrib)"}. Kalau jadwal shalat belum termuat, dipakai jam lokal (terang 05:00–18:00).`
               : "Pilihanmu tersimpan dan mengalahkan mode otomatis."}
           </p>
         </Card>
 
         <Card>
-          <p className="mb-2 text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">Penyimpanan</p>
-          <p className="text-sm leading-relaxed text-slate-600 dark:text-[#B9D2C6]">
+          <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Penyimpanan</p>
+          <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             {supabaseConfigured()
               ? "Supabase terhubung — progres disinkronkan ke cloud."
               : "Mode lokal: progres tersimpan di perangkat ini (localStorage). Aktifkan Supabase di env var NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY untuk sinkronisasi cloud."}
@@ -104,8 +118,8 @@ export default function AturPage() {
         </Card>
 
         <Card>
-          <p className="mb-2 text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">Tentang aplikasi</p>
-          <p className="text-sm leading-relaxed text-slate-600 dark:text-[#B9D2C6]">
+          <p className="mb-2 text-sm font-bold text-neutral-900 dark:text-neutral-100">Tentang aplikasi</p>
+          <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
             ABEE Muslim v0.1 — aplikasi belajar Islam & ibadah untuk semua orang, oleh ABEE
             MotionVerse. Jadwal shalat dari Aladhan API, cuaca dari Open-Meteo, teks Al-Qur&apos;an
             dari AlQuran Cloud API.
@@ -118,7 +132,7 @@ export default function AturPage() {
               resetProgress();
             }
           }}
-          className="rounded-2xl bg-red-50 dark:bg-red-400/10 py-3 text-sm font-bold text-red-600 dark:text-red-400 ring-1 ring-red-200"
+          className="rounded-2xl bg-red-50 py-3 text-sm font-bold text-red-600 ring-1 ring-red-200 dark:bg-red-400/10 dark:text-red-400"
         >
           Hapus Semua Progres
         </button>

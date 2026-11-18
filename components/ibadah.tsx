@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Card, Note, PageHeader, ProgressBar } from "@/components/ui";
+import { Card, Icon, Note, PageHeader, ProgressBar } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 import {
   PRAYER_ORDER,
@@ -31,15 +31,15 @@ export function DoaPage() {
         {DUAS.map((d) => (
           <Card key={d.id}>
             <button className="flex w-full items-center justify-between text-left" onClick={() => setOpen(open === d.id ? null : d.id)}>
-              <span className="font-extrabold text-abee-ink dark:text-[#F7F2E7]">{d.title}</span>
-              <span className="text-slate-400 dark:text-[#7FA294]">{open === d.id ? "▾" : "▸"}</span>
+              <span className="font-extrabold text-neutral-900 dark:text-neutral-100">{d.title}</span>
+              <span className="text-neutral-400 dark:text-neutral-500">{open === d.id ? "▾" : "▸"}</span>
             </button>
             {open === d.id && (
-              <div className="mt-3 border-t border-black/5 dark:border-white/10 pt-3">
-                <p className="arabic text-right text-2xl text-abee-ink dark:text-[#F7F2E7]">{d.arabic}</p>
-                <p className="mt-2 text-sm italic text-slate-600 dark:text-[#B9D2C6]">{d.latin}</p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-[#D5E5DC]">{d.translation}</p>
-                <p className="mt-2 text-xs text-slate-400 dark:text-[#7FA294]">{d.source}</p>
+              <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
+                <p className="arabic text-right text-2xl text-neutral-900 dark:text-neutral-100">{d.arabic}</p>
+                <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{d.latin}</p>
+                <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{d.translation}</p>
+                <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">{d.source}</p>
               </div>
             )}
           </Card>
@@ -70,7 +70,7 @@ export function TasbihPage() {
             <button
               key={t}
               onClick={() => setTarget(t)}
-              className={`rounded-full px-4 py-2 text-sm font-bold ${target === t ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26]" : "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-[#B9D2C6]"}`}
+              className={`rounded-full px-4 py-2 text-sm font-bold ${target === t ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-[#F5F5F4] text-neutral-600 dark:bg-white/10 dark:text-neutral-300"}`}
             >
               {t}x
             </button>
@@ -78,27 +78,33 @@ export function TasbihPage() {
         </div>
         <button
           onClick={tap}
-          className={`flex h-44 w-44 flex-col items-center justify-center rounded-full text-white shadow-lg transition active:scale-95 ${done ? "bg-emerald-500" : "bg-abee-green"}`}
+          className={`flex h-44 w-44 flex-col items-center justify-center rounded-full text-white shadow-lg ring-4 transition active:scale-95 ${
+            done
+              ? "bg-[#0B3D39] ring-[#0B3D39]/20 dark:bg-[#D4AF37] dark:text-[#0A0A0A] dark:ring-[#D4AF37]/30"
+              : "bg-[#0A0A0A] ring-[#0A0A0A]/10 dark:bg-[#D4AF37] dark:text-[#0A0A0A] dark:ring-[#D4AF37]/30"
+          }`}
           aria-label="Ketuk untuk menghitung tasbih"
         >
           <span className="text-5xl font-extrabold">{count}</span>
           <span className="text-sm opacity-80">/ {target}</span>
         </button>
-        <p className="text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">
-          {done ? "Alhamdulillah, target tercapai! +10 poin 🎉" : "Subhanallah · Alhamdulillah · Allahu Akbar"}
+        <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
+          {done ? "Alhamdulillah, target tercapai — +10 poin" : "Subhanallah · Alhamdulillah · Allahu Akbar"}
         </p>
         <ProgressBar value={count} max={target} />
         <button
           onClick={() => setTasbih("tasbih", 0)}
-          className="rounded-full bg-slate-100 dark:bg-white/10 px-4 py-2 text-sm font-bold text-slate-600 dark:text-[#B9D2C6]"
+          className="rounded-full bg-[#F5F5F4] px-4 py-2 text-sm font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300"
         >
           Ulang dari 0
         </button>
       </Card>
-      <Note>
-        Hitungan tersimpan di perangkatmu. Kalau Supabase diaktifkan, hitungan juga tersimpan di
-        akunmu dan bisa lanjut di perangkat lain.
-      </Note>
+      <div className="mt-3">
+        <Note>
+          Hitungan tersimpan di perangkatmu. Kalau Supabase diaktifkan, hitungan juga tersimpan di
+          akunmu dan bisa lanjut di perangkat lain.
+        </Note>
+      </div>
     </div>
   );
 }
@@ -121,26 +127,28 @@ export function JadwalPage() {
     <div>
       <PageHeader title="Jadwal Shalat" subtitle={`Kota: ${progress.city} · Metode Kemenag (Aladhan API)`} backHref="/ibadah" />
       <Card>
-        <p className="mb-3 text-sm text-slate-500 dark:text-[#A8C3B5]">Hijriah: {hijriToday()}</p>
+        <p className="mb-3 text-sm text-neutral-500 dark:text-neutral-400">Hijriah: {hijriToday()}</p>
         {timings ? (
           <div className="flex flex-col divide-y divide-black/5 dark:divide-white/10">
             {PRAYER_ORDER.map((name) => (
               <div key={name} className="flex items-center justify-between py-3">
-                <span className="font-bold text-abee-ink dark:text-[#F7F2E7]">{name === "Terbit" ? "Terbit (Syuruq)" : name}</span>
-                <span className="font-mono text-lg font-extrabold text-abee-green dark:text-teal-300">{timings[name]}</span>
+                <span className="font-bold text-neutral-900 dark:text-neutral-100">{name === "Terbit" ? "Terbit (Syuruq)" : name}</span>
+                <span className="font-mono text-lg font-extrabold text-[#0B3D39] dark:text-[#D4AF37]">{timings[name]}</span>
               </div>
             ))}
           </div>
         ) : error ? (
-          <p className="text-sm text-slate-600 dark:text-[#B9D2C6]">Jadwal shalat tidak bisa dimuat. Periksa koneksi internet, lalu buka lagi halaman ini.</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Jadwal shalat tidak bisa dimuat. Periksa koneksi internet, lalu buka lagi halaman ini.</p>
         ) : (
-          <p className="text-sm text-slate-600 dark:text-[#B9D2C6]">Memuat jadwal shalat…</p>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400">Memuat jadwal shalat…</p>
         )}
       </Card>
-      <Note>
-        Waktu shalat diambil langsung dari Aladhan API (api.aladhan.com) dengan metode 20
-        (Kementerian Agama RI). Ganti kota di menu Atur.
-      </Note>
+      <div className="mt-3">
+        <Note>
+          Waktu shalat diambil langsung dari Aladhan API (api.aladhan.com) dengan metode 20
+          (Kementerian Agama RI). Ganti kota di menu Atur.
+        </Note>
+      </div>
     </div>
   );
 }
@@ -167,24 +175,28 @@ export function RamadhanPage() {
   return (
     <div>
       <PageHeader title="Road to Ramadhan" subtitle="Hitung mundur menuju bulan suci" backHref="/ibadah" />
-      <Card className="bg-gradient-to-br from-violet-500 to-fuchsia-500 text-center !text-white">
-        <p className="text-6xl font-extrabold">{days === null ? "…" : days}</p>
-        <p className="text-lg font-bold">hari lagi menuju 1 Ramadhan</p>
-        {dateStr && <p className="mt-1 text-sm opacity-80">Diperkirakan: {dateStr}</p>}
-      </Card>
-      <Card>
-        <h2 className="font-extrabold text-abee-ink dark:text-[#F7F2E7]">Persiapan Ramadhan</h2>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700 dark:text-[#D5E5DC]">
-          <li>Perbanyak puasa sunnah Senin–Kamis dan Ayyamul Bidh.</li>
-          <li>Mulai khatam Al-Qur&apos;an sedikit demi sedikit (lihat Khatam Planner).</li>
-          <li>Latih shalat malam dan dzikir pagi–petang.</li>
-          <li>Siapkan target sedekah dan amal harian.</li>
-        </ul>
-      </Card>
-      <Note>
-        Tanggal 1 Ramadhan dihitung dari kalender Hijriah (Intl) dan bisa bergeser 1 hari mengikuti
-        keputusan pemerintah / rukyatul hilal.
-      </Note>
+      <div className="rounded-2xl bg-[#0A0A0A] p-6 text-center text-white shadow-md">
+        <p className="text-6xl font-extrabold text-[#D4AF37]">{days === null ? "…" : days}</p>
+        <p className="mt-1 text-lg font-bold">hari lagi menuju 1 Ramadhan</p>
+        {dateStr && <p className="mt-1 text-sm text-white/70">Diperkirakan: {dateStr}</p>}
+      </div>
+      <div className="mt-3">
+        <Card>
+          <h2 className="font-extrabold text-neutral-900 dark:text-neutral-100">Persiapan Ramadhan</h2>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+            <li>Perbanyak puasa sunnah Senin–Kamis dan Ayyamul Bidh.</li>
+            <li>Mulai khatam Al-Qur&apos;an sedikit demi sedikit (lihat Khatam Planner).</li>
+            <li>Latih shalat malam dan dzikir pagi–petang.</li>
+            <li>Siapkan target sedekah dan amal harian.</li>
+          </ul>
+        </Card>
+      </div>
+      <div className="mt-3">
+        <Note>
+          Tanggal 1 Ramadhan dihitung dari kalender Hijriah (Intl) dan bisa bergeser 1 hari mengikuti
+          keputusan pemerintah / rukyatul hilal.
+        </Note>
+      </div>
     </div>
   );
 }
@@ -213,7 +225,7 @@ export function KalenderPage() {
         backHref="/ibadah"
       />
       <Card>
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 dark:text-[#7FA294]">
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-neutral-400 dark:text-neutral-500">
           {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map((d) => (
             <div key={d}>{d}</div>
           ))}
@@ -226,18 +238,18 @@ export function KalenderPage() {
             <div
               key={c.g}
               className={`rounded-xl p-1.5 text-center ring-1 ${
-                c.g === now.getDate() ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26] ring-abee-green" : "bg-slate-50 dark:bg-white/5 ring-black/5 dark:ring-white/10"
+                c.g === now.getDate() ? "bg-[#0A0A0A] text-white ring-[#0A0A0A] dark:bg-[#D4AF37] dark:text-[#0A0A0A] dark:ring-[#D4AF37]" : "bg-[#F5F5F4] ring-black/5 dark:bg-white/5 dark:ring-white/10"
               }`}
             >
               <p className="text-sm font-extrabold">{c.g}</p>
-              <p className={`text-[10px] ${c.g === now.getDate() ? "text-white/80" : "text-emerald-600 dark:text-emerald-400"}`}>
+              <p className={`text-[10px] ${c.g === now.getDate() ? "text-white/80 dark:text-[#0A0A0A]/70" : "text-[#0B3D39] dark:text-[#D4AF37]"}`}>
                 {c.h} {c.hm}
               </p>
             </div>
           ))}
         </div>
-        <p className="mt-3 text-xs text-slate-500 dark:text-[#A8C3B5]">
-          Angka besar = tanggal Masehi, angka kecil hijau = tanggal Hijriah. Kalender Hijriah
+        <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+          Angka besar = tanggal Masehi, angka kecil = tanggal Hijriah. Kalender Hijriah
           dihitung otomatis dari perangkatmu.
         </p>
       </Card>
@@ -253,20 +265,20 @@ export function ShalatWudhuPage() {
     <div>
       <PageHeader title="Belajar Shalat & Wudhu" subtitle="Langkah demi langkah" backHref="/ibadah" />
       <div className="mb-3 flex gap-2">
-        <button onClick={() => setTab("wudhu")} className={`flex-1 rounded-2xl py-3 text-sm font-bold ${tab === "wudhu" ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26]" : "bg-white dark:bg-[#14382E] text-slate-600 dark:text-[#B9D2C6] ring-1 ring-black/10 dark:ring-white/15"}`}>
-          💧 Wudhu
+        <button onClick={() => setTab("wudhu")} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "wudhu" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}>
+          <Icon name="droplet" className="h-4 w-4" /> Wudhu
         </button>
-        <button onClick={() => setTab("shalat")} className={`flex-1 rounded-2xl py-3 text-sm font-bold ${tab === "shalat" ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26]" : "bg-white dark:bg-[#14382E] text-slate-600 dark:text-[#B9D2C6] ring-1 ring-black/10 dark:ring-white/15"}`}>
-          🕌 Shalat
+        <button onClick={() => setTab("shalat")} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "shalat" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}>
+          <Icon name="mosque" className="h-4 w-4" /> Shalat
         </button>
       </div>
       <div className="flex flex-col gap-2">
         {steps.map((s, i) => (
           <Card key={i} className="flex gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-abee-green dark:bg-[#D4AF37] text-sm font-extrabold text-white dark:text-[#0B2E26]">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
               {i + 1}
             </span>
-            <p className="text-sm leading-relaxed text-slate-700 dark:text-[#D5E5DC]">{s}</p>
+            <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{s}</p>
           </Card>
         ))}
       </div>
@@ -286,17 +298,23 @@ export function DzikirPage() {
           const done = count >= d.count;
           return (
             <Card key={d.id}>
-              <p className="arabic text-right text-2xl text-abee-ink dark:text-[#F7F2E7]">{d.arabic}</p>
-              <p className="mt-1 text-sm italic text-slate-600 dark:text-[#B9D2C6]">{d.latin}</p>
-              <p className="text-sm text-slate-700 dark:text-[#D5E5DC]">{d.translation}</p>
+              <p className="arabic text-right text-2xl text-neutral-900 dark:text-neutral-100">{d.arabic}</p>
+              <p className="mt-1 text-sm italic text-neutral-600 dark:text-neutral-400">{d.latin}</p>
+              <p className="text-sm text-neutral-700 dark:text-neutral-300">{d.translation}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button
                   onClick={() => !done && setTasbih(d.id, count + 1)}
-                  className={`flex-1 rounded-2xl py-2.5 text-sm font-bold ${done ? "bg-emerald-100 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300" : "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26] active:scale-95"}`}
+                  className={`flex flex-1 items-center justify-center gap-1 rounded-2xl py-2.5 text-sm font-bold ${done ? "bg-black/5 text-[#0B3D39] dark:bg-white/5 dark:text-[#D4AF37]" : "bg-[#0A0A0A] text-white active:scale-95 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"}`}
                 >
-                  {done ? "Selesai ✓" : `Hitung (${count}/${d.count})`}
+                  {done ? (
+                    <>
+                      <Icon name="check" className="h-4 w-4" /> Selesai
+                    </>
+                  ) : (
+                    `Hitung (${count}/${d.count})`
+                  )}
                 </button>
-                <button onClick={() => setTasbih(d.id, 0)} className="rounded-2xl bg-slate-100 dark:bg-white/10 px-3 py-2.5 text-sm font-bold text-slate-600 dark:text-[#B9D2C6]">
+                <button onClick={() => setTasbih(d.id, 0)} className="rounded-2xl bg-[#F5F5F4] px-3 py-2.5 text-sm font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300">
                   Ulang
                 </button>
               </div>
@@ -320,18 +338,18 @@ export function TahlilPage() {
     <div>
       <PageHeader title="Tahlil & Doa" subtitle="Bacaan tahlil" backHref="/ibadah" />
       <Card>
-        <p className="arabic text-right text-2xl leading-loose text-abee-ink dark:text-[#F7F2E7]">{TAHLIL_TEXT.arabic}</p>
-        <p className="mt-2 text-sm italic text-slate-600 dark:text-[#B9D2C6]">{TAHLIL_TEXT.latin}</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-[#D5E5DC]">{TAHLIL_TEXT.translation}</p>
-        <p className="mt-2 text-xs text-slate-400 dark:text-[#7FA294]">{TAHLIL_TEXT.note}</p>
+        <p className="arabic text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">{TAHLIL_TEXT.arabic}</p>
+        <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{TAHLIL_TEXT.latin}</p>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{TAHLIL_TEXT.translation}</p>
+        <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">{TAHLIL_TEXT.note}</p>
         <div className="mt-4 flex items-center gap-2">
           <button
             onClick={() => count < target && setTasbih("tahlil", count + 1)}
-            className="flex-1 rounded-2xl bg-abee-green dark:bg-[#D4AF37] py-3 text-sm font-bold text-white dark:text-[#0B2E26] active:scale-95"
+            className="flex-1 rounded-2xl bg-[#0A0A0A] py-3 text-sm font-bold text-white active:scale-95 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
           >
             Hitung ({count}/{target})
           </button>
-          <button onClick={() => setTasbih("tahlil", 0)} className="rounded-2xl bg-slate-100 dark:bg-white/10 px-4 py-3 text-sm font-bold text-slate-600 dark:text-[#B9D2C6]">
+          <button onClick={() => setTasbih("tahlil", 0)} className="rounded-2xl bg-[#F5F5F4] px-4 py-3 text-sm font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300">
             Ulang
           </button>
         </div>
@@ -365,12 +383,12 @@ export function MasjidPage() {
     <div>
       <PageHeader title="Masjid Terdekat" subtitle="Dibuka di Google Maps" backHref="/ibadah" />
       <Card className="flex flex-col gap-3">
-        <p className="text-sm leading-relaxed text-slate-700 dark:text-[#D5E5DC]">
+        <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
           Aplikasi ini tidak menyimpan daftar masjid sendiri — pencarian dibuka langsung di Google
           Maps supaya datanya selalu terbaru.
         </p>
-        <button onClick={requestLoc} className="rounded-2xl bg-abee-green dark:bg-[#D4AF37] py-3 text-sm font-bold text-white dark:text-[#0B2E26]">
-          📍 Gunakan lokasiku
+        <button onClick={requestLoc} className="flex items-center justify-center gap-2 rounded-2xl bg-[#0A0A0A] py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+          <Icon name="pin" className="h-4 w-4" /> Gunakan lokasiku
         </button>
         {locError && (
           <p className="text-xs text-red-600 dark:text-red-400">
@@ -382,12 +400,12 @@ export function MasjidPage() {
           href={mapsUrl}
           target="_blank"
           rel="noreferrer"
-          className="rounded-2xl bg-white dark:bg-[#14382E] py-3 text-center text-sm font-bold text-abee-green dark:text-teal-300 ring-1 ring-black/10 dark:ring-white/15"
+          className="rounded-2xl bg-white py-3 text-center text-sm font-bold text-[#0B3D39] ring-1 ring-black/10 dark:bg-white/5 dark:text-[#D4AF37] dark:ring-white/15"
         >
-          Buka di Google Maps →
+          Buka di Google Maps
         </a>
         {loc && (
-          <p className="text-xs text-slate-500 dark:text-[#A8C3B5]">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             Lokasi: {loc.lat.toFixed(4)}, {loc.lon.toFixed(4)}
           </p>
         )}
@@ -445,22 +463,22 @@ export function KiblatPage() {
     <div>
       <PageHeader title="Arah Kiblat" subtitle="Kompas kiblat dari lokasimu" backHref="/ibadah" />
       <Card className="flex flex-col items-center gap-4 py-6 text-center">
-        <div className="relative flex h-48 w-48 items-center justify-center rounded-full bg-slate-100 dark:bg-white/10 ring-4 ring-abee-green/20">
-          <span className="absolute top-2 text-xs font-bold text-slate-400 dark:text-[#7FA294]">U</span>
+        <div className="relative flex h-48 w-48 items-center justify-center rounded-full bg-[#F5F5F4] ring-4 ring-[#0B3D39]/20 dark:bg-white/10 dark:ring-[#D4AF37]/25">
+          <span className="absolute top-2 text-xs font-bold text-neutral-400 dark:text-neutral-500">U</span>
           <span
-            className="text-6xl transition-transform duration-200"
-            style={{ transform: `rotate(${rotation}deg)` }}
+            className="text-[#0B3D39] transition-transform duration-200 dark:text-[#D4AF37]"
+            style={{ transform: `rotate(${rotation + 90}deg)` }}
             aria-hidden
           >
-            ⬆️
+            <Icon name="arrow-left" className="h-14 w-14" />
           </span>
-          <span className="absolute bottom-2 text-xs font-bold text-slate-400 dark:text-[#7FA294]">S</span>
+          <span className="absolute bottom-2 text-xs font-bold text-neutral-400 dark:text-neutral-500">S</span>
         </div>
-        <p className="text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">
+        <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
           {bearing !== null ? `Arah kiblat: ${Math.round(bearing)}° dari utara` : "Arah kiblat belum dihitung"}
         </p>
-        <p className="text-xs leading-relaxed text-slate-500 dark:text-[#A8C3B5]">{status}</p>
-        <button onClick={activate} className="rounded-2xl bg-abee-green dark:bg-[#D4AF37] px-6 py-3 text-sm font-bold text-white dark:text-[#0B2E26]">
+        <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">{status}</p>
+        <button onClick={activate} className="rounded-2xl bg-[#0A0A0A] px-6 py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
           Aktifkan Kompas
         </button>
         {!supported && (
@@ -488,11 +506,11 @@ export function AmalPage() {
           const done = !!progress.amalDone[`${key}:${a}`];
           return (
             <button key={a} onClick={() => toggleAmal(a)} className="w-full text-left">
-              <Card className={`flex items-center gap-3 ${done ? "bg-emerald-50 dark:bg-emerald-400/10" : ""}`}>
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${done ? "bg-emerald-500 text-white" : "bg-slate-200 dark:bg-white/15 text-slate-500 dark:text-[#A8C3B5]"}`}>
-                  {done ? "✓" : ""}
+              <Card className={`flex items-center gap-3 ${done ? "bg-[#0B3D39]/5 dark:bg-[#D4AF37]/10" : ""}`}>
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${done ? "bg-[#0B3D39] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-black/10 text-neutral-500 dark:bg-white/15 dark:text-neutral-400"}`}>
+                  {done ? <Icon name="check" className="h-4 w-4" /> : ""}
                 </span>
-                <span className={`text-sm font-bold ${done ? "text-emerald-800 dark:text-emerald-200 line-through" : "text-abee-ink dark:text-[#F7F2E7]"}`}>{a}</span>
+                <span className={`text-sm font-bold ${done ? "text-[#0B3D39] line-through dark:text-[#D4AF37]" : "text-neutral-900 dark:text-neutral-100"}`}>{a}</span>
               </Card>
             </button>
           );
@@ -522,22 +540,22 @@ export function AsmaulHusnaPage() {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Cari nama atau arti… (mis. Pengasih)"
-        className="mb-3 w-full rounded-2xl bg-white dark:bg-[#14382E] px-4 py-3 text-sm font-semibold ring-1 ring-black/10 dark:ring-white/15 outline-none focus:ring-2 focus:ring-abee-green"
+        className="mb-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-[#0A0A0A] dark:bg-[#171717] dark:ring-white/15"
       />
       <div className="flex flex-col gap-2">
         {filtered.map((a) => (
           <Card key={a.no} className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-abee-gold/20 text-sm font-extrabold text-amber-700 dark:text-amber-300">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#C9A227]/20 text-sm font-extrabold text-[#8a6d1c] dark:text-[#D4AF37]">
               {a.no}
             </span>
             <div className="flex-1">
-              <p className="text-sm font-extrabold text-abee-ink dark:text-[#F7F2E7]">{a.latin}</p>
-              <p className="text-xs text-slate-500 dark:text-[#A8C3B5]">{a.meaning}</p>
+              <p className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">{a.latin}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">{a.meaning}</p>
             </div>
-            <span className="arabic text-2xl text-abee-green dark:text-teal-300">{a.arabic}</span>
+            <span className="arabic text-2xl text-[#0B3D39] dark:text-[#D4AF37]">{a.arabic}</span>
           </Card>
         ))}
-        {filtered.length === 0 && <p className="text-center text-sm text-slate-500 dark:text-[#A8C3B5]">Tidak ditemukan. Coba kata lain.</p>}
+        {filtered.length === 0 && <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">Tidak ditemukan. Coba kata lain.</p>}
       </div>
     </div>
   );

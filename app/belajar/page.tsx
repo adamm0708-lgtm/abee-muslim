@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Card, PageHeader, ProgressBar } from "@/components/ui";
+import { Card, Icon, PageHeader, ProgressBar } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 import { FLASHCARDS } from "@/lib/data";
 
@@ -56,18 +56,20 @@ function Quiz() {
   if (done) {
     return (
       <Card className="text-center">
-        <p className="text-4xl">{correct >= 8 ? "🎉" : "💪"}</p>
-        <p className="mt-2 text-2xl font-extrabold text-abee-ink dark:text-[#F7F2E7]">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0A0A0A] text-[#D4AF37] dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+          <Icon name="trophy" className="h-7 w-7" />
+        </span>
+        <p className="mt-3 text-2xl font-extrabold text-neutral-900 dark:text-neutral-100">
           Skor: {correct}/10
         </p>
-        <p className="mt-1 text-sm text-slate-600 dark:text-[#B9D2C6]">
+        <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
           {correct >= 8
-            ? "Hebat! Kamu dapat +10 poin."
-            : "Terus berlatih ya — coba lagi sampai dapat 8 atau lebih."}
+            ? "Bagus sekali! Kamu mendapat +10 poin."
+            : "Terus berlatih — coba lagi sampai dapat 8 atau lebih."}
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="mt-4 rounded-2xl bg-abee-green dark:bg-[#D4AF37] px-6 py-3 text-sm font-bold text-white dark:text-[#0B2E26]"
+          className="mt-4 rounded-2xl bg-[#0A0A0A] px-6 py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
         >
           Main Lagi
         </button>
@@ -78,12 +80,12 @@ function Quiz() {
   return (
     <Card>
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-bold text-slate-500 dark:text-[#A8C3B5]">
+        <p className="text-sm font-bold text-neutral-500 dark:text-neutral-400">
           Soal {idx + 1}/10 · Benar: {correct}
         </p>
       </div>
       <ProgressBar value={idx} max={10} />
-      <p className="mt-4 text-center text-4xl font-extrabold text-abee-ink dark:text-[#F7F2E7]">
+      <p className="mt-4 text-center text-4xl font-extrabold text-neutral-900 dark:text-neutral-100">
         {q.a} {q.op} {q.b} = ?
       </p>
       <div className="mt-4 flex gap-2">
@@ -93,15 +95,15 @@ function Quiz() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Jawabanmu"
-          className="flex-1 rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-3 text-lg font-bold ring-1 ring-black/10 dark:ring-white/15 outline-none"
+          className="flex-1 rounded-2xl bg-[#F5F5F4] px-4 py-3 text-lg font-bold ring-1 ring-black/10 outline-none dark:bg-white/5 dark:ring-white/15"
           autoFocus
         />
-        <button onClick={submit} className="rounded-2xl bg-abee-green dark:bg-[#D4AF37] px-6 py-3 text-sm font-bold text-white dark:text-[#0B2E26]">
+        <button onClick={submit} className="rounded-2xl bg-[#0A0A0A] px-6 py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
           Jawab
         </button>
       </div>
-      <p className="mt-2 text-center text-xs text-slate-400 dark:text-[#7FA294]">
-        Jawaban terakhir: {answers[idx] === null ? "—" : answers[idx] === q.answer ? "Benar ✓" : "Belum tepat"}
+      <p className="mt-2 text-center text-xs text-neutral-400 dark:text-neutral-500">
+        Jawaban terakhir: {answers[idx] === null ? "—" : answers[idx] === q.answer ? "Benar" : "Belum tepat"}
       </p>
     </Card>
   );
@@ -123,39 +125,39 @@ function Flashcards() {
   };
   return (
     <Card className="text-center">
-      <p className="text-xs font-bold text-slate-400 dark:text-[#7FA294]">
+      <p className="text-xs font-bold text-neutral-400 dark:text-neutral-500">
         Kartu {idx + 1}/{FLASHCARDS.length} · Sudah hafal: {known.size}
       </p>
       <button
         onClick={() => setFlipped(!flipped)}
-        className="mt-3 flex min-h-40 w-full flex-col items-center justify-center rounded-3xl bg-[#F4F7F6] dark:bg-[#14382E] p-4 ring-1 ring-black/5 dark:ring-white/10 active:scale-95"
+        className="mt-3 flex min-h-40 w-full flex-col items-center justify-center rounded-3xl bg-[#F5F5F4] p-4 ring-1 ring-black/5 active:scale-95 dark:bg-white/5 dark:ring-white/10"
       >
         {flipped ? (
           <>
-            <p className="text-2xl font-extrabold text-abee-ink dark:text-[#F7F2E7]">{card.id}</p>
-            <p className="text-sm text-slate-500 dark:text-[#A8C3B5]">Inggris: {card.en}</p>
-            <p className="text-xs text-slate-400 dark:text-[#7FA294]">Ketuk untuk membalik lagi</p>
+            <p className="text-2xl font-extrabold text-neutral-900 dark:text-neutral-100">{card.id}</p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">Inggris: {card.en}</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500">Ketuk untuk membalik lagi</p>
           </>
         ) : (
           <>
-            <p className="arabic text-5xl text-abee-green dark:text-teal-300">{card.arabic}</p>
-            <p className="mt-2 text-lg font-bold text-abee-ink dark:text-[#F7F2E7]">{card.latin}</p>
-            <p className="text-xs text-slate-400 dark:text-[#7FA294]">Ketuk untuk melihat artinya</p>
+            <p className="arabic text-5xl text-[#0B3D39] dark:text-[#D4AF37]">{card.arabic}</p>
+            <p className="mt-2 text-lg font-bold text-neutral-900 dark:text-neutral-100">{card.latin}</p>
+            <p className="text-xs text-neutral-400 dark:text-neutral-500">Ketuk untuk melihat artinya</p>
           </>
         )}
       </button>
       <div className="mt-3 flex gap-2">
-        <button onClick={markKnown} className="flex-1 rounded-2xl bg-abee-green dark:bg-[#D4AF37] py-3 text-sm font-bold text-white dark:text-[#0B2E26]">
-          Sudah Hafal ✓
+        <button onClick={markKnown} className="flex-1 rounded-2xl bg-[#0A0A0A] py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+          Sudah Hafal
         </button>
         <button
           onClick={() => {
             setFlipped(false);
             setIdx((i) => (i + 1) % FLASHCARDS.length);
           }}
-          className="flex-1 rounded-2xl bg-white dark:bg-[#14382E] py-3 text-sm font-bold text-slate-600 dark:text-[#B9D2C6] ring-1 ring-black/10 dark:ring-white/15"
+          className="flex-1 rounded-2xl bg-white py-3 text-sm font-bold text-neutral-600 ring-1 ring-black/10 dark:bg-white/5 dark:text-neutral-300 dark:ring-white/15"
         >
-          Lewati →
+          Lewati
         </button>
       </div>
     </Card>
@@ -166,23 +168,23 @@ export default function BelajarPage() {
   const [tab, setTab] = useState<"quiz" | "kata">("quiz");
   return (
     <div>
-      <PageHeader title="📚 Belajar" subtitle="Latihan hitung dan kata Inggris/Arab" backHref="/" />
+      <PageHeader title="Belajar" subtitle="Latihan hitung dan kata Inggris/Arab" backHref="/" />
       <div className="mb-3 flex gap-2">
         <button
           onClick={() => setTab("quiz")}
-          className={`flex-1 rounded-2xl py-3 text-sm font-bold ${tab === "quiz" ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26]" : "bg-white dark:bg-[#14382E] text-slate-600 dark:text-[#B9D2C6] ring-1 ring-black/10 dark:ring-white/15"}`}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "quiz" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}
         >
-          🔢 Soal Hitung
+          <Icon name="list" className="h-4 w-4" /> Soal Hitung
         </button>
         <button
           onClick={() => setTab("kata")}
-          className={`flex-1 rounded-2xl py-3 text-sm font-bold ${tab === "kata" ? "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26]" : "bg-white dark:bg-[#14382E] text-slate-600 dark:text-[#B9D2C6] ring-1 ring-black/10 dark:ring-white/15"}`}
+          className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "kata" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}
         >
-          🔤 Belajar Kata
+          <Icon name="book" className="h-4 w-4" /> Belajar Kata
         </button>
       </div>
       {tab === "quiz" ? <Quiz /> : <Flashcards />}
-      <p className="mt-3 text-center text-xs text-slate-400 dark:text-[#7FA294]">
+      <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
         Skor kuis 8/10 atau lebih memberi +10 poin. Kartu kata yang ditandai hafal mengisi misi
         &ldquo;Belajar kata&rdquo;.
       </p>

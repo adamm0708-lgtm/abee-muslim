@@ -1,5 +1,5 @@
 "use client";
-import { Card, Note, PageHeader } from "@/components/ui";
+import { Card, Icon, Note, PageHeader } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 
 const SAMPLE = [
@@ -16,16 +16,18 @@ export default function PeringkatPage() {
     .sort((a, b) => b.points - a.points);
   return (
     <div>
-      <PageHeader title="🏆 Peringkat" subtitle="Papan peringkat poin minggu ini" backHref="/" />
+      <PageHeader title="Peringkat" subtitle="Papan peringkat poin minggu ini" backHref="/" />
       <Card>
         <div className="flex flex-col divide-y divide-black/5 dark:divide-white/10">
           {rows.map((r, i) => (
-            <div key={r.name} className={`flex items-center justify-between py-3 ${r.you ? "font-extrabold text-abee-green dark:text-teal-300" : ""}`}>
+            <div key={r.name} className={`flex items-center justify-between py-3 ${r.you ? "font-extrabold text-[#0B3D39] dark:text-[#D4AF37]" : ""}`}>
               <span className="flex items-center gap-3">
-                <span className="w-6 text-center text-sm font-extrabold text-slate-400 dark:text-[#7FA294]">#{i + 1}</span>
-                <span className="text-sm">{i === 0 ? "🥇 " : i === 1 ? "🥈 " : i === 2 ? "🥉 " : ""}{r.name}</span>
+                <span className={`w-6 text-center text-sm font-extrabold ${i < 3 ? "text-[#C9A227]" : "text-neutral-400 dark:text-neutral-500"}`}>#{i + 1}</span>
+                <span className="text-sm">{r.name}</span>
               </span>
-              <span className="text-sm font-extrabold">⭐ {r.points}</span>
+              <span className="flex items-center gap-1 text-sm font-extrabold">
+                <Icon name="star" className="h-3.5 w-3.5 text-[#C9A227]" /> {r.points}
+              </span>
             </div>
           ))}
         </div>

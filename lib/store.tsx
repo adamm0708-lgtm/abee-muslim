@@ -14,6 +14,13 @@ import { deviceId, getSupabase } from "./supabase";
 
 export type ThemeChoice = "auto" | "light" | "dark";
 
+export type LastRead = {
+  surahNo: number;
+  surahName: string;
+  ayah: number;
+  at: string; // ISO date
+};
+
 export type Progress = {
   name: string;
   city: string;
@@ -27,6 +34,7 @@ export type Progress = {
   amalDone: Record<string, boolean>; // "YYYY-MM-DD:amal" -> true
   hafalanDone: Record<number, boolean>; // no surah -> hafal
   groups: string[];
+  lastRead: LastRead | null;
 };
 
 const DEFAULT_PROGRESS: Progress = {
@@ -42,6 +50,7 @@ const DEFAULT_PROGRESS: Progress = {
   amalDone: {},
   hafalanDone: {},
   groups: [],
+  lastRead: null,
 };
 
 const KEY = "abee-muslim-progress-v1";
@@ -57,10 +66,10 @@ export function levelFromPoints(points: number): { level: number; title: string;
   const levels = [
     { at: 0, title: "Pemula" },
     { at: 100, title: "Pelajar" },
-    { at: 300, title: "Pelajar Cerdas" },
+    { at: 300, title: "Penuntut Ilmu" },
     { at: 600, title: "Penghafal" },
-    { at: 1000, title: "Bintang ABEE" },
-    { at: 2000, title: "Teladan" },
+    { at: 1000, title: "Teladan" },
+    { at: 2000, title: "Istiqamah" },
   ];
   let level = 1;
   let title = levels[0].title;
@@ -89,6 +98,7 @@ type Store = {
   toggleHafalan: (no: number) => void;
   addGroup: (name: string) => void;
   removeGroup: (name: string) => void;
+  setLastRead: (r: LastRead) => void;
   resetProgress: () => void;
 };
 
@@ -224,6 +234,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         ),
       removeGroup: (name) =>
         update((p) => ({ ...p, groups: p.groups.filter((g) => g !== name) })),
+      setLastRead: (r) => update((p) => ({ ...p, lastRead: r })),
       resetProgress: () => {
         try {
           localStorage.removeItem(KEY);

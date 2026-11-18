@@ -12,31 +12,70 @@ export type Dua = {
   source: string;
 };
 
-export type MenuEntry = { slug: string; label: string; icon: string; bg: string };
+export type IconName =
+  | "hands"
+  | "beads"
+  | "mosque"
+  | "moon"
+  | "calendar"
+  | "droplet"
+  | "leaf"
+  | "flame"
+  | "pin"
+  | "compass"
+  | "check"
+  | "star"
+  | "book"
+  | "book-open"
+  | "headphones"
+  | "target"
+  | "users"
+  | "play"
+  | "home"
+  | "search"
+  | "settings"
+  | "menu"
+  | "close"
+  | "chevron-right"
+  | "arrow-left"
+  | "clock"
+  | "quote"
+  | "bookmark"
+  | "audio"
+  | "eye"
+  | "list"
+  | "cap"
+  | "trophy"
+  | "medal"
+  | "sun"
+  | "half"
+  | "alif";
+
+export type MenuEntry = { slug: string; label: string; icon: IconName };
 
 export const IBADAH_MENU: MenuEntry[] = [
-  { slug: "doa", label: "Doa Harian", icon: "🤲", bg: "bg-amber-500" },
-  { slug: "tasbih", label: "Tasbih Digital", icon: "📿", bg: "bg-teal-500" },
-  { slug: "jadwal", label: "Jadwal Shalat", icon: "🕋", bg: "bg-indigo-500" },
-  { slug: "ramadhan", label: "Road to Ramadhan", icon: "🌙", bg: "bg-pink-500" },
-  { slug: "kalender", label: "Kalender Hijriyah", icon: "📅", bg: "bg-violet-500" },
-  { slug: "shalat-wudhu", label: "Belajar Shalat & Wudhu", icon: "🕌", bg: "bg-emerald-500" },
-  { slug: "dzikir", label: "Dzikir Harian", icon: "🌿", bg: "bg-green-500" },
-  { slug: "tahlil", label: "Tahlil & Doa", icon: "🕯️", bg: "bg-yellow-500" },
-  { slug: "masjid", label: "Masjid Terdekat", icon: "📍", bg: "bg-orange-500" },
-  { slug: "kiblat", label: "Arah Kiblat", icon: "🧭", bg: "bg-sky-500" },
-  { slug: "amal", label: "Amal Harian", icon: "✅", bg: "bg-lime-500" },
-  { slug: "asmaul-husna", label: "Asmaul Husna", icon: "✨", bg: "bg-fuchsia-500" },
+  { slug: "doa", label: "Doa Harian", icon: "hands" },
+  { slug: "tasbih", label: "Tasbih Digital", icon: "beads" },
+  { slug: "jadwal", label: "Jadwal Shalat", icon: "mosque" },
+  { slug: "ramadhan", label: "Road to Ramadhan", icon: "moon" },
+  { slug: "kalender", label: "Kalender Hijriyah", icon: "calendar" },
+  { slug: "shalat-wudhu", label: "Belajar Shalat & Wudhu", icon: "droplet" },
+  { slug: "dzikir", label: "Dzikir Harian", icon: "leaf" },
+  { slug: "tahlil", label: "Tahlil & Doa", icon: "flame" },
+  { slug: "masjid", label: "Masjid Terdekat", icon: "pin" },
+  { slug: "kiblat", label: "Arah Kiblat", icon: "compass" },
+  { slug: "amal", label: "Amal Harian", icon: "check" },
+  { slug: "asmaul-husna", label: "Asmaul Husna", icon: "star" },
 ];
 
 export const QURAN_MENU: MenuEntry[] = [
-  { slug: "hafalan", label: "Hafalan Juz 30", icon: "📖", bg: "bg-emerald-500" },
-  { slug: "hijaiyah", label: "Huruf Hijaiyah", icon: "ب", bg: "bg-teal-500" },
-  { slug: "qari", label: "Suara & Qari", icon: "🎧", bg: "bg-sky-500" },
-  { slug: "baca", label: "Baca Al-Qur'an", icon: "📗", bg: "bg-green-600" },
-  { slug: "khatam", label: "Khatam Planner", icon: "🎯", bg: "bg-red-500" },
-  { slug: "kelompok", label: "Kelompok Mengaji", icon: "👥", bg: "bg-violet-500" },
-  { slug: "video", label: "Video Quotes Ayat", icon: "🎬", bg: "bg-amber-500" },
+  { slug: "hafalan", label: "Hafalan Juz 30", icon: "book" },
+  { slug: "hijaiyah", label: "Huruf Hijaiyah", icon: "alif" },
+  { slug: "qari", label: "Suara & Qari", icon: "headphones" },
+  { slug: "baca", label: "Baca Al-Qur'an", icon: "book-open" },
+  { slug: "khatam", label: "Khatam Planner", icon: "target" },
+  { slug: "kelompok", label: "Kelompok Mengaji", icon: "users" },
+  { slug: "video", label: "Video Quotes Ayat", icon: "play" },
 ];
 
 export const DUAS: Dua[] = [
@@ -519,3 +558,163 @@ export const SHALAT_STEPS = [
   "Duduk di antara dua sujud, lalu sujud kedua.",
   "Berdiri untuk rakaat berikutnya. Pada rakaat terakhir, duduk tasyahud akhir lalu salam ke kanan dan ke kiri.",
 ];
+
+// ---------- Mutiara Hari Ini ----------
+// Kutipan-kutipan hadits yang dikenal luas. Diputar berdasarkan hari.
+export const MUTIARA: { text: string; source: string }[] = [
+  {
+    text: "Kebaikan Islam seseorang tercermin dari kemampuannya meninggalkan hal-hal yang tidak berguna baginya.",
+    source: "HR. Tirmidzi",
+  },
+  {
+    text: "Sebaik-baik kalian adalah yang mempelajari Al-Qur'an dan mengajarkannya.",
+    source: "HR. Bukhari",
+  },
+  {
+    text: "Barang siapa menempuh jalan untuk mencari ilmu, Allah akan mudahkan baginya jalan menuju surga.",
+    source: "HR. Muslim",
+  },
+  {
+    text: "Kebersihan adalah sebagian dari iman.",
+    source: "HR. Muslim",
+  },
+  {
+    text: "Sebaik-baik manusia adalah yang paling bermanfaat bagi manusia lain.",
+    source: "HR. Ahmad",
+  },
+  {
+    text: "Sesungguhnya Allah itu indah dan menyukai keindahan.",
+    source: "HR. Muslim",
+  },
+  {
+    text: "Barang siapa beriman kepada Allah dan hari akhir, hendaklah ia berkata baik atau diam.",
+    source: "HR. Bukhari dan Muslim",
+  },
+];
+
+export function mutiaraHariIni(now = new Date()): { text: string; source: string } {
+  const start = new Date(now.getFullYear(), 0, 0);
+  const day = Math.floor((now.getTime() - start.getTime()) / 86400000);
+  return MUTIARA[day % MUTIARA.length];
+}
+
+// ---------- Fitur Utama (foto) ----------
+// Foto dari Wikimedia Commons (sudah diverifikasi dapat diakses).
+// Fallback: gradasi zamrud + pola geometris SVG (di komponen PhotoCard).
+export type FiturUtama = { href: string; label: string; photo: string; credit: string };
+
+export const FITUR_UTAMA: FiturUtama[] = [
+  {
+    href: "/quran/baca",
+    label: "Al-Qur'an",
+    photo:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/85/The_Holy_Qur%27an_placed_on_a_Rehal_at_the_Abuja_National_Mosque.jpg/960px-The_Holy_Qur%27an_placed_on_a_Rehal_at_the_Abuja_National_Mosque.jpg",
+    credit: "Al-Qur'an di atas rehal — Wikimedia Commons",
+  },
+  {
+    href: "/ibadah/doa",
+    label: "Doa Harian",
+    photo:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/A_Muslim_worshipper_raises_his_hands_in_sincere_supplication_%28du%E2%80%98a.jpg/960px-A_Muslim_worshipper_raises_his_hands_in_sincere_supplication_%28du%E2%80%98a.jpg",
+    credit: "Tangan menengadah berdoa — Wikimedia Commons",
+  },
+  {
+    href: "/ibadah/dzikir",
+    label: "Dzikir",
+    photo:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fc/A_Qur%E2%80%99anic_teacher_sits_on_a_carpet_holding_a_tasbih_%28prayer_beads%29_while_teaching_the_Holy_Qur%E2%80%99an.jpg/960px-A_Qur%E2%80%99anic_teacher_sits_on_a_carpet_holding_a_tasbih_%28prayer_beads%29_while_teaching_the_Holy_Qur%E2%80%99an.jpg",
+    credit: "Guru memegang tasbih — Wikimedia Commons",
+  },
+  {
+    href: "/ibadah/tasbih",
+    label: "Tasbih Digital",
+    photo:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/Tasbih_or_prayer_beads.jpg/960px-Tasbih_or_prayer_beads.jpg",
+    credit: "Tasbih — Wikimedia Commons",
+  },
+  {
+    href: "/ibadah/jadwal",
+    label: "Jadwal Shalat",
+    photo:
+      "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/42/Hassan_II_Mosque_and_Its_Minaret_at_Sunset_%E2%80%93_Casablanca%2C_Morocco.jpg/960px-Hassan_II_Mosque_and_Its_Minaret_at_Sunset_%E2%80%93_Casablanca%2C_Morocco.jpg",
+    credit: "Masjid Hassan II saat senja — Wikimedia Commons",
+  },
+];
+
+// ---------- Pembagian Juz & halaman mushaf ----------
+// Batas awal setiap juz (surah:ayat) — pembagian standar mushaf Madinah.
+export const JUZ_STARTS: { juz: number; surah: number; ayah: number }[] = [
+  { juz: 1, surah: 1, ayah: 1 },
+  { juz: 2, surah: 2, ayah: 142 },
+  { juz: 3, surah: 2, ayah: 253 },
+  { juz: 4, surah: 3, ayah: 93 },
+  { juz: 5, surah: 4, ayah: 24 },
+  { juz: 6, surah: 4, ayah: 148 },
+  { juz: 7, surah: 5, ayah: 82 },
+  { juz: 8, surah: 6, ayah: 111 },
+  { juz: 9, surah: 7, ayah: 88 },
+  { juz: 10, surah: 8, ayah: 41 },
+  { juz: 11, surah: 9, ayah: 93 },
+  { juz: 12, surah: 11, ayah: 6 },
+  { juz: 13, surah: 12, ayah: 53 },
+  { juz: 14, surah: 15, ayah: 1 },
+  { juz: 15, surah: 17, ayah: 1 },
+  { juz: 16, surah: 18, ayah: 75 },
+  { juz: 17, surah: 21, ayah: 1 },
+  { juz: 18, surah: 23, ayah: 1 },
+  { juz: 19, surah: 25, ayah: 21 },
+  { juz: 20, surah: 27, ayah: 56 },
+  { juz: 21, surah: 29, ayah: 46 },
+  { juz: 22, surah: 33, ayah: 31 },
+  { juz: 23, surah: 36, ayah: 28 },
+  { juz: 24, surah: 39, ayah: 32 },
+  { juz: 25, surah: 41, ayah: 47 },
+  { juz: 26, surah: 46, ayah: 1 },
+  { juz: 27, surah: 51, ayah: 31 },
+  { juz: 28, surah: 58, ayah: 1 },
+  { juz: 29, surah: 67, ayah: 1 },
+  { juz: 30, surah: 78, ayah: 1 },
+];
+
+// Halaman awal setiap juz pada mushaf Madinah (604 halaman).
+export const JUZ_PAGE_STARTS: number[] = [
+  1, 22, 42, 62, 82, 102, 121, 142, 162, 182, 201, 222, 242, 262, 282, 302, 322,
+  342, 362, 382, 402, 422, 442, 462, 482, 502, 522, 542, 562, 582,
+];
+
+/** Juz tempat awal sebuah surah berada. */
+export function juzOfSurah(surahNo: number): number {
+  let juz = 1;
+  for (const s of JUZ_STARTS) {
+    if (s.surah <= surahNo) juz = s.juz;
+    else break;
+  }
+  return juz;
+}
+
+/** Rentang nomor surah yang tercakup dalam satu juz (awal–akhir). */
+export function surahsInJuz(juz: number): [number, number] {
+  const start = JUZ_STARTS[juz - 1];
+  if (juz >= 30) return [start.surah, 114];
+  const next = JUZ_STARTS[juz];
+  const end = next.ayah === 1 ? next.surah - 1 : next.surah;
+  return [start.surah, Math.max(start.surah, end)];
+}
+
+/** Juz tempat sebuah halaman mushaf berada (1–604). */
+export function juzForPage(page: number): number {
+  const p = Math.min(604, Math.max(1, page));
+  let juz = 1;
+  for (let i = 0; i < JUZ_PAGE_STARTS.length; i++) {
+    if (JUZ_PAGE_STARTS[i] <= p) juz = i + 1;
+    else break;
+  }
+  return juz;
+}
+
+/** Rentang halaman mushaf untuk satu juz. */
+export function pageRangeOfJuz(juz: number): [number, number] {
+  const start = JUZ_PAGE_STARTS[juz - 1];
+  const end = juz >= 30 ? 604 : JUZ_PAGE_STARTS[juz] - 1;
+  return [start, end];
+}

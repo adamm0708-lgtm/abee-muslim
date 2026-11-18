@@ -1,18 +1,30 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Card, ProgressBar } from "@/components/ui";
+import {
+  Card,
+  Icon,
+  MenuGrid,
+  MenuItem,
+  Note,
+  PhotoCard,
+  PrayerCard,
+  ProgressBar,
+  QuoteCard,
+  SectionTitle,
+} from "@/components/ui";
 import { useProgress, levelFromPoints, todayKey } from "@/lib/store";
 import {
+  FITUR_UTAMA,
+  IBADAH_MENU,
+  QURAN_MENU,
+  mutiaraHariIni,
+} from "@/lib/data";
+import {
   CITIES,
-  PRAYER_ORDER,
   daysToRamadhan,
-  formatCountdown,
-  getTimings,
   getWeather,
   hijriToday,
-  nextPrayer,
-  type Timings,
   type Weather,
 } from "@/lib/api";
 
@@ -32,8 +44,6 @@ function greeting(): string {
 
 export default function Home() {
   const { progress, completeMission } = useProgress();
-  const [timings, setTimings] = useState<Timings | null>(null);
-  const [timingsError, setTimingsError] = useState(false);
   const [weather, setWeather] = useState<Weather | null>(null);
   const [weatherError, setWeatherError] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -41,12 +51,10 @@ export default function Home() {
 
   const city = CITIES.find((c) => c.name === progress.city) ?? CITIES[0];
   const { level, title } = levelFromPoints(progress.points);
+  const mutiara = mutiaraHariIni();
 
   useEffect(() => {
     let alive = true;
-    getTimings(progress.city)
-      .then((t) => alive && setTimings(t))
-      .catch(() => alive && setTimingsError(true));
     getWeather(city.lat, city.lon)
       .then((w) => alive && setWeather(w))
       .catch(() => alive && setWeatherError(true));
@@ -62,116 +70,127 @@ export default function Home() {
     return () => clearInterval(id);
   }, []);
 
-  const next = useMemo(() => (timings ? nextPrayer(timings, now) : null), [timings, now]);
-  const countdown = next ? formatCountdown(next.at.getTime() - now.getTime()) : "--:--:--";
   const t = todayKey();
   const missionsDoneCount = progress.missionsDone[t] ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Profil */}
+      {/* Sapaan & progres */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-abee-gold text-2xl">
-            🐼
-          </span>
-          <div>
-            <p className="text-sm font-extrabold text-abee-ink dark:text-[#F7F2E7]">{progress.name}</p>
-            <p className="text-xs text-slate-500 dark:text-[#A8C3B5]">
-              Lv {level} · {title}
-            </p>
-          </div>
+        <div>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Assalamu&apos;alaikum, {greeting()}
+          </p>
+          <p className="mt-0.5 text-lg font-extrabold text-neutral-900 dark:text-neutral-100">
+            {progress.name}
+          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Level {level} · {title}
+          </p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold">
-          <span className="rounded-full bg-white dark:bg-[#14382E] px-2.5 py-1 ring-1 ring-black/5 dark:ring-white/10">🔥 {progress.streak}</span>
-          <span className="rounded-full bg-white dark:bg-[#14382E] px-2.5 py-1 ring-1 ring-black/5 dark:ring-white/10">⭐ {progress.points}</span>
+        <div className="flex items-center gap-2 text-xs font-bold text-neutral-600 dark:text-neutral-300">
+          <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-black/5 dark:bg-[#171717] dark:ring-white/10">
+            <Icon name="flame" className="h-3.5 w-3.5 text-[#C9A227]" />
+            {progress.streak} hari
+          </span>
+          <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-black/5 dark:bg-[#171717] dark:ring-white/10">
+            <Icon name="star" className="h-3.5 w-3.5 text-[#C9A227]" />
+            {progress.points} poin
+          </span>
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 dark:text-[#B9D2C6]">
-        Assalamu&apos;alaikum 👋 <span className="font-bold text-abee-ink dark:text-[#F7F2E7]">{greeting()}</span>
-      </p>
+      {/* Kartu shalat berikutnya (gelap) */}
+      <PrayerCard />
 
-      {/* Tanggal Hijriah */}
-      <Card className="flex items-center justify-between bg-gradient-to-r from-abee-green to-abee-teal !text-white">
-        <div>
-          <p className="text-xs opacity-80">Tanggal Hijriah hari ini</p>
-          <p className="text-lg font-extrabold">{hijriToday()}</p>
-          <p className="text-xs opacity-80">
+      {/* Hijriah + cuaca */}
+      <div className="grid grid-cols-2 gap-3">
+        <Card>
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            Hijriah hari ini
+          </p>
+          <p className="mt-1 text-base font-extrabold leading-snug text-neutral-900 dark:text-neutral-100">
+            {hijriToday()}
+          </p>
+          <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
             {now.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
           </p>
-        </div>
-        <span className="text-4xl" aria-hidden>
-          🌙
-        </span>
-      </Card>
-
-      {/* Shalat berikutnya */}
-      <Card className="bg-gradient-to-br from-[#1e2a78] to-[#5b2a86] !text-white">
-        <p className="text-xs opacity-80">Shalat berikutnya · {progress.city}</p>
-        {timings && next ? (
-          <>
-            <p className="mt-1 text-2xl font-extrabold">
-              {next.label} {timings[next.name]}
-            </p>
-            <p className="font-mono text-4xl font-extrabold tracking-wider">{countdown}</p>
-            <div className="mt-3 grid grid-cols-6 gap-1.5">
-              {PRAYER_ORDER.map((name) => (
-                <div
-                  key={name}
-                  className={`rounded-xl px-1 py-2 text-center ${
-                    next.name === name ? "bg-abee-gold text-abee-ink dark:text-[#F7F2E7]" : "bg-white/10"
-                  }`}
-                >
-                  <p className="text-[10px] opacity-80">{name}</p>
-                  <p className="text-xs font-extrabold">{timings[name]}</p>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : timingsError ? (
-          <p className="mt-2 text-sm">
-            Jadwal shalat tidak bisa dimuat (periksa koneksi internet). Coba lagi nanti.
+        </Card>
+        <Card>
+          <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+            Cuaca · {progress.city}
           </p>
-        ) : (
-          <p className="mt-2 text-sm">Memuat jadwal shalat…</p>
-        )}
-      </Card>
-
-      {/* Cuaca + Road to Ramadhan */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="bg-gradient-to-br from-sky-400 to-sky-600 !text-white">
-          <p className="text-xs opacity-80">Cuaca · {progress.city}</p>
           {weather ? (
             <>
-              <p className="mt-1 text-3xl font-extrabold">{weather.temp}°</p>
-              <p className="text-sm font-bold">{weather.desc}</p>
-              <p className="text-xs opacity-80">
-                💧 {weather.humidity}% · 💨 {weather.wind} km/j
+              <p className="mt-1 text-3xl font-extrabold text-neutral-900 dark:text-neutral-100">
+                {weather.temp}°
+              </p>
+              <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">{weather.desc}</p>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Kelembapan {weather.humidity}% · Angin {weather.wind} km/j
               </p>
             </>
           ) : weatherError ? (
-            <p className="mt-2 text-sm">Cuaca tidak bisa dimuat.</p>
+            <p className="mt-2 text-sm text-neutral-500">Cuaca tidak bisa dimuat.</p>
           ) : (
-            <p className="mt-2 text-sm">Memuat cuaca…</p>
+            <p className="mt-2 text-sm text-neutral-500">Memuat cuaca…</p>
           )}
         </Card>
-        <Link href="/ibadah/ramadhan">
-          <Card className="h-full bg-gradient-to-br from-violet-500 to-fuchsia-500 !text-white">
-            <p className="text-xs opacity-80">Road to Ramadhan</p>
-            <p className="mt-1 text-4xl font-extrabold">
-              {ramadhanDays === null ? "…" : ramadhanDays}
-            </p>
-            <p className="text-sm font-bold">hari lagi</p>
-          </Card>
-        </Link>
       </div>
 
-      {/* Misi hari ini */}
+      {/* Road to Ramadhan */}
+      <Link href="/ibadah/ramadhan">
+        <div className="flex items-center justify-between rounded-2xl bg-[#0A0A0A] px-5 py-4 text-white shadow-sm">
+          <div>
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-white/60">
+              Road to Ramadhan
+            </p>
+            <p className="mt-1 text-sm font-bold">
+              {ramadhanDays === null ? "…" : `${ramadhanDays} hari lagi`}
+            </p>
+          </div>
+          <span className="flex items-center gap-1 text-xs font-bold text-[#D4AF37]">
+            Lihat <Icon name="chevron-right" className="h-4 w-4" />
+          </span>
+        </div>
+      </Link>
+
+      {/* Fitur Utama */}
+      <div>
+        <SectionTitle title="Fitur Utama" />
+        <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+          {FITUR_UTAMA.map((f) => (
+            <PhotoCard key={f.href} href={f.href} label={f.label} photo={f.photo} />
+          ))}
+        </div>
+      </div>
+
+      {/* Menu Lainnya */}
+      <div>
+        <SectionTitle title="Menu Lainnya" />
+        <MenuGrid>
+          {IBADAH_MENU.map((m) => (
+            <MenuItem key={`i-${m.slug}`} href={`/ibadah/${m.slug}`} icon={m.icon} label={m.label} />
+          ))}
+          {QURAN_MENU.map((m) => (
+            <MenuItem key={`q-${m.slug}`} href={`/quran/${m.slug}`} icon={m.icon} label={m.label} />
+          ))}
+        </MenuGrid>
+      </div>
+
+      {/* Mutiara hari ini */}
+      <div>
+        <SectionTitle title="Mutiara Hari Ini" />
+        <QuoteCard text={mutiara.text} source={mutiara.source} />
+      </div>
+
+      {/* Misi hari ini — tampilan tenang */}
       <Card>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-extrabold text-abee-ink dark:text-[#F7F2E7]">🎯 Misi hari ini</h2>
-          <span className="text-xs font-bold text-slate-500 dark:text-[#A8C3B5]">{missionsDoneCount}/3</span>
+          <h2 className="font-extrabold text-neutral-900 dark:text-neutral-100">Misi hari ini</h2>
+          <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+            {missionsDoneCount}/3 selesai
+          </span>
         </div>
         <div className="flex flex-col gap-3">
           {MISSIONS.map((m) => {
@@ -183,13 +202,26 @@ export default function Home() {
                 : (progress.missionProgress[t]?.[`${m.id}-count`] ?? 0)
             );
             return (
-              <div key={m.id} className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3 ring-1 ring-black/5 dark:ring-white/10">
+              <div
+                key={m.id}
+                className="rounded-2xl bg-[#F5F5F4] p-3 ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10"
+              >
                 <div className="flex items-center justify-between gap-2">
-                  <Link href={m.href} className="text-sm font-bold text-abee-ink dark:text-[#F7F2E7]">
+                  <Link
+                    href={m.href}
+                    className="text-sm font-bold text-neutral-900 dark:text-neutral-100"
+                  >
                     {m.title}
                   </Link>
-                  <span className="text-xs font-bold text-slate-500 dark:text-[#A8C3B5]">
-                    {done ? "Selesai ✓" : `${val}/${m.target}`}
+                  <span className="flex shrink-0 items-center gap-1 text-xs font-bold text-neutral-500 dark:text-neutral-400">
+                    {done ? (
+                      <>
+                        <Icon name="check" className="h-3.5 w-3.5 text-[#0B3D39] dark:text-[#D4AF37]" />
+                        Selesai · +20 poin
+                      </>
+                    ) : (
+                      `${val}/${m.target}`
+                    )}
                   </span>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
@@ -199,11 +231,13 @@ export default function Home() {
                   <button
                     disabled={done}
                     onClick={() => completeMission(m.id)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                      done ? "bg-emerald-100 dark:bg-emerald-400/20 text-emerald-700 dark:text-emerald-300" : "bg-abee-green dark:bg-[#D4AF37] text-white dark:text-[#0B2E26] active:scale-95"
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold transition active:scale-95 ${
+                      done
+                        ? "bg-black/5 text-neutral-400 dark:bg-white/5 dark:text-neutral-500"
+                        : "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
                     }`}
                   >
-                    {done ? "+20 poin ✓" : "Selesai +20"}
+                    {done ? "Selesai" : "Tandai selesai"}
                   </button>
                 </div>
               </div>
@@ -212,41 +246,10 @@ export default function Home() {
         </div>
       </Card>
 
-      {/* Menu cepat */}
-      <div>
-        <h2 className="mb-2 font-extrabold text-abee-ink dark:text-[#F7F2E7]">🕌 Ibadah</h2>
-        <div className="grid grid-cols-4 gap-3">
-          {[
-            { href: "/ibadah/doa", icon: "🤲", label: "Doa Harian", bg: "bg-amber-500" },
-            { href: "/ibadah/tasbih", icon: "📿", label: "Tasbih Digital", bg: "bg-teal-500" },
-            { href: "/ibadah/jadwal", icon: "🕋", label: "Jadwal Shalat", bg: "bg-indigo-500" },
-            { href: "/ibadah/dzikir", icon: "🌿", label: "Dzikir Harian", bg: "bg-emerald-500" },
-          ].map((m) => (
-            <Link
-              key={m.href}
-              href={m.href}
-              className="flex flex-col items-center gap-2 rounded-2xl bg-white dark:bg-[#14382E] p-3 text-center shadow-sm ring-1 ring-black/5 dark:ring-white/10 transition active:scale-95"
-            >
-              <span className={`flex h-14 w-14 items-center justify-center rounded-2xl text-2xl text-white ${m.bg}`}>
-                {m.icon}
-              </span>
-              <span className="text-xs font-bold leading-tight text-abee-ink dark:text-[#F7F2E7]">{m.label}</span>
-            </Link>
-          ))}
-        </div>
-        <div className="mt-3 flex gap-3">
-          <Link href="/ibadah" className="flex-1 rounded-2xl bg-abee-green dark:bg-[#D4AF37] py-3 text-center text-sm font-bold text-white dark:text-[#0B2E26]">
-            Semua Menu Ibadah →
-          </Link>
-          <Link href="/quran" className="flex-1 rounded-2xl bg-white dark:bg-[#14382E] py-3 text-center text-sm font-bold text-abee-green dark:text-teal-300 ring-1 ring-black/10 dark:ring-white/15">
-            Al-Qur&apos;an →
-          </Link>
-        </div>
-      </div>
-
-      <p className="pb-2 text-center text-[11px] text-slate-400 dark:text-[#7FA294]">
-        Jadwal shalat: Aladhan API (Metode Kemenag) · Cuaca: Open-Meteo · Data tersimpan di perangkatmu
-      </p>
+      <Note>
+        Jadwal shalat: Aladhan API (Metode Kemenag) · Cuaca: Open-Meteo · Foto fitur: Wikimedia
+        Commons · Data tersimpan di perangkatmu dan disinkronkan ke cloud.
+      </Note>
     </div>
   );
 }

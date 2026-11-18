@@ -15,18 +15,93 @@ html {
 }
 
 body {
-  background: #ffffff;
-  color: #12211f;
+  background: #f4f5f3;
+  color: #111111;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .dark body {
-  background: #0b2e26;
-  color: #f7f2e7;
+  background: #0a0a0a;
+  color: #f5f5f4;
 }
 
+/* Teks Arab: Amiri Quran / Scheherazade New (Google Fonts), fallback Amiri. */
 .arabic {
-  font-family: "Amiri", "Traditional Arabic", "Scheherazade", serif;
+  font-family: "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
   line-height: 2;
   direction: rtl;
+}
+
+/* Teks mushaf: Arab besar, rata kanan-kiri, spasi baris lega. */
+.mushaf {
+  font-family: "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
+  direction: rtl;
+  text-align: justify;
+  text-align-last: justify;
+  line-height: 2.5;
+  word-spacing: 0.05em;
+}
+
+.mushaf .ayah {
+  cursor: pointer;
+  border-radius: 0.375rem;
+  padding: 0 0.15em;
+  transition: background-color 0.15s ease;
+}
+
+.mushaf .ayah:hover {
+  background: rgb(0 0 0 / 0.05);
+}
+
+.dark .mushaf .ayah:hover {
+  background: rgb(255 255 255 / 0.07);
+}
+
+.mushaf .ayah.last-read {
+  background: rgb(16 185 129 / 0.14);
+  box-shadow: inset 0 0 0 1px rgb(16 185 129 / 0.35);
+}
+
+.dark .mushaf .ayah.last-read {
+  background: rgb(16 185 129 / 0.18);
+}
+
+.mushaf .ayah-mark {
+  color: #c9a227;
+  font-weight: 700;
+  white-space: nowrap;
+  padding: 0 0.1em;
+}
+
+.mushaf .ayah-mark .ayah-no {
+  font-size: 0.55em;
+  vertical-align: super;
+  letter-spacing: 0;
+}
+
+/* Wordmark serif elegan untuk header. */
+.font-wordmark {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: 0.02em;
+}
+
+/* Sembunyikan scrollbar untuk deretan horizontal (chip surah, fitur utama). */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pola geometris halus untuk fallback kartu foto (saat gambar gagal dimuat). */
+.geo-pattern {
+  background-color: #0b3d39;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23C9A227' stroke-opacity='0.35'%3E%3Cpath d='M28 8l5 15 15 5-15 5-5 15-5-15-15-5 15-5z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 56px;
+}
+
+.dark .geo-pattern {
+  background-color: #111111;
 }
