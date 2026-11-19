@@ -61,20 +61,24 @@ export function DoaPage() {
 export function TasbihPage() {
   const { progress, setTasbih, addPoints } = useProgress();
   const [target, setTarget] = useState(33);
-  const count = progress.tasbihCounts["tasbih"] ?? 0;
-  const done = count >= target;
+  // Total ketukan tidak pernah direset saat putaran selesai: hitungan
+  // terus berjalan, tiap kelipatan target = satu putaran selesai.
+  const total = progress.tasbihCounts["tasbih"] ?? 0;
+  const roundsDone = Math.floor(total / target);
+  const inRound = total === 0 ? 0 : total % target === 0 ? target : total % target;
+  const roundNow = roundsDone + 1;
+  const roundJustDone = total > 0 && total % target === 0;
   const tap = () => {
-    if (done) return;
-    const next = count + 1;
+    const next = total + 1;
     setTasbih("tasbih", next);
-    if (next === target) addPoints(10);
+    if (next % target === 0) addPoints(10);
   };
   return (
     <div>
       <PageHeader title="Tasbih Digital" subtitle="Ketuk lingkaran untuk berdzikir" backHref="/ibadah" />
       <Card className="flex flex-col items-center gap-4 py-6 text-center">
-        <div className="flex gap-2">
-          {[33, 99, 100].map((t) => (
+        <div className="flex flex-wrap justify-center gap-2">
+          {[33, 99, 100, 1000].map((t) => (
             <button
               key={t}
               onClick={() => setTarget(t)}
@@ -87,19 +91,24 @@ export function TasbihPage() {
         <button
           onClick={tap}
           className={`flex h-44 w-44 flex-col items-center justify-center rounded-full text-white shadow-lg ring-4 transition active:scale-95 ${
-            done
+            roundJustDone
               ? "bg-[#0B3D39] ring-[#0B3D39]/20 dark:bg-[#D4AF37] dark:text-[#0A0A0A] dark:ring-[#D4AF37]/30"
               : "bg-[#0A0A0A] ring-[#0A0A0A]/10 dark:bg-[#D4AF37] dark:text-[#0A0A0A] dark:ring-[#D4AF37]/30"
           }`}
           aria-label="Ketuk untuk menghitung tasbih"
         >
-          <span className="text-5xl font-extrabold">{count}</span>
+          <span className="text-5xl font-extrabold">{inRound}</span>
           <span className="text-sm opacity-80">/ {target}</span>
         </button>
         <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
-          {done ? "Alhamdulillah, target tercapai — +10 poin" : "Subhanallah · Alhamdulillah · Allahu Akbar"}
+          {roundJustDone
+            ? `Alhamdulillah, putaran ke-${roundsDone} selesai — +10 poin`
+            : "Subhanallah · Alhamdulillah · Allahu Akbar"}
         </p>
-        <ProgressBar value={count} max={target} />
+        <p className="text-xs font-bold text-neutral-500 dark:text-neutral-400">
+          Putaran ke-{roundNow} · Total {total}x
+        </p>
+        <ProgressBar value={inRound} max={target} />
         <button
           onClick={() => setTasbih("tasbih", 0)}
           className="rounded-full bg-[#F5F5F4] px-4 py-2 text-sm font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300"
