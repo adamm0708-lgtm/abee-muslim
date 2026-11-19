@@ -86,12 +86,6 @@ body {
   padding: 0 0.1em;
 }
 
-.mushaf .ayah-mark .ayah-no {
-  font-size: 0.55em;
-  vertical-align: super;
-  letter-spacing: 0;
-}
-
 /* Wordmark serif elegan untuk header. */
 .font-wordmark {
   font-family: Georgia, "Times New Roman", serif;

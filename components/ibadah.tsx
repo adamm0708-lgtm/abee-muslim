@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Card, Icon, Note, PageHeader, ProgressBar } from "@/components/ui";
+import { Card, Icon, Note, PageHeader, ProgressBar, toArabicIndic } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 import {
   HIJRI_MONTHS_SHORT_ID,
@@ -646,13 +646,6 @@ function YasinReader() {
     };
   }, []);
 
-  useEffect(() => {
-    if (progress.lastRead?.surahNo !== 36) {
-      setLastRead({ surahNo: 36, surahName: "Yaseen", ayah: 1, at: new Date().toISOString() });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const markAyah = (ayah: number) => {
     setLastRead({ surahNo: 36, surahName: "Yaseen", ayah, at: new Date().toISOString() });
   };
@@ -775,9 +768,7 @@ function YasinReader() {
                   title={`Ketuk untuk menandai Ayat ${a.numberInSurah} sebagai terakhir dibaca`}
                 >
                   {a.text}{" "}
-                  <span className="ayah-mark">
-                    ۝<span className="ayah-no">{a.numberInSurah}</span>
-                  </span>{" "}
+                  <span className="ayah-mark">{toArabicIndic(a.numberInSurah)}</span>{" "}
                 </span>
               ))}
             </p>

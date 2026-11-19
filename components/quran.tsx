@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Card, Chip, Icon, Note, PageHeader, ProgressBar, StarBadge } from "@/components/ui";
+import { Card, Chip, Icon, Note, PageHeader, ProgressBar, StarBadge, toArabicIndic } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 import {
   HIJAIYAH,
@@ -255,19 +255,6 @@ export function BacaPage() {
       alive = false;
     };
   }, [readerSurah, embedded]);
-
-  // Catat posisi baca saat membuka surah (ayat 1, kecuali surah yang sama sudah tersimpan).
-  useEffect(() => {
-    if (readerSurah == null) return;
-    const meta =
-      surahs?.find((s) => s.number === readerSurah) ??
-      embeddedSurahMeta().find((s) => s.number === readerSurah);
-    const name = meta?.englishName ?? `Surah ${readerSurah}`;
-    if (progress.lastRead?.surahNo !== readerSurah) {
-      setLastRead({ surahNo: readerSurah, surahName: name, ayah: 1, at: new Date().toISOString() });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readerSurah]);
 
   const arabicLines = embedded ? embedded.arabic : apiSurah?.ayahs.map((a) => a.text) ?? [];
   const transLines = embedded ? embedded.translation : apiTrans;
@@ -550,9 +537,7 @@ export function BacaPage() {
                     title={`Ketuk untuk menandai Ayat ${i + 1} sebagai terakhir dibaca`}
                   >
                     {line}{" "}
-                    <span className="ayah-mark">
-                      ۝<span className="ayah-no">{i + 1}</span>
-                    </span>{" "}
+                    <span className="ayah-mark">{toArabicIndic(i + 1)}</span>{" "}
                   </span>
                 ))}
               </p>

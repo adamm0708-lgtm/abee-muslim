@@ -849,3 +849,13 @@ export function PrayerCard() {
     </div>
   );
 }
+
+/** Angka Arab-Indik (٠١٢٣٤٥٦٧٨٩): dipakai untuk nomor ayat akhir ayat.
+ * Font UthmanicHafs menggambar angka Arab-Indik SEBAGAI ornamen penanda
+ * akhir ayat — angka DI DALAM lingkaran (terverifikasi untuk 1–286).
+ * JANGAN tambahkan karakter ۝ di depannya: ۝ digambar sebagai lingkaran
+ * kosong terpisah, jadi akan muncul DUA lingkaran. Angka Latin juga jangan:
+ * angkanya akan jatuh di luar lingkaran. */
+export function toArabicIndic(n: number): string {
+  return String(n).replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[Number(d)]);
+}
