@@ -564,6 +564,25 @@ function stripLeadingBismillah(text: string): string {
  * Basmalah ditampilkan sebagai baris tersendiri di atas teks (kecuali
  * surah 1 yang Basmalah-nya memang ayat 1, dan surah 9 yang tanpa Basmalah).
  */
+/**
+ * Teks tajwid satu surah (warna per hukum bacaan) dari Quran.com API v4:
+ * `quran/verses/uthmani_tajweed` — teks Mushaf Uthmani yang sama dengan
+ * fetchSurahText, ditambah tag `<tajweed class=X>` per huruf dan
+ * `<span class=end>` penanda akhir ayat. per_page=300 menutupi surah
+ * terpanjang (286 ayat); tanpa per_page API hanya mengembalikan 10 ayat.
+ * Tidak ada cadangan: kalau gagal, pemanggil memakai teks polos.
+ */
+export async function fetchSurahTajweed(surahNo: number): Promise<string[]> {
+  const json = (await fetchJson(
+    `https://api.quran.com/api/v4/quran/verses/uthmani_tajweed?chapter_number=${surahNo}&per_page=300`
+  )) as { verses?: { text_uthmani_tajweed?: string }[] };
+  const verses = json.verses;
+  if (!verses || verses.length === 0) throw new Error("Quran.com tajwid: tidak ada ayat");
+  const lines = verses.map((v) => (v.text_uthmani_tajweed ?? "").trim());
+  if (lines.some((l) => !l)) throw new Error("Quran.com tajwid: teks ayat kosong");
+  return lines;
+}
+
 export async function fetchSurahText(surahNo: number): Promise<SurahText> {
   try {
     const json = (await fetchJson(

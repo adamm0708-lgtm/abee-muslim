@@ -86,6 +86,90 @@ body {
   padding: 0 0.1em;
 }
 
+/* Warna tajwid (palet standar Quran.com, disesuaikan agar terbaca di
+   latar terang maupun gelap). Satu warna = satu kelompok hukum bacaan,
+   supaya pemula langsung tahu cara membacanya — lihat TAJWEED_LEGEND
+   di lib/tajweed.ts untuk arti tiap warna. */
+.mushaf .tj-ham_wasl,
+.mushaf .tj-slnt,
+.mushaf .tj-laam_shamsiyah {
+  color: #8a8a8a;
+}
+.mushaf .tj-madda_normal {
+  color: #537fff;
+}
+.mushaf .tj-madda_permissible {
+  color: #4050b5;
+}
+.mushaf .tj-madda_necessary {
+  color: #1e3a8a;
+}
+.mushaf .tj-madda_obligatory {
+  color: #2144c1;
+}
+.mushaf .tj-qalaqah {
+  color: #dd0008;
+}
+.mushaf .tj-ikhafa {
+  color: #9400a8;
+}
+.mushaf .tj-ikhafa_shafawi {
+  color: #d500b7;
+}
+.mushaf .tj-idgham_ghunnah,
+.mushaf .tj-idgham_wo_ghunnah,
+.mushaf .tj-idgham_shafawi,
+.mushaf .tj-idgham_mutajanisayn,
+.mushaf .tj-idgham_mutaqaribayn {
+  color: #15803d;
+}
+.mushaf .tj-iqlab {
+  color: #0891b2;
+}
+.mushaf .tj-ghunnah {
+  color: #ea580c;
+}
+
+.dark .mushaf .tj-ham_wasl,
+.dark .mushaf .tj-slnt,
+.dark .mushaf .tj-laam_shamsiyah {
+  color: #9ca3af;
+}
+.dark .mushaf .tj-madda_normal {
+  color: #7da2ff;
+}
+.dark .mushaf .tj-madda_permissible {
+  color: #818cf8;
+}
+.dark .mushaf .tj-madda_necessary {
+  color: #93c5fd;
+}
+.dark .mushaf .tj-madda_obligatory {
+  color: #60a5fa;
+}
+.dark .mushaf .tj-qalaqah {
+  color: #ff5a5a;
+}
+.dark .mushaf .tj-ikhafa {
+  color: #c084fc;
+}
+.dark .mushaf .tj-ikhafa_shafawi {
+  color: #e879f9;
+}
+.dark .mushaf .tj-idgham_ghunnah,
+.dark .mushaf .tj-idgham_wo_ghunnah,
+.dark .mushaf .tj-idgham_shafawi,
+.dark .mushaf .tj-idgham_mutajanisayn,
+.dark .mushaf .tj-idgham_mutaqaribayn {
+  color: #4ade80;
+}
+.dark .mushaf .tj-iqlab {
+  color: #22d3ee;
+}
+.dark .mushaf .tj-ghunnah {
+  color: #fb923c;
+}
+
 /* Wordmark serif elegan untuk header. */
 .font-wordmark {
   font-family: Georgia, "Times New Roman", serif;

@@ -17,9 +17,11 @@ import {
   QURAN_SOURCE_NOTE,
   embeddedSurahMeta,
   fetchSurahText,
+  fetchSurahTajweed,
   getSurahList,
   type SurahMeta,
 } from "@/lib/api";
+import { TAJWEED_LEGEND, tajweedToSafeHtml } from "@/lib/tajweed";
 
 // ---------- Hafalan Juz 30 ----------
 export function HafalanPage() {
@@ -202,6 +204,8 @@ export function BacaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showTranslation, setShowTranslation] = useState(true);
+  const [showTajweed, setShowTajweed] = useState(true);
+  const [tajweedLines, setTajweedLines] = useState<string[] | null>(null);
   const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("lg");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [ayahJumpOpen, setAyahJumpOpen] = useState(false);
@@ -256,7 +260,25 @@ export function BacaPage() {
     };
   }, [readerSurah, embedded]);
 
+  // Warna tajwid: dimuat terpisah dari teks polos (sumber sama, Quran.com),
+  // untuk semua surah termasuk yang tertanam di Juz 30. Gagal = teks polos.
+  useEffect(() => {
+    if (readerSurah == null || !showTajweed) {
+      setTajweedLines(null);
+      return;
+    }
+    let alive = true;
+    fetchSurahTajweed(readerSurah)
+      .then((lines) => alive && setTajweedLines(lines))
+      .catch(() => alive && setTajweedLines(null));
+    return () => {
+      alive = false;
+    };
+  }, [readerSurah, showTajweed]);
+
   const arabicLines = embedded ? embedded.arabic : apiSurah?.ayahs.map((a) => a.text) ?? [];
+  const tajweedOn =
+    showTajweed && tajweedLines != null && tajweedLines.length === arabicLines.length;
   const transLines = embedded ? embedded.translation : apiTrans;
   const readerMeta =
     surahs?.find((s) => s.number === readerSurah) ??
@@ -393,6 +415,17 @@ export function BacaPage() {
                     </span>
                     <span className="text-xs text-[#0B3D39] dark:text-[#D4AF37]">
                       {showTranslation ? "Tampil" : "Sembunyi"}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setShowTajweed((v) => !v)}
+                    className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-bold hover:bg-black/5 dark:hover:bg-white/5"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon name="droplet" className="h-4 w-4" /> Warna Tajwid
+                    </span>
+                    <span className="text-xs text-[#0B3D39] dark:text-[#D4AF37]">
+                      {showTajweed ? "Tampil" : "Sembunyi"}
                     </span>
                   </button>
                   <div className="mt-1 flex items-center justify-between rounded-xl px-2 py-2">
@@ -536,7 +569,15 @@ export function BacaPage() {
                     className={`ayah ${lastReadAyah === i + 1 ? "last-read" : ""}`}
                     title={`Ketuk untuk menandai Ayat ${i + 1} sebagai terakhir dibaca`}
                   >
-                    {line}{" "}
+                    {showTajweed && tajweedLines && tajweedLines.length === arabicLines.length ? (
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: tajweedToSafeHtml(tajweedLines[i]),
+                        }}
+                      />
+                    ) : (
+                      line
+                    )}{" "}
                     <span className="ayah-mark">{toArabicIndic(i + 1)}</span>{" "}
                   </span>
                 ))}
@@ -556,6 +597,35 @@ export function BacaPage() {
             </>
           )}
         </Card>
+
+        {/* Panduan warna tajwid (untuk pemula) */}
+        {tajweedOn && (
+          <Card className="mt-3">
+            <p className="mb-2 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+              Panduan warna tajwid
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {TAJWEED_LEGEND.map((r) => (
+                <span
+                  key={r.name}
+                  className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1.5 text-xs font-bold text-neutral-700 dark:bg-white/5 dark:text-neutral-300"
+                >
+                  <span
+                    className="h-2.5 w-2.5 shrink-0 rounded-full"
+                    style={{ backgroundColor: r.swatch }}
+                  />
+                  {r.name} — {r.desc}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+              Warna mengikuti hukum bacaan pada hurufnya. Data warna tajwid: Quran.com API
+              (teks Uthmani yang sama). Matikan lewat Pengaturan → Warna Tajwid kalau mau
+              tampilan mushaf polos.
+            </p>
+          </Card>
+        )}
+
         <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
           Ketuk sebuah ayat untuk menandainya sebagai terakhir dibaca. {QURAN_SOURCE_NOTE}.
         </p>
