@@ -114,6 +114,70 @@ export const QURAN_MENU: MenuEntry[] = [
   { slug: "khatam", label: "Khatam Planner", icon: "target" },
   { slug: "kelompok", label: "Kelompok Mengaji", icon: "users" },
   { slug: "video", label: "Video Quotes Ayat", icon: "play" },
+  { slug: "pilihan", label: "Surat Pilihan", icon: "bookmark" },
+];
+
+// ---------- Surat Pilihan (menu baru, Adam 2026-11-20) ----------
+
+export type SuratPilihanEntry = {
+  slug: string;
+  label: string;
+  arabic: string;
+  desc: string;
+  surah?: number; // buka langsung surah ini di Baca Al-Qur'an
+  juz?: number; // buka daftar surah juz ini
+};
+
+export const SURAT_PILIHAN: SuratPilihanEntry[] = [
+  { slug: "juz-amma", label: "Juz Amma", arabic: "جُزْء عَمَّ", desc: "Juz 30 · 37 surah", juz: 30 },
+  { slug: "al-mulk", label: "Al-Mulk", arabic: "المُلْكِ", desc: "Surah 67 · 30 ayat · Makkiyah", surah: 67 },
+  { slug: "ar-rahman", label: "Ar-Rahman", arabic: "الرَّحْمَٰن", desc: "Surah 55 · 78 ayat · Madaniyah", surah: 55 },
+  { slug: "al-waqiah", label: "Al-Waqi'ah", arabic: "الوَاقِعَةِ", desc: "Surah 56 · 96 ayat · Makkiyah", surah: 56 },
+  { slug: "al-kahf", label: "Al-Kahf", arabic: "الكَهْفِ", desc: "Surah 18 · 110 ayat · Makkiyah", surah: 18 },
+];
+
+// Daftar 37 surah Juz 30 (nama + jumlah ayat dari AlQuran Cloud API,
+// nama Arab dinormalisasi ke sukun biasa seperti data aplikasi lainnya).
+export type JuzSurahShort = { no: number; name: string; arabicName: string; ayahs: number };
+
+export const JUZ30_LIST: JuzSurahShort[] = [
+  { no: 78, name: "An-Naba'", arabicName: "النَّبَإِ", ayahs: 40 },
+  { no: 79, name: "An-Nazi'at", arabicName: "النَّازِعَاتِ", ayahs: 46 },
+  { no: 80, name: "'Abasa", arabicName: "عَبَسَ", ayahs: 42 },
+  { no: 81, name: "At-Takwir", arabicName: "التَّكْوِيرِ", ayahs: 29 },
+  { no: 82, name: "Al-Infitar", arabicName: "الانفِطَارِ", ayahs: 19 },
+  { no: 83, name: "Al-Mutaffifin", arabicName: "المُطَفِّفِينَ", ayahs: 36 },
+  { no: 84, name: "Al-Insyiqaq", arabicName: "الانشِقَاقِ", ayahs: 25 },
+  { no: 85, name: "Al-Buruj", arabicName: "البُرُوجِ", ayahs: 22 },
+  { no: 86, name: "At-Tariq", arabicName: "الطَّارِقِ", ayahs: 17 },
+  { no: 87, name: "Al-A'la", arabicName: "الأَعْلَىٰ", ayahs: 19 },
+  { no: 88, name: "Al-Gasyiyah", arabicName: "الغَاشِيَةِ", ayahs: 26 },
+  { no: 89, name: "Al-Fajr", arabicName: "الفَجْرِ", ayahs: 30 },
+  { no: 90, name: "Al-Balad", arabicName: "البَلَدِ", ayahs: 20 },
+  { no: 91, name: "Asy-Syams", arabicName: "الشَّمْسِ", ayahs: 15 },
+  { no: 92, name: "Al-Lail", arabicName: "اللَّيْلِ", ayahs: 21 },
+  { no: 93, name: "Ad-Duha", arabicName: "الضُّحَىٰ", ayahs: 11 },
+  { no: 94, name: "Asy-Syarh", arabicName: "الشَّرْحِ", ayahs: 8 },
+  { no: 95, name: "At-Tin", arabicName: "التِّينِ", ayahs: 8 },
+  { no: 96, name: "Al-'Alaq", arabicName: "العَلَقِ", ayahs: 19 },
+  { no: 97, name: "Al-Qadr", arabicName: "القَدْرِ", ayahs: 5 },
+  { no: 98, name: "Al-Bayyinah", arabicName: "البَيِّنَةِ", ayahs: 8 },
+  { no: 99, name: "Az-Zalzalah", arabicName: "الزَّلْزَلَةِ", ayahs: 8 },
+  { no: 100, name: "Al-'Adiyat", arabicName: "العَادِيَاتِ", ayahs: 11 },
+  { no: 101, name: "Al-Qari'ah", arabicName: "القَارِعَةِ", ayahs: 11 },
+  { no: 102, name: "At-Takasur", arabicName: "التَّكَاثُرِ", ayahs: 8 },
+  { no: 103, name: "Al-'Ashr", arabicName: "العَصْرِ", ayahs: 3 },
+  { no: 104, name: "Al-Humazah", arabicName: "الهُمَزَةِ", ayahs: 9 },
+  { no: 105, name: "Al-Fil", arabicName: "الفِيلِ", ayahs: 5 },
+  { no: 106, name: "Quraisy", arabicName: "قُرَيْشٍ", ayahs: 4 },
+  { no: 107, name: "Al-Ma'un", arabicName: "المَاعُونِ", ayahs: 7 },
+  { no: 108, name: "Al-Kautsar", arabicName: "الكَوْثَرِ", ayahs: 3 },
+  { no: 109, name: "Al-Kafirun", arabicName: "الكَافِرُونَ", ayahs: 6 },
+  { no: 110, name: "An-Nasr", arabicName: "النَّصْرِ", ayahs: 3 },
+  { no: 111, name: "Al-Lahab", arabicName: "المَسَدِ", ayahs: 5 },
+  { no: 112, name: "Al-Ikhlas", arabicName: "الإِخْلَاصِ", ayahs: 4 },
+  { no: 113, name: "Al-Falaq", arabicName: "الفَلَقِ", ayahs: 5 },
+  { no: 114, name: "An-Nas", arabicName: "النَّاسِ", ayahs: 6 },
 ];
 
 export const DUAS: Dua[] = [

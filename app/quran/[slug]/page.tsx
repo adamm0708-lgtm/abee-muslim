@@ -7,6 +7,7 @@ import {
   KhatamPage,
   KelompokPage,
   QariPage,
+  SuratPilihanPage,
   VideoPage,
 } from "@/components/quran";
 
@@ -22,6 +23,7 @@ const PAGES: Record<string, () => JSX.Element> = {
   khatam: KhatamPage,
   kelompok: KelompokPage,
   video: VideoPage,
+  pilihan: SuratPilihanPage,
 };
 
 export default function QuranDetail({ params }: { params: { slug: string } }) {

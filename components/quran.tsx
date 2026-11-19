@@ -5,8 +5,10 @@ import { Card, Chip, Icon, Note, PageHeader, ProgressBar, StarBadge, toArabicInd
 import { useProgress } from "@/lib/store";
 import {
   HIJAIYAH,
+  JUZ30_LIST,
   JUZ30_SURAHS,
   QARIS,
+  SURAT_PILIHAN,
   juzForPage,
   juzOfSurah,
   pageRangeOfJuz,
@@ -174,6 +176,99 @@ export function QariPage() {
   );
 }
 
+// ---------- Surat Pilihan ----------
+export function SuratPilihanPage() {
+  const [showJuz30, setShowJuz30] = useState(false);
+
+  if (showJuz30) {
+    return (
+      <div>
+        <div className="mb-4">
+          <button
+            onClick={() => setShowJuz30(false)}
+            className="mb-2 inline-flex items-center gap-1 text-sm font-semibold text-[#0B3D39] dark:text-[#D4AF37]"
+          >
+            <Icon name="arrow-left" className="h-4 w-4" /> Kembali
+          </button>
+          <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Juz Amma</h1>
+          <span className="mt-2 block h-0.5 w-10 rounded-full bg-[#C9A227]" aria-hidden />
+          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+            Juz 30 · 37 surah · ketuk surah untuk membacanya
+          </p>
+        </div>
+        <div className="flex flex-col gap-2">
+          {JUZ30_LIST.map((s) => (
+            <Link key={s.no} href={`/quran/baca?surah=${s.no}`}>
+              <Card>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#F5F5F4] text-sm font-extrabold text-[#0B3D39] dark:bg-white/10 dark:text-[#D4AF37]">
+                      {s.no}
+                    </span>
+                    <div>
+                      <p className="font-extrabold text-neutral-900 dark:text-neutral-100">{s.name}</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">{s.ayahs} ayat</p>
+                    </div>
+                  </div>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="arabic text-xl text-[#0B3D39] dark:text-[#D4AF37]">{s.arabicName}</span>
+                    <Icon name="chevron-right" className="h-4 w-4 opacity-40" />
+                  </span>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+        <div className="mt-3">
+          <Note>{QURAN_SOURCE_NOTE}</Note>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <PageHeader title="Surat Pilihan" subtitle="Surat-surat pilihan untuk dibaca setiap hari" backHref="/quran" />
+      <div className="flex flex-col gap-3">
+        {SURAT_PILIHAN.map((e) => {
+          const inner = (
+            <Card>
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="font-extrabold text-neutral-900 dark:text-neutral-100">{e.label}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">{e.desc}</p>
+                </div>
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="arabic text-2xl text-[#0B3D39] dark:text-[#D4AF37]">{e.arabic}</span>
+                  <Icon name="chevron-right" className="h-4 w-4 opacity-40" />
+                </span>
+              </div>
+            </Card>
+          );
+          if (e.juz != null) {
+            return (
+              <div key={e.slug} onClick={() => setShowJuz30(true)} className="cursor-pointer">
+                {inner}
+              </div>
+            );
+          }
+          return (
+            <Link key={e.slug} href={`/quran/baca?surah=${e.surah}`}>
+              {inner}
+            </Link>
+          );
+        })}
+      </div>
+      <div className="mt-3">
+        <Note>
+          Dibuka di Baca Al-Qur&apos;an — teks Arab, terjemahan Kemenag, dan warna tajwid
+          mengikuti pengaturan bacaanmu.
+        </Note>
+      </div>
+    </div>
+  );
+}
+
 // ---------- Baca Al-Qur'an ----------
 type ApiSurah = {
   number: number;
@@ -226,6 +321,18 @@ export function BacaPage() {
     return () => {
       alive = false;
     };
+  }, []);
+
+  // Buka surah langsung dari menu Surat Pilihan (?surah=N). Query dibersihkan
+  // setelah dibaca supaya refresh tidak membuka surah lama.
+  useEffect(() => {
+    const n = Number(new URLSearchParams(window.location.search).get("surah"));
+    if (Number.isInteger(n) && n >= 1 && n <= 114) {
+      setReaderSurah(n);
+      window.history.replaceState(null, "", "/quran/baca");
+      window.scrollTo({ top: 0 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const embedded = readerSurah != null ? JUZ30_SURAHS.find((s) => s.no === readerSurah) : undefined;
