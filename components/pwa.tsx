@@ -36,6 +36,126 @@ export function PwaRegister() {
   return null;
 }
 
+const DISMISS_KEY = "abee:install-prompt-dismissed";
+const DISMISS_DAYS = 7;
+
+/** Popup tawaran install saat kunjungan pertama.
+ * Muncul sekali (±2,5 detik setelah halaman dimuat), tidak mengganggu:
+ * - Chrome/Android: tombol Install memunculkan dialog install bawaan Chrome.
+ * - iPhone/iPad: instruksi manual (Safari tidak mendukung prompt otomatis).
+ * - Sudah terinstal / pernah menolak dalam 7 hari: tidak tampil. */
+export function InstallPromptModal() {
+  const [visible, setVisible] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    // Sudah terinstal sebagai aplikasi → jangan pernah tampil.
+    if (
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true
+    )
+      return;
+    // Pernah ditolak dalam 7 hari terakhir → jangan tampil dulu.
+    try {
+      const raw = localStorage.getItem(DISMISS_KEY);
+      if (raw && Date.now() - Number(raw) < DISMISS_DAYS * 24 * 60 * 60 * 1000) return;
+    } catch {
+      /* abaikan */
+    }
+    setIsIOS(
+      /iphone|ipad|ipod/i.test(navigator.userAgent) &&
+        !(window as unknown as { MSStream?: unknown }).MSStream
+    );
+    if (deferredPrompt) setReady(true);
+    const onReady = () => setReady(true);
+    const onInstalled = () => {
+      setVisible(false);
+      try {
+        localStorage.setItem(DISMISS_KEY, String(Date.now()));
+      } catch {
+        /* abaikan */
+      }
+    };
+    window.addEventListener("abee:install-ready", onReady);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("abee:install-ready", onReady);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Tampilkan hanya bila install tersedia (Chrome/Android) atau perangkat iOS.
+    if (!ready && !isIOS) return;
+    const t = window.setTimeout(() => setVisible(true), 2500);
+    return () => window.clearTimeout(t);
+  }, [ready, isIOS]);
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    } catch {
+      /* abaikan */
+    }
+    setVisible(false);
+  };
+
+  const install = async () => {
+    if (!deferredPrompt) return;
+    await deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    dismiss();
+  };
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+      onClick={dismiss}
+      role="dialog"
+      aria-label="Install aplikasi ABEE Muslim"
+    >
+      <div
+        className="w-full max-w-md rounded-3xl bg-white p-5 shadow-2xl dark:bg-[#14201F]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon-192.png" alt="ABEE Muslim" className="h-14 w-14 rounded-2xl" />
+          <div className="text-left">
+            <p className="font-extrabold text-neutral-900 dark:text-neutral-100">Install ABEE Muslim</p>
+            <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+              Buka seperti aplikasi asli — layar penuh tanpa address bar, bisa dipakai offline.
+            </p>
+          </div>
+        </div>
+        {isIOS && !ready ? (
+          <p className="mt-4 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
+            Di iPhone/iPad: ketuk tombol <b>Bagikan</b> di Safari, lalu pilih{" "}
+            <b>Tambahkan ke Layar Utama</b>.
+          </p>
+        ) : (
+          <button
+            onClick={install}
+            className="mt-4 w-full rounded-2xl bg-[#0A0A0A] py-3 text-sm font-bold text-white active:scale-[0.98] dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+          >
+            Install aplikasi
+          </button>
+        )}
+        <button
+          onClick={dismiss}
+          className="mt-2 w-full rounded-2xl py-2.5 text-sm font-bold text-neutral-500 dark:text-neutral-400"
+        >
+          Nanti
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Tombol "Install aplikasi" untuk halaman Atur. */
 export function InstallButton() {
   const [ready, setReady] = useState(false);

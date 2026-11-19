@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ProgressProvider } from "@/lib/store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import { BottomNav, SiteHeader } from "@/components/ui";
-import { PwaRegister } from "@/components/pwa";
+import { PwaRegister, InstallPromptModal } from "@/components/pwa";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -44,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main className="mx-auto w-full max-w-md px-4 pb-24 pt-4">{children}</main>
             <BottomNav />
             <PwaRegister />
+            <InstallPromptModal />
           </ThemeProvider>
         </ProgressProvider>
       </body>
