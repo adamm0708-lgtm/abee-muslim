@@ -25,16 +25,29 @@ body {
   color: #f5f5f4;
 }
 
-/* Teks Arab: Amiri Quran / Scheherazade New (Google Fonts), fallback Amiri. */
+/* Teks Arab: UthmanicHafs (font mushaf Madinah standar, sama seperti di foto —
+   dipakai Quran.com untuk teks Uthmani; dihost Quran Foundation) diutamakan,
+   lalu Amiri Quran / Scheherazade New (Google Fonts) sebagai fallback. */
+@font-face {
+  font-family: "UthmanicHafs";
+  src:
+    url("https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2")
+      format("woff2"),
+    url("https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.ttf")
+      format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 .arabic {
-  font-family: "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
+  font-family: "UthmanicHafs", "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
   line-height: 2;
   direction: rtl;
 }
 
 /* Teks mushaf: Arab besar, rata kanan-kiri, spasi baris lega. */
 .mushaf {
-  font-family: "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
+  font-family: "UthmanicHafs", "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
   direction: rtl;
   text-align: justify;
   text-align-last: justify;
