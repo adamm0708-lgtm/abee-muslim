@@ -45,12 +45,12 @@ body {
   direction: rtl;
 }
 
-/* Teks mushaf: Arab besar, rata kanan-kiri, spasi baris lega. */
+/* Teks mushaf: Arab besar, rata kanan, spasi antar kata natural (tidak
+   direnggangkan seperti justify — seperti contoh mushaf yang dikirim Adam). */
 .mushaf {
   font-family: "UthmanicHafs", "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
   direction: rtl;
-  text-align: justify;
-  text-align-last: justify;
+  text-align: right;
   line-height: 2.5;
   word-spacing: 0.05em;
 }
