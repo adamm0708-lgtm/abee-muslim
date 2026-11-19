@@ -238,8 +238,7 @@ export function InstallButton() {
   return (
     <p className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400">
       Di Chrome Android: buka menu <b>⋮</b> di kanan atas, lalu pilih{" "}
-      <b>Tambahkan ke layar utama</b> (atau <b>Install aplikasi</b> bila muncul). Di Chrome
-      desktop: klik ikon install di address bar.
+      <b>Install aplikasi</b>. Di Chrome desktop: klik ikon install di address bar.
     </p>
   );
 }

@@ -2,6 +2,24 @@
 // sudah dikenal luas (doa harian, dzikir, surah Juz 30). Tidak ada ayat yang
 // dikarang — untuk surah di luar daftar ini, aplikasi mengambil dari
 // AlQuran Cloud API saat runtime (lihat app/quran/baca).
+//
+// Katalog doa lengkap (187 doa, 12 kategori) ada di lib/doa-katalog/ —
+// diverifikasi ke sunnah.com, quran.com, NU Online, Al-Adzkar (lihat
+// lib/doa-katalog/RINGKASAN.md). Bentuk `Dua` di sini sama persis dengan
+// lib/doa-katalog/dua-type.ts.
+
+import { DUAS_SEHARI_HARI } from "./doa-katalog/sehari-hari";
+import { DUAS_IBADAH } from "./doa-katalog/ibadah";
+import { DUAS_BULAN_HARI } from "./doa-katalog/bulan-hari";
+import { DUAS_KELUARGA } from "./doa-katalog/keluarga";
+import { DUAS_TRADISI } from "./doa-katalog/tradisi";
+import { DUAS_SAKIT } from "./doa-katalog/sakit";
+import { DUAS_KEMATIAN } from "./doa-katalog/kematian";
+import { DUAS_REZEKI } from "./doa-katalog/rezeki";
+import { DUAS_PERLINDUNGAN } from "./doa-katalog/perlindungan";
+import { DUAS_HATI } from "./doa-katalog/hati";
+import { DUAS_PERJALANAN } from "./doa-katalog/perjalanan";
+import { DUAS_AKHIRAT } from "./doa-katalog/akhirat";
 
 export type Dua = {
   id: string;
@@ -10,7 +28,26 @@ export type Dua = {
   latin: string;
   translation: string;
   source: string;
+  category: string;
+  status: string; // "Shahih" | "Hasan" | "Dhaif" | "Doa umum"
+  note: string; // keterangan: kapan & bagaimana dibaca, plus kejujuran status
 };
+
+/** 12 kategori doa (urutan tampil di halaman Doa Harian). */
+export const DUA_CATEGORIES: { slug: string; label: string }[] = [
+  { slug: "sehari-hari", label: "Doa Sehari-hari" },
+  { slug: "ibadah", label: "Doa Ibadah & Salat" },
+  { slug: "bulan-hari", label: "Doa Bulan & Hari Tertentu" },
+  { slug: "keluarga", label: "Doa Keluarga" },
+  { slug: "tradisi", label: "Doa Tradisi & Acara" },
+  { slug: "sakit", label: "Doa Sakit & Kesehatan" },
+  { slug: "kematian", label: "Doa Kematian & Jenazah" },
+  { slug: "rezeki", label: "Doa Rezeki & Usaha" },
+  { slug: "perlindungan", label: "Doa Perlindungan" },
+  { slug: "hati", label: "Doa Hati & Akhlak" },
+  { slug: "perjalanan", label: "Doa Perjalanan & Haji Umrah" },
+  { slug: "akhirat", label: "Doa Dunia & Akhirat" },
+];
 
 export type IconName =
   | "hands"
@@ -88,6 +125,9 @@ export const DUAS: Dua[] = [
     translation:
       "Segala puji bagi Allah yang telah menghidupkan kami setelah mematikan kami, dan kepada-Nya kami dibangkitkan.",
     source: "HR. Bukhari dan Muslim",
+    category: "sehari-hari",
+    status: "Shahih",
+    note: "Dibaca begitu bangun tidur.",
   },
   {
     id: "keluar-rumah",
@@ -97,6 +137,9 @@ export const DUAS: Dua[] = [
     translation:
       "Dengan nama Allah, aku bertawakal kepada Allah. Tiada daya dan kekuatan kecuali dengan pertolongan Allah.",
     source: "HR. Abu Dawud 5095, Tirmidzi 3426",
+    category: "sehari-hari",
+    status: "Shahih",
+    note: "Dibaca saat keluar rumah.",
   },
   {
     id: "setelah-wudhu",
@@ -108,6 +151,9 @@ export const DUAS: Dua[] = [
     translation:
       "Aku bersaksi bahwa tidak ada Tuhan selain Allah Yang Maha Esa, tiada sekutu bagi-Nya, dan aku bersaksi bahwa Muhammad adalah hamba dan utusan-Nya. Ya Allah, jadikanlah aku termasuk orang-orang yang bertaubat dan jadikanlah aku termasuk orang-orang yang bersuci.",
     source: "HR. Muslim 234, Tirmidzi 55",
+    category: "sehari-hari",
+    status: "Shahih",
+    note: "Dibaca setelah selesai berwudhu.",
   },
   {
     id: "qunut-subuh",
@@ -119,14 +165,20 @@ export const DUAS: Dua[] = [
     translation:
       "Ya Allah, berilah aku petunjuk sebagaimana orang-orang yang telah Engkau beri petunjuk. Berilah aku kesehatan sebagaimana orang-orang yang telah Engkau beri kesehatan. Pimpinlah aku sebagaimana orang-orang yang telah Engkau pimpin. Berkahilah apa yang telah Engkau berikan kepadaku. Lindungilah aku dari keburukan yang telah Engkau tetapkan. Sungguh Engkau yang memutuskan dan tidak diputuskan atas-Mu. Tidak hina orang yang Engkau pimpin, dan tidak mulia orang yang Engkau musuhi. Maha Suci Engkau, Tuhan kami, dan Maha Tinggi. Segala puji bagi-Mu atas apa yang telah Engkau tetapkan. Aku memohon ampun dan bertaubat kepada-Mu. Semoga shalawat dan salam tercurah kepada Nabi Muhammad, nabi yang ummi, beserta keluarga dan sahabatnya.",
     source: "NU Online (Al-Adzkar Imam An-Nawawi); HR. Abu Dawud, Tirmidzi",
+    category: "ibadah",
+    status: "Hasan",
+    note: "Dibaca di rakaat kedua salat Subuh. Bagian akhir (istighfar + shalawat) adalah tambahan mazhab Syafi'i yang biasa dibaca di Indonesia.",
   },
   {
     id: "sebelum-makan",
     title: "Doa Sebelum Makan",
-    arabic: "بِسْمِ اللَّهِ وَعَلَى بَرَكَةِ اللَّهِ",
-    latin: "Bismillaahi wa 'alaa barakatillaah.",
-    translation: "Dengan nama Allah dan atas berkah Allah.",
-    source: "HR. Abu Dawud, Tirmidzi",
+    arabic: "بِسْمِ اللَّهِ",
+    latin: "Bismillaah.",
+    translation: "Dengan nama Allah.",
+    source: "HR. Tirmidzi 1858, Abu Dawud 3767",
+    category: "sehari-hari",
+    status: "Shahih",
+    note: "Cukup membaca 'Bismillah' sebelum makan. Lafaz 'Bismillahi wa 'ala barakatillah' yang sebelumnya tercantum di aplikasi ini TIDAK ditemukan dalam kitab hadis — yang ada di Mustadrak Al-Hakim adalah 'Bismillahi wa barakatillah' (tanpa 'alaa). Bila lupa di awal: 'Bismillahi fi awwalihi wa akhirihi'.",
   },
   {
     id: "sebelum-tidur",
@@ -135,6 +187,9 @@ export const DUAS: Dua[] = [
     latin: "Bismika Allaahumma amuutu wa ahyaa.",
     translation: "Dengan nama-Mu ya Allah, aku mati dan aku hidup.",
     source: "HR. Bukhari",
+    category: "sehari-hari",
+    status: "Shahih",
+    note: "Dibaca sebelum tidur.",
   },
   {
     id: "masuk-masjid",
@@ -143,7 +198,23 @@ export const DUAS: Dua[] = [
     latin: "Allaahummaftah lii abwaaba rahmatik.",
     translation: "Ya Allah, bukakanlah untukku pintu-pintu rahmat-Mu.",
     source: "HR. Muslim",
+    category: "sehari-hari",
+    status: "Shahih",
+    note: "Dibaca saat masuk masjid, mendahulukan kaki kanan.",
   },
+  // --- Katalog lengkap (187 doa, 12 kategori) ---
+  ...DUAS_SEHARI_HARI,
+  ...DUAS_IBADAH,
+  ...DUAS_BULAN_HARI,
+  ...DUAS_KELUARGA,
+  ...DUAS_TRADISI,
+  ...DUAS_SAKIT,
+  ...DUAS_KEMATIAN,
+  ...DUAS_REZEKI,
+  ...DUAS_PERLINDUNGAN,
+  ...DUAS_HATI,
+  ...DUAS_PERJALANAN,
+  ...DUAS_AKHIRAT,
 ];
 
 export type Dzikir = {

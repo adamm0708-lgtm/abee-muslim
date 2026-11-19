@@ -20,6 +20,7 @@ import {
   ASMAUL_HUSNA,
   DOA_TAHLIL,
   DUAS,
+  DUA_CATEGORIES,
   DZIKIR,
   QARIS,
   SHALAT_STEPS,
@@ -30,28 +31,210 @@ import {
 } from "@/lib/data";
 
 // ---------- Doa Harian ----------
+const STATUS_BADGE: Record<string, string> = {
+  Shahih:
+    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+  Hasan: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
+  Dhaif: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  "Doa umum": "bg-neutral-200 text-neutral-700 dark:bg-white/10 dark:text-neutral-300",
+};
+
+function DuaCard({
+  d,
+  open,
+  onToggle,
+  showCategory,
+}: {
+  d: (typeof DUAS)[number];
+  open: boolean;
+  onToggle: () => void;
+  showCategory?: boolean;
+}) {
+  const catLabel = DUA_CATEGORIES.find((c) => c.slug === d.category)?.label ?? d.category;
+  return (
+    <Card>
+      <button
+        className="flex w-full items-center justify-between gap-2 text-left"
+        onClick={onToggle}
+      >
+        <span className="min-w-0">
+          <span className="block truncate font-extrabold text-neutral-900 dark:text-neutral-100">
+            {d.title}
+          </span>
+          {showCategory && (
+            <span className="block text-[11px] font-bold text-neutral-400 dark:text-neutral-500">
+              {catLabel}
+            </span>
+          )}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <span
+            className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${
+              STATUS_BADGE[d.status] ?? STATUS_BADGE["Doa umum"]
+            }`}
+          >
+            {d.status}
+          </span>
+          <span className="text-neutral-400 dark:text-neutral-500">{open ? "▾" : "▸"}</span>
+        </span>
+      </button>
+      {open && (
+        <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
+          <p className="arabic text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+            {d.arabic}
+          </p>
+          <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{d.latin}</p>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+            {d.translation}
+          </p>
+          {d.note && (
+            <p className="mt-2 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+              <span className="font-extrabold text-neutral-600 dark:text-neutral-300">
+                Keterangan:{" "}
+              </span>
+              {d.note}
+            </p>
+          )}
+          <p className="mt-2 text-xs font-bold text-neutral-400 dark:text-neutral-500">
+            {d.source}
+          </p>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export function DoaPage() {
   const [open, setOpen] = useState<string | null>("bangun-tidur");
+  const [cat, setCat] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const q = search.trim().toLowerCase();
+
+  const shown = useMemo(() => {
+    let list = DUAS;
+    if (cat) list = list.filter((d) => d.category === cat);
+    if (q)
+      list = list.filter(
+        (d) =>
+          d.title.toLowerCase().includes(q) || d.translation.toLowerCase().includes(q)
+      );
+    return list;
+  }, [cat, q]);
+
+  const toggle = (id: string) => setOpen(open === id ? null : id);
+  const countFor = (slug: string) => DUAS.filter((d) => d.category === slug).length;
+
   return (
     <div>
-      <PageHeader title="Doa Harian" subtitle="Doa-doa yang dipakai setiap hari" backHref="/ibadah" />
-      <div className="flex flex-col gap-3">
-        {DUAS.map((d) => (
-          <Card key={d.id}>
-            <button className="flex w-full items-center justify-between text-left" onClick={() => setOpen(open === d.id ? null : d.id)}>
-              <span className="font-extrabold text-neutral-900 dark:text-neutral-100">{d.title}</span>
-              <span className="text-neutral-400 dark:text-neutral-500">{open === d.id ? "▾" : "▸"}</span>
-            </button>
-            {open === d.id && (
-              <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
-                <p className="arabic text-right text-2xl text-neutral-900 dark:text-neutral-100">{d.arabic}</p>
-                <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{d.latin}</p>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{d.translation}</p>
-                <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">{d.source}</p>
-              </div>
-            )}
-          </Card>
+      <PageHeader
+        title="Doa Harian"
+        subtitle={`${DUAS.length} doa dalam ${DUA_CATEGORIES.length} kategori — ketuk kategori atau cari judulnya`}
+        backHref="/ibadah"
+      />
+
+      {/* Cari doa */}
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Cari doa… (mis. masuk pasar, wudhu, safar)"
+        className="mb-3 w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold ring-1 ring-black/10 outline-none focus:ring-2 focus:ring-[#0A0A0A] dark:bg-[#171717] dark:ring-white/15"
+      />
+
+      {/* Kategori */}
+      <div className="mb-3 flex flex-wrap gap-2">
+        <button
+          onClick={() => setCat(null)}
+          className={`rounded-full px-3.5 py-2 text-xs font-bold ${
+            cat === null
+              ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+              : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/10"
+          }`}
+        >
+          Semua ({DUAS.length})
+        </button>
+        {DUA_CATEGORIES.map((c) => (
+          <button
+            key={c.slug}
+            onClick={() => setCat(cat === c.slug ? null : c.slug)}
+            className={`rounded-full px-3.5 py-2 text-xs font-bold ${
+              cat === c.slug
+                ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+                : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/10"
+            }`}
+          >
+            {c.label} ({countFor(c.slug)})
+          </button>
         ))}
+      </div>
+
+      {/* Daftar doa: hasil cari / satu kategori = daftar datar; "Semua" = per kategori */}
+      {q || cat ? (
+        <div className="flex flex-col gap-3">
+          {shown.length === 0 ? (
+            <p className="py-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
+              Tidak ditemukan. Coba kata kunci lain.
+            </p>
+          ) : (
+            shown.map((d) => (
+              <DuaCard
+                key={d.id}
+                d={d}
+                open={open === d.id}
+                onToggle={() => toggle(d.id)}
+                showCategory={q !== ""}
+              />
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {DUA_CATEGORIES.map((c) => {
+            const items = DUAS.filter((d) => d.category === c.slug);
+            if (items.length === 0) return null;
+            return (
+              <div key={c.slug}>
+                <button
+                  onClick={() => setCat(c.slug)}
+                  className="mb-2 flex w-full items-center justify-between text-left"
+                >
+                  <span className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+                    {c.label}
+                  </span>
+                  <span className="text-xs font-bold text-[#0B3D39] dark:text-[#D4AF37]">
+                    {items.length} doa · Lihat semua ›
+                  </span>
+                </button>
+                <div className="flex flex-col gap-3">
+                  {items.slice(0, 3).map((d) => (
+                    <DuaCard
+                      key={d.id}
+                      d={d}
+                      open={open === d.id}
+                      onToggle={() => toggle(d.id)}
+                    />
+                  ))}
+                  {items.length > 3 && (
+                    <button
+                      onClick={() => setCat(c.slug)}
+                      className="rounded-2xl bg-white py-2.5 text-xs font-bold text-neutral-500 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-400 dark:ring-white/10"
+                    >
+                      + {items.length - 3} doa lagi di {c.label}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-4">
+        <Note>
+          Lencana status: <b>Shahih</b> (riwayat sahih) · <b>Hasan</b> (baik) ·{" "}
+          <b>Dhaif</b> (lemah) · <b>Doa umum</b> (susunan doa memohon kebaikan, bukan
+          riwayat khusus dari Rasulullah ﷺ). Doa dari ayat Al-Qur&apos;an dilabel Shahih
+          karena teksnya otentik dari mushaf.
+        </Note>
       </div>
     </div>
   );
