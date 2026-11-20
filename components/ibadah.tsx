@@ -41,6 +41,14 @@ import {
   type IconName,
   type WiridItem,
 } from "@/lib/data";
+import {
+  RAWATIB,
+  RAWATIB_KEUTAMAAN,
+  SHALAT_READINGS,
+  WUDHU_READINGS,
+  type BacaanShalat,
+  type RawatibItem,
+} from "@/lib/shalat-wudhu";
 
 // ---------- Doa Harian ----------
 const STATUS_BADGE: Record<string, string> = {
@@ -515,10 +523,117 @@ export function KalenderPage() {
 }
 
 // ---------- Belajar Shalat & Wudhu ----------
+// Bacaan wudhu, bacaan shalat & sunnah rawatib (Adam 2026-11-20 20:45 WIB).
+// Teks Arab diverifikasi silang dari kitab hadis — lihat lib/shalat-wudhu.ts.
+
+function BacaanCard({
+  b,
+  index,
+  arabicClass,
+  bodyClass,
+}: {
+  b: BacaanShalat;
+  index: number;
+  arabicClass: string;
+  bodyClass: string;
+}) {
+  return (
+    <Card>
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0B3D39] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+          {index + 1}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">{b.title}</h3>
+            <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_BADGE[b.status]}`}>{b.status}</span>
+          </div>
+          {b.verses ? (
+            <div className="mt-2 flex flex-col gap-1">
+              {b.verses.map((v, i) => (
+                <p key={i} className={`arabic text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
+                  {normalizeArabicText(v)}
+                </p>
+              ))}
+            </div>
+          ) : (
+            <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
+              {normalizeArabicText(b.arabic)}
+            </p>
+          )}
+          <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{b.latin}</p>
+          <p className={`mt-1 text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{b.translation}</p>
+          <p className={`mt-2 text-xs font-semibold text-[#0B3D39] dark:text-[#D4AF37] ${bodyClass}`}>{b.source}</p>
+          {b.note && (
+            <p className={`mt-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400 ${bodyClass}`}>{b.note}</p>
+          )}
+          {b.link && (
+            <Link
+              href={b.link.href}
+              className="mt-3 inline-flex items-center gap-1 rounded-full bg-[#0B3D39] px-3 py-1.5 text-xs font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+            >
+              <Icon name="book-open" className="h-3.5 w-3.5" /> {b.link.label}
+            </Link>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function RawatibCard({
+  r,
+  arabicClass,
+  bodyClass,
+}: {
+  r: RawatibItem;
+  arabicClass: string;
+  bodyClass: string;
+}) {
+  return (
+    <Card>
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">{r.title}</h3>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+            r.muakkad
+              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+              : "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300"
+          }`}
+        >
+          {r.muakkad ? "Muakkad" : "Ghairu muakkad"}
+        </span>
+        <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-[11px] font-bold text-neutral-700 dark:bg-white/10 dark:text-neutral-300">
+          {r.rakaat} rakaat · {r.waktu}
+        </span>
+      </div>
+      <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
+        {normalizeArabicText(r.niatArab)}
+      </p>
+      <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{r.niatLatin}</p>
+      <p className={`mt-1 text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{r.niatArti}</p>
+      <p className={`mt-2 text-sm text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
+        <span className="font-bold">Keutamaan: </span>
+        {r.keutamaan}
+      </p>
+      <p className={`mt-1 text-xs font-semibold text-[#0B3D39] dark:text-[#D4AF37] ${bodyClass}`}>{r.source}</p>
+      {r.note && (
+        <p className={`mt-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400 ${bodyClass}`}>{r.note}</p>
+      )}
+    </Card>
+  );
+}
+
 export function ShalatWudhuPage() {
-  const [tab, setTab] = useState<"wudhu" | "shalat">("wudhu");
+  const [tab, setTab] = useState<"wudhu" | "shalat" | "rawatib">("wudhu");
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
   const steps = tab === "wudhu" ? WUDHU_STEPS : SHALAT_STEPS;
-  const { size, setSize, bodyClass } = useReaderFontSize();
+  const tabBtn = (active: boolean) =>
+    `flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${
+      active
+        ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+        : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"
+    }`;
   return (
     <div>
       <PageHeader title="Belajar Shalat & Wudhu" subtitle="Langkah demi langkah" backHref="/ibadah" />
@@ -527,23 +642,105 @@ export function ShalatWudhuPage() {
         <Note>Panduan ibadah dalam aplikasi ini mengikuti mazhab Syafi&apos;i.</Note>
       </div>
       <div className="mb-3 flex gap-2">
-        <button onClick={() => setTab("wudhu")} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "wudhu" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}>
+        <button onClick={() => setTab("wudhu")} className={tabBtn(tab === "wudhu")}>
           <Icon name="droplet" className="h-4 w-4" /> Wudhu
         </button>
-        <button onClick={() => setTab("shalat")} className={`flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${tab === "shalat" ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]" : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/15"}`}>
+        <button onClick={() => setTab("shalat")} className={tabBtn(tab === "shalat")}>
           <Icon name="mosque" className="h-4 w-4" /> Shalat
         </button>
+        <button onClick={() => setTab("rawatib")} className={tabBtn(tab === "rawatib")}>
+          <Icon name="clock" className="h-4 w-4" /> Rawatib
+        </button>
       </div>
-      <div className="flex flex-col gap-2">
-        {steps.map((s, i) => (
-          <Card key={i} className="flex gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
-              {i + 1}
-            </span>
-            <p className={`leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{s}</p>
+
+      {tab === "rawatib" ? (
+        <div className="flex flex-col gap-3">
+          <Card>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+                Sunnah Rawatib — 12 Rakaat Sehari Semalam
+              </h3>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${STATUS_BADGE["Shahih"]}`}>Shahih</span>
+            </div>
+            <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
+              {normalizeArabicText(RAWATIB_KEUTAMAAN.arabic)}
+            </p>
+            <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{RAWATIB_KEUTAMAAN.latin}</p>
+            <p className={`mt-1 text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{RAWATIB_KEUTAMAAN.translation}</p>
+            <p className={`mt-2 text-xs font-semibold text-[#0B3D39] dark:text-[#D4AF37] ${bodyClass}`}>
+              {RAWATIB_KEUTAMAAN.source}
+            </p>
+            <p className={`mt-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400 ${bodyClass}`}>
+              {RAWATIB_KEUTAMAAN.note}
+            </p>
           </Card>
-        ))}
-      </div>
+          <Note>
+            Niat tempatnya di hati — lafaz niat di bawah ini menurut tuntunan fikih mazhab Syafi&apos;i (bukan
+            riwayat hadis) dan hanya alat bantu belajar; shalat tetap sah tanpa melafazkannya.
+          </Note>
+          {RAWATIB.map((r) => (
+            <RawatibCard key={r.id} r={r} arabicClass={arabicClass} bodyClass={bodyClass} />
+          ))}
+          <Note>
+            Tidak ada ba&apos;diyah Subuh dan ba&apos;diyah Ashar — setelah Subuh dan setelah Ashar adalah waktu
+            terlarang shalat sunnah (HR. Bukhari 586, Muslim 827). Rawatib 4 rakaat dikerjakan 2 rakaat + 2 rakaat,
+            masing-masing dengan salam.
+          </Note>
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2">
+            {steps.map((s, i) => (
+              <Card key={i} className="flex gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+                  {i + 1}
+                </span>
+                <p className={`leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{s}</p>
+              </Card>
+            ))}
+          </div>
+
+          {tab === "wudhu" ? (
+            <div className="mt-5 flex flex-col gap-3">
+              <h2 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">Bacaan Wudhu</h2>
+              {WUDHU_READINGS.map((b, i) => (
+                <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
+              ))}
+              <Note>
+                Doa khusus untuk tiap anggota wudhu (doa saat membasuh wajah, tangan, kepala, kaki) tidak dicantumkan
+                di sini — tidak ada satu pun riwayat yang sahih dari Nabi ﷺ tentang itu. Imam An-Nawawi (Al-Adzkar
+                hlm. 30) dan Ibnul Qayyim (Zad al-Ma&apos;ad 1/195) menjelaskan bahwa semua hadis tentang dzikir di
+                tengah wudhu adalah dusta dan dibuat-buat. Yang diajarkan Nabi ﷺ hanyalah basmalah di awal wudhu dan
+                doa setelah selesai berwudhu.
+              </Note>
+            </div>
+          ) : (
+            <div className="mt-5 flex flex-col gap-3">
+              <h2 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">Bacaan Shalat</h2>
+              {SHALAT_READINGS.map((b, i) => (
+                <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
+              ))}
+              <Link
+                href="/ibadah/doa"
+                className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] dark:bg-[#171717] dark:ring-white/10"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B3D39] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+                  <Icon name="hands" className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+                    Doa Qunut Subuh
+                  </span>
+                  <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                    Sudah ada di Doa Harian — ketuk untuk membuka
+                  </span>
+                </span>
+                <Icon name="chevron-right" className="h-4 w-4 shrink-0 text-neutral-400" />
+              </Link>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
