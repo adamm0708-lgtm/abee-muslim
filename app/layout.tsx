@@ -3,6 +3,7 @@ import { ProgressProvider } from "@/lib/store";
 import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import { BottomNav, SiteHeader } from "@/components/ui";
 import { PwaRegister, InstallPromptModal } from "@/components/pwa";
+import { AdhanReminder } from "@/components/adhan";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <BottomNav />
             <PwaRegister />
             <InstallPromptModal />
+            <AdhanReminder />
           </ThemeProvider>
         </ProgressProvider>
       </body>

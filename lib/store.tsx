@@ -35,6 +35,18 @@ export type Progress = {
   hafalanDone: Record<number, boolean>; // no surah -> hafal
   groups: string[];
   lastRead: LastRead | null;
+  /** Pengingat adzan: master toggle + per-shalat + yang sudah di-dismiss hari ini. */
+  adhanEnabled: boolean;
+  adhanPrayers: Record<string, boolean>; // nama shalat -> aktif
+  adhanDismissed: Record<string, string[]>; // "YYYY-MM-DD" -> nama shalat yang di-dismiss
+};
+
+export const DEFAULT_ADHAN_PRAYERS: Record<string, boolean> = {
+  Subuh: true,
+  Dzuhur: true,
+  Ashar: true,
+  Maghrib: true,
+  Isya: true,
 };
 
 const DEFAULT_PROGRESS: Progress = {
@@ -51,6 +63,9 @@ const DEFAULT_PROGRESS: Progress = {
   hafalanDone: {},
   groups: [],
   lastRead: null,
+  adhanEnabled: true,
+  adhanPrayers: { ...DEFAULT_ADHAN_PRAYERS },
+  adhanDismissed: {},
 };
 
 const KEY = "abee-muslim-progress-v1";
@@ -99,6 +114,9 @@ type Store = {
   addGroup: (name: string) => void;
   removeGroup: (name: string) => void;
   setLastRead: (r: LastRead) => void;
+  setAdhanEnabled: (b: boolean) => void;
+  setAdhanPrayer: (name: string, b: boolean) => void;
+  dismissAdhan: (name: string) => void;
   resetProgress: () => void;
 };
 
@@ -135,7 +153,13 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as Progress;
-        setProgress({ ...DEFAULT_PROGRESS, ...parsed });
+        // Gabung dalam: adhanPrayers dari data lama bisa tidak lengkap.
+        setProgress({
+          ...DEFAULT_PROGRESS,
+          ...parsed,
+          adhanPrayers: { ...DEFAULT_ADHAN_PRAYERS, ...(parsed.adhanPrayers ?? {}) },
+          adhanDismissed: parsed.adhanDismissed ?? {},
+        });
       }
     } catch {
       // abaikan data rusak
@@ -235,6 +259,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       removeGroup: (name) =>
         update((p) => ({ ...p, groups: p.groups.filter((g) => g !== name) })),
       setLastRead: (r) => update((p) => ({ ...p, lastRead: r })),
+      setAdhanEnabled: (b) => update((p) => ({ ...p, adhanEnabled: b })),
+      setAdhanPrayer: (name, b) =>
+        update((p) => ({ ...p, adhanPrayers: { ...p.adhanPrayers, [name]: b } })),
+      dismissAdhan: (name) =>
+        update((p) => {
+          const t = todayKey();
+          const list = p.adhanDismissed[t] ?? [];
+          if (list.includes(name)) return p;
+          return { ...p, adhanDismissed: { ...p.adhanDismissed, [t]: [...list, name] } };
+        }),
       resetProgress: () => {
         try {
           localStorage.removeItem(KEY);

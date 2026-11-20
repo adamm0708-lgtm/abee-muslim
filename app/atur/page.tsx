@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Card, Icon, Note, PageHeader } from "@/components/ui";
 import { useProgress, levelFromPoints, type ThemeChoice } from "@/lib/store";
 import { useTheme } from "@/lib/theme";
 import { CITIES, QURAN_SOURCE_NOTE } from "@/lib/api";
 import { InstallButton } from "@/components/pwa";
+import { ADHAN_CREDIT, ADHAN_FILE_URL, ADHAN_PRAYERS, ADHAN_URL } from "@/components/adhan";
 import { supabaseConfigured } from "@/lib/supabase";
 import type { IconName } from "@/lib/data";
 
@@ -14,12 +15,50 @@ const THEME_OPTIONS: { value: ThemeChoice; label: string; desc: string; icon: Ic
   { value: "dark", label: "Gelap", desc: "Selalu tema gelap", icon: "moon" },
 ];
 
+function Toggle({ on, disabled, onChange, label }: { on: boolean; disabled?: boolean; onChange: (b: boolean) => void; label: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={label}
+      disabled={disabled}
+      onClick={() => onChange(!on)}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition ${on ? "bg-[#0B3D39] dark:bg-[#D4AF37]" : "bg-neutral-300 dark:bg-white/20"} ${disabled ? "opacity-40" : ""}`}
+    >
+      <span className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-all ${on ? "left-[22px]" : "left-0.5"}`} />
+    </button>
+  );
+}
+
 export default function AturPage() {
-  const { progress, setName, setCity, resetProgress } = useProgress();
+  const { progress, setName, setCity, setAdhanEnabled, setAdhanPrayer, resetProgress } = useProgress();
   const { choice, setChoice, effective } = useTheme();
   const [name, setNameInput] = useState(progress.name);
   const [saved, setSaved] = useState(false);
+  const [adhanPlaying, setAdhanPlaying] = useState(false);
+  const [adhanTestError, setAdhanTestError] = useState(false);
+  const adhanAudioRef = useRef<HTMLAudioElement | null>(null);
   const { level, title } = levelFromPoints(progress.points);
+
+  const toggleAdhanTest = () => {
+    if (adhanPlaying) {
+      const a = adhanAudioRef.current;
+      if (a) {
+        a.pause();
+        a.currentTime = 0;
+      }
+      setAdhanPlaying(false);
+      return;
+    }
+    setAdhanTestError(false);
+    const a = adhanAudioRef.current ?? new Audio(ADHAN_URL);
+    adhanAudioRef.current = a;
+    a.onended = () => setAdhanPlaying(false);
+    a.play()
+      .then(() => setAdhanPlaying(true))
+      .catch(() => setAdhanTestError(true));
+  };
 
   const saveName = () => {
     const v = name.trim();
@@ -78,6 +117,49 @@ export default function AturPage() {
               </button>
             ))}
           </div>
+        </Card>
+
+        <Card>
+          <p className="mb-1 text-sm font-bold text-neutral-900 dark:text-neutral-100">Pengingat Adzan</p>
+          <p className="mb-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+            Saat aplikasi dibuka dalam 15 menit pertama setelah waktu shalat, muncul pengingat dengan suara adzan.
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">Suara Adzan</span>
+            <Toggle on={progress.adhanEnabled} onChange={setAdhanEnabled} label="Suara Adzan" />
+          </div>
+          <div className={`mt-3 flex flex-col gap-2 border-t border-black/5 pt-3 dark:border-white/10 ${progress.adhanEnabled ? "" : "opacity-40"}`}>
+            {ADHAN_PRAYERS.map((name) => (
+              <div key={name} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-neutral-700 dark:text-neutral-300">{name}</span>
+                <Toggle
+                  on={progress.adhanPrayers[name] !== false}
+                  disabled={!progress.adhanEnabled}
+                  onChange={(b) => setAdhanPrayer(name, b)}
+                  label={`Pengingat ${name}`}
+                />
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={toggleAdhanTest}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#F5F5F4] py-2.5 text-sm font-bold text-neutral-900 ring-1 ring-black/5 dark:bg-white/10 dark:text-neutral-100 dark:ring-white/10"
+          >
+            <Icon name={adhanPlaying ? "close" : "audio"} className="h-4 w-4" />
+            {adhanPlaying ? "Berhenti" : "Coba putar adzan"}
+          </button>
+          {adhanTestError && (
+            <p className="mt-2 text-xs font-bold text-red-600 dark:text-red-400">
+              Suara adzan tidak bisa dimuat — periksa koneksi internet.
+            </p>
+          )}
+          <p className="mt-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+            Suara adzan baru bisa diputar setelah kamu menyentuh layar (aturan browser).{" "}
+            <a href={ADHAN_FILE_URL} target="_blank" rel="noreferrer" className="font-bold text-[#0B3D39] underline dark:text-[#D4AF37]">
+              {ADHAN_CREDIT}
+            </a>{" "}
+            — Wikimedia Commons.
+          </p>
         </Card>
 
         <Card>
