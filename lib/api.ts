@@ -443,12 +443,25 @@ export async function getWeather(lat: number, lon: number): Promise<Weather> {
   };
 }
 
-/** Arah kiblat (derajat dari utara) dari posisi pengguna — Ka'bah 21.4225, 39.8262. */
+/**
+ * Arah kiblat (derajat dari utara SEJATI) dari posisi pengguna.
+ * Rumus great-circle standar (atan2) — Ka'bah 21.422510, 39.826172
+ * (presisi emnopal/arah_kiblat).
+ * Verifikasi silang dengan rumus emnopal (src/count.py, arctan + 270°):
+ * Bangil 294.091°, Jakarta 295.151°, Surabaya 294.036°, Bandung 295.167°,
+ * Medan 292.767° — selisih < 0.001° di semua kota Indonesia.
+ * Rumus emnopal TIDAK dipakai sebagai pengganti: ia hanya benar untuk
+ * belahan selatan di timur Mekkah (Indonesia) dan salah di luar itu
+ * (Jeddah 263.6° padahal seharusnya ~96°, London 241° padahal ~119°).
+ * Catatan: hasil ini utara sejati; kompas HP membaca utara MAGNET —
+ * deklinasi di Bangil ~+0,5–1° (galat kecil yang diketahui, lebih kecil
+ * dari goyangan sensor HP).
+ */
 export function qiblaBearing(lat: number, lon: number): number {
   const toRad = (d: number) => (d * Math.PI) / 180;
   const toDeg = (r: number) => (r * 180) / Math.PI;
-  const kaabaLat = 21.4225;
-  const kaabaLon = 39.8262;
+  const kaabaLat = 21.42251;
+  const kaabaLon = 39.826172;
   const dLon = toRad(kaabaLon - lon);
   const y = Math.sin(dLon);
   const x =

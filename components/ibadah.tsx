@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Card, Icon, Note, PageHeader, ProgressBar, toArabicIndic } from "@/components/ui";
 import { ReaderToolbar } from "@/components/reading";
 import { CSS_FULLSCREEN_CLASS, normalizeArabicText, useFullscreen, useReaderFontSize } from "@/lib/reading";
@@ -926,11 +926,73 @@ export function MasjidPage() {
 }
 
 // ---------- Arah Kiblat ----------
+
+/** Normalisasi sudut ke [0, 360). */
+function normDeg(d: number): number {
+  return ((d % 360) + 360) % 360;
+}
+
+/** Selisih sudut terpendek (target - current) dalam (-180, 180]. */
+function shortestDelta(target: number, current: number): number {
+  return ((target - current + 540) % 360) - 180;
+}
+
+/**
+ * Heading (arah hadap pengguna, 0° = utara) dari event orientasi.
+ *
+ * - webkitCompassHeading (iOS): sudah berupa heading dalam derajat.
+ * - alpha: arahnya BERLAWANAN dengan heading kompas (W3C: "alpha is in
+ *   the opposite sense to a compass heading"), jadi heading tepi-atas
+ *   HP = 360 - alpha. Ini hanya benar bila event.absolute === true
+ *   (atau event deviceorientationabsolute). Sejak Chrome 50,
+ *   `deviceorientation` biasa memberi alpha RELATIF terhadap arah HP
+ *   saat halaman dibuka — bukan utara — sehingga kompas menunjuk arah
+ *   sembarang yang berubah tiap kali tombol ditekan.
+ * - Koreksi orientasi layar: yang dipakai adalah arah hadap pengguna,
+ *   bukan arah tepi atas HP — kurangi sudut rotasi layar
+ *   (0 portrait, 90/270 landscape). Tanpa ini, kompas meleset 90°
+ *   bila HP dipegang landscape.
+ */
+function headingFromEvent(e: DeviceOrientationEvent): { heading: number; absolute: boolean } | null {
+  const h = (e as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading;
+  const soAngle = typeof screen !== "undefined" ? screen.orientation?.angle : undefined;
+  const screenAngle =
+    soAngle ?? (window as unknown as { orientation?: number }).orientation ?? 0;
+  if (typeof h === "number") return { heading: normDeg(h - screenAngle), absolute: true };
+  if (e.alpha === null) return null;
+  return { heading: normDeg(360 - e.alpha - screenAngle), absolute: e.absolute === true };
+}
+
 export function KiblatPage() {
   const [bearing, setBearing] = useState<number | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
+  const [arrowDeg, setArrowDeg] = useState(90);
   const [status, setStatus] = useState("Ketuk tombol di bawah untuk mengaktifkan kompas.");
   const [supported, setSupported] = useState(true);
+  const [source, setSource] = useState<"mutlak" | "relatif" | null>(null);
+  const [needsCalibration, setNeedsCalibration] = useState(false);
+
+  const activeRef = useRef(false);
+  const bearingRef = useRef<number | null>(null);
+  const smoothRef = useRef<number | null>(null);
+  const arrowRef = useRef(90);
+  const jitterRef = useRef(0);
+  const stableRef = useRef(0);
+  const lastShownRef = useRef<{ heading: number; arrow: number } | null>(null);
+  const listenersRef = useRef<{ type: string; fn: EventListener }[]>([]);
+
+  // Lepas semua listener saat halaman ditinggalkan (sebelumnya listener
+  // deviceorientation tidak pernah dilepas).
+  useEffect(() => {
+    const listeners = listenersRef.current;
+    return () => {
+      for (const { type, fn } of listeners) {
+        window.removeEventListener(type as "deviceorientation", fn);
+      }
+      listeners.length = 0;
+      activeRef.current = false;
+    };
+  }, []);
 
   const activate = () => {
     if (typeof DeviceOrientationEvent === "undefined") {
@@ -938,25 +1000,74 @@ export function KiblatPage() {
       setStatus("Perangkat ini tidak mendukung sensor kompas.");
       return;
     }
+    if (activeRef.current) return;
     const start = () => {
+      activeRef.current = true;
       if (!navigator.geolocation) {
         setStatus("Geolocation tidak tersedia di perangkat ini.");
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          setBearing(qiblaBearing(pos.coords.latitude, pos.coords.longitude));
+          const b = qiblaBearing(pos.coords.latitude, pos.coords.longitude);
+          bearingRef.current = b;
+          setBearing(b);
           setStatus("Kompas aktif — putar HP sampai panah menunjuk ke atas.");
         },
         () => setStatus("Izin lokasi ditolak — arah kiblat tidak bisa dihitung."),
         { timeout: 10000 }
       );
       const handler = (e: DeviceOrientationEvent) => {
-        const h = (e as DeviceOrientationEvent & { webkitCompassHeading?: number }).webkitCompassHeading;
-        if (typeof h === "number") setHeading(h);
-        else if (e.alpha !== null) setHeading(360 - e.alpha);
+        const res = headingFromEvent(e);
+        if (!res) return;
+        setSource(res.absolute ? "mutlak" : "relatif");
+        // Perhalus heading (EMA di lingkaran) supaya panah tidak gemetar.
+        const prev = smoothRef.current;
+        const next = prev === null ? res.heading : normDeg(prev + shortestDelta(res.heading, prev) * 0.3);
+        const delta = prev === null ? 0 : Math.abs(shortestDelta(res.heading, prev));
+        if (delta > 25) {
+          jitterRef.current += 1;
+          stableRef.current = 0;
+          if (jitterRef.current >= 3) setNeedsCalibration(true);
+        } else {
+          jitterRef.current = 0;
+          stableRef.current += 1;
+          if (stableRef.current > 20) setNeedsCalibration(false);
+        }
+        smoothRef.current = next;
+        const b = bearingRef.current;
+        if (b !== null) {
+          // Panah: jalur terpendek (tanpa putaran jauh) saat heading
+          // melewati 359°→0°. Ikon arrow-left menunjuk ke kiri (270°)
+          // saat rotate 0, jadi panah ke atas = rotate 90°.
+          const targetArrow = normDeg(b - next + 90);
+          arrowRef.current += shortestDelta(targetArrow, normDeg(arrowRef.current));
+        }
+        // Batasi render ulang: hanya bila berubah ≥ 0,5°.
+        const last = lastShownRef.current;
+        if (
+          !last ||
+          Math.abs(shortestDelta(next, last.heading)) >= 0.5 ||
+          Math.abs(arrowRef.current - last.arrow) >= 0.5
+        ) {
+          lastShownRef.current = { heading: next, arrow: arrowRef.current };
+          setHeading(next);
+          setArrowDeg(arrowRef.current);
+        }
       };
-      window.addEventListener("deviceorientation", handler);
+      const onCalib = () => setNeedsCalibration(true);
+      // Utamakan event MUTLAK: di Chrome Android, `deviceorientation`
+      // biasa memberi alpha relatif sejak Chrome 50 — kompas menunjuk
+      // arah sembarang. `deviceorientationabsolute` menjamin alpha
+      // berbasis magnetometer (utara). iOS memakai webkitCompassHeading.
+      const absoluteSupported =
+        typeof window !== "undefined" && "ondeviceorientationabsolute" in window;
+      const type = absoluteSupported ? "deviceorientationabsolute" : "deviceorientation";
+      const fn = handler as EventListener;
+      const calibFn = onCalib as EventListener;
+      window.addEventListener(type as "deviceorientation", fn);
+      window.addEventListener("compassneedscalibration", calibFn);
+      listenersRef.current.push({ type, fn }, { type: "compassneedscalibration", fn: calibFn });
     };
     const doe = DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> };
     if (typeof doe.requestPermission === "function") {
@@ -969,7 +1080,6 @@ export function KiblatPage() {
     }
   };
 
-  const rotation = bearing !== null && heading !== null ? bearing - heading : 0;
   return (
     <div>
       <PageHeader title="Arah Kiblat" subtitle="Kompas kiblat dari lokasimu" backHref="/ibadah" />
@@ -978,7 +1088,7 @@ export function KiblatPage() {
           <span className="absolute top-2 text-xs font-bold text-neutral-400 dark:text-neutral-500">U</span>
           <span
             className="text-[#0B3D39] transition-transform duration-200 dark:text-[#D4AF37]"
-            style={{ transform: `rotate(${rotation + 90}deg)` }}
+            style={{ transform: `rotate(${arrowDeg}deg)` }}
             aria-hidden
           >
             <Icon name="arrow-left" className="h-14 w-14" />
@@ -988,7 +1098,24 @@ export function KiblatPage() {
         <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100">
           {bearing !== null ? `Arah kiblat: ${Math.round(bearing)}° dari utara` : "Arah kiblat belum dihitung"}
         </p>
+        {heading !== null && (
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            Arah hadapmu: {Math.round(heading)}°
+            {source === "mutlak" ? " · kompas mutlak" : source === "relatif" ? " · kompas relatif" : ""}
+          </p>
+        )}
         <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">{status}</p>
+        {source === "relatif" && (
+          <Note>
+            Perangkat ini hanya memberi arah relatif — panah bergerak mengikuti putaran HP, tapi utara
+            tidak akurat. Angka derajat kiblat di atas tetap benar; cocokkan dengan kompas lain.
+          </Note>
+        )}
+        {needsCalibration && (
+          <Note>
+            Kompas perlu kalibrasi: gerakkan HP membentuk angka 8 beberapa kali sampai panah stabil.
+          </Note>
+        )}
         <button onClick={activate} className="rounded-2xl bg-[#0A0A0A] px-6 py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
           Aktifkan Kompas
         </button>
