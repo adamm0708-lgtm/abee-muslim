@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Card, Icon, Note, PageHeader, ProgressBar, toArabicIndic } from "@/components/ui";
 import { useProgress } from "@/lib/store";
 import {
@@ -18,16 +19,23 @@ import {
 import {
   AMAL_HARIAN,
   ASMAUL_HUSNA,
+  DOA_SETELAH_SHALAT,
   DOA_TAHLIL,
   DUAS,
   DUA_CATEGORIES,
   DZIKIR,
+  DZIKIR_PAGI,
+  DZIKIR_PETANG,
+  DZIKIR_WIRID_MENU,
   QARIS,
   SHALAT_STEPS,
   TAHLIL_STEPS,
   TAHLIL_TEXT,
+  WIRID_SESUDAH_SHALAT,
   WUDHU_STEPS,
   surahAudioUrl,
+  type IconName,
+  type WiridItem,
 } from "@/lib/data";
 
 // ---------- Doa Harian ----------
@@ -36,6 +44,8 @@ const STATUS_BADGE: Record<string, string> = {
     "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
   Hasan: "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300",
   Dhaif: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  "Al-Qur'an":
+    "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
   "Doa umum": "bg-neutral-200 text-neutral-700 dark:bg-white/10 dark:text-neutral-300",
 };
 
@@ -555,6 +565,238 @@ export function DzikirPage() {
         })}
       </div>
     </div>
+  );
+}
+
+// ---------- Dzikir dan Wirid (grup baru, Adam 2026-11-20) ----------
+// Grup "Dzikir dan Wirid": Dzikir Setelah Shalat Fardlu, Dzikir Pagi,
+// Dzikir Petang. Tiap bacaan punya counter ketuk (pola DzikirPage) +
+// progres keseluruhan + tombol "Mulai dari awal". Di bawah halaman wirid
+// ada tombol "Doa Setelah Shalat" (Adam 2026-11-20 09:32 WIB).
+
+const DZIKIR_WIRID_ICONS: Record<string, IconName> = {
+  wirid: "clock",
+  "dzikir-pagi": "leaf",
+  "dzikir-petang": "moon",
+};
+
+export function DzikirWiridPage() {
+  return (
+    <div>
+      <PageHeader title="Dzikir dan Wirid" subtitle="Wirid sesudah salat & dzikir pagi petang" backHref="/ibadah" />
+      <div className="mb-3">
+        <Note>Dzikir dan wirid harian — pilih salah satu untuk memulai.</Note>
+      </div>
+      <div className="flex flex-col gap-2">
+        {DZIKIR_WIRID_MENU.map((m) => (
+          <Link
+            key={m.slug}
+            href={`/ibadah/${m.slug}`}
+            className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] dark:bg-[#171717] dark:ring-white/10"
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+              <Icon name={DZIKIR_WIRID_ICONS[m.slug] ?? "book"} className="h-5 w-5" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block font-extrabold text-neutral-900 dark:text-neutral-100">{m.label}</span>
+              <span className="block text-xs font-bold text-neutral-400 dark:text-neutral-500">{m.desc}</span>
+            </span>
+            <span className="text-neutral-400 dark:text-neutral-500">▸</span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WiridCard({
+  item,
+  index,
+  showCounter = true,
+}: {
+  item: WiridItem;
+  index: number;
+  showCounter?: boolean;
+}) {
+  const { progress, setTasbih } = useProgress();
+  const count = progress.tasbihCounts[item.id] ?? 0;
+  const done = count >= item.count;
+  return (
+    <Card>
+      <div className="flex items-start gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+          {index + 1}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-extrabold text-neutral-900 dark:text-neutral-100">{item.title}</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${
+                STATUS_BADGE[item.status] ?? STATUS_BADGE["Doa umum"]
+              }`}
+            >
+              {item.status}
+            </span>
+            {item.special && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                {item.special}
+              </span>
+            )}
+            <span className="text-xs font-bold text-neutral-400 dark:text-neutral-500">
+              {item.count}x
+            </span>
+          </div>
+          <p className="arabic mt-2 text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+            {item.arabic}
+          </p>
+          <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{item.latin}</p>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+            {item.translation}
+          </p>
+          {item.note && (
+            <p className="mt-2 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+              <span className="font-extrabold text-neutral-600 dark:text-neutral-300">
+                Keterangan:{" "}
+              </span>
+              {item.note}
+            </p>
+          )}
+          <p className="mt-2 text-xs font-bold text-neutral-400 dark:text-neutral-500">
+            {item.source}
+          </p>
+          {showCounter && (
+            <>
+              <div className="mt-3 flex items-center gap-2">
+                <button
+                  onClick={() => !done && setTasbih(item.id, count + 1)}
+                  className={`flex flex-1 items-center justify-center gap-1 rounded-2xl py-2.5 text-sm font-bold ${
+                    done
+                      ? "bg-black/5 text-[#0B3D39] dark:bg-white/5 dark:text-[#D4AF37]"
+                      : "bg-[#0A0A0A] text-white active:scale-95 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+                  }`}
+                >
+                  {done ? (
+                    <>
+                      <Icon name="check" className="h-4 w-4" /> Selesai
+                    </>
+                  ) : (
+                    `Hitung (${count}/${item.count})`
+                  )}
+                </button>
+                <button
+                  onClick={() => setTasbih(item.id, 0)}
+                  className="rounded-2xl bg-[#F5F5F4] px-3 py-2.5 text-sm font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300"
+                >
+                  Ulang
+                </button>
+              </div>
+              <div className="mt-2">
+                <ProgressBar value={count} max={item.count} />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function WiridListPage({
+  items,
+  title,
+  subtitle,
+  backHref,
+  children,
+}: {
+  items: WiridItem[];
+  title: string;
+  subtitle: string;
+  backHref: string;
+  children?: ReactNode;
+}) {
+  const { progress, setTasbih } = useProgress();
+  const doneCount = items.filter((i) => (progress.tasbihCounts[i.id] ?? 0) >= i.count).length;
+  return (
+    <div>
+      <PageHeader title={title} subtitle={subtitle} backHref={backHref} />
+      <Card className="mb-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
+            {doneCount} dari {items.length} bacaan selesai
+          </p>
+          <button
+            onClick={() => items.forEach((i) => setTasbih(i.id, 0))}
+            className="rounded-2xl bg-[#F5F5F4] px-3 py-2 text-xs font-bold text-neutral-600 dark:bg-white/10 dark:text-neutral-300"
+          >
+            Mulai dari awal
+          </button>
+        </div>
+        <div className="mt-2">
+          <ProgressBar value={doneCount} max={items.length} />
+        </div>
+      </Card>
+      <div className="flex flex-col gap-3">
+        {items.map((item, i) => (
+          <WiridCard key={item.id} item={item} index={i} />
+        ))}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+export function WiridPage() {
+  const [showDoa, setShowDoa] = useState(false);
+  return (
+    <WiridListPage
+      items={WIRID_SESUDAH_SHALAT}
+      title="Dzikir Setelah Shalat Fardlu"
+      subtitle="Wirid berurutan sesudah salat fardu · ketuk untuk menghitung"
+      backHref="/ibadah/dzikir-wirid"
+    >
+      <div className="mt-4">
+        <button
+          onClick={() => setShowDoa(!showDoa)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0A0A0A] py-3.5 text-sm font-bold text-white transition active:scale-[0.98] dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+        >
+          <Icon name="hands" className="h-4 w-4" />
+          {showDoa ? "Tutup Doa" : "Doa Setelah Shalat"}
+          <span>{showDoa ? "▾" : "▸"}</span>
+        </button>
+        {showDoa && (
+          <div className="mt-3 flex flex-col gap-3">
+            <Note>
+              Doa dibaca setelah wirid selesai — mengikuti contoh doa sesudah salat fardhu.
+            </Note>
+            {DOA_SETELAH_SHALAT.map((d, i) => (
+              <WiridCard key={d.id} item={d} index={i} showCounter={false} />
+            ))}
+          </div>
+        )}
+      </div>
+    </WiridListPage>
+  );
+}
+
+export function DzikirPagiPage() {
+  return (
+    <WiridListPage
+      items={DZIKIR_PAGI}
+      title="Dzikir Pagi"
+      subtitle="Al-Ma'tsurat pagi · dibaca setelah Subuh hingga Zuhur"
+      backHref="/ibadah/dzikir-wirid"
+    />
+  );
+}
+
+export function DzikirPetangPage() {
+  return (
+    <WiridListPage
+      items={DZIKIR_PETANG}
+      title="Dzikir Petang"
+      subtitle="Al-Ma'tsurat petang · dibaca setelah Asar hingga Isya"
+      backHref="/ibadah/dzikir-wirid"
+    />
   );
 }
 

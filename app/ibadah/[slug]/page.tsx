@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
-import { IBADAH_MENU } from "@/lib/data";
+import { DZIKIR_WIRID_MENU, IBADAH_MENU } from "@/lib/data";
 import {
   AmalPage,
   AsmaulHusnaPage,
   DoaPage,
   DzikirPage,
+  DzikirPagiPage,
+  DzikirPetangPage,
+  DzikirWiridPage,
   JadwalPage,
   KalenderPage,
   KiblatPage,
@@ -13,11 +16,13 @@ import {
   ShalatWudhuPage,
   TahlilPage,
   TasbihPage,
+  WiridPage,
   YasinTahlilPage,
 } from "@/components/ibadah";
 
 export function generateStaticParams() {
-  return IBADAH_MENU.map((m) => ({ slug: m.slug }));
+  // Menu grup + anak-anaknya (anak grup tidak ada di IBADAH_MENU).
+  return [...IBADAH_MENU, ...DZIKIR_WIRID_MENU].map((m) => ({ slug: m.slug }));
 }
 
 const PAGES: Record<string, () => JSX.Element> = {
@@ -28,6 +33,10 @@ const PAGES: Record<string, () => JSX.Element> = {
   kalender: KalenderPage,
   "shalat-wudhu": ShalatWudhuPage,
   dzikir: DzikirPage,
+  "dzikir-wirid": DzikirWiridPage,
+  wirid: WiridPage,
+  "dzikir-pagi": DzikirPagiPage,
+  "dzikir-petang": DzikirPetangPage,
   tahlil: TahlilPage,
   "yasin-tahlil": YasinTahlilPage,
   masjid: MasjidPage,

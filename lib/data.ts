@@ -99,6 +99,7 @@ export const IBADAH_MENU: MenuEntry[] = [
   { slug: "kalender", label: "Kalender Hijriyah", icon: "calendar" },
   { slug: "shalat-wudhu", label: "Belajar Shalat & Wudhu", icon: "droplet" },
   { slug: "dzikir", label: "Dzikir Harian", icon: "leaf" },
+  { slug: "dzikir-wirid", label: "Dzikir dan Wirid", icon: "book" },
   { slug: "tahlil", label: "Tahlil & Doa", icon: "flame" },
   { slug: "masjid", label: "Masjid Terdekat", icon: "pin" },
   { slug: "kiblat", label: "Arah Kiblat", icon: "compass" },
@@ -521,6 +522,790 @@ export const TAHLIL_STEPS: TahlilStep[] = [
       "Allahumma shalli 'ala habibika sayyidina Muhammadin wa 'ala alihi wa shahbihi wa sallim (2 kali). Allahumma shalli 'ala habibika sayyidina Muhammadin wa 'ala alihi wa shahbihi wa barik wa sallim ajma'in.",
     translation:
       "Ya Allah, limpahkan rahmat takzim dan keselamatan kepada kekasih-Mu, pemimpin kami, Nabi Muhammad, berikut keluarga dan sahabatnya (2 kali). Ya Allah, limpahkanlah rahmat kepada kekasih-Mu, pemimpin kami, Nabi Muhammad, berikut keluarga dan sahabatnya. Limpahkanlah pula berkah dan keselamatan kepada mereka semua.",
+  },
+];
+
+// ---------- Wirid Sesudah Shalat ----------
+// Rangkaian zikir & doa setelah salat fardu, dibaca berurutan.
+// Tiap bacaan terverifikasi ke sumbernya (bukan karangan):
+// - Istighfar + Allahumma antas-salam: HR. Muslim 591–592
+// - Tahlil: HR. Muslim 594; 10x setelah Subuh (HR. Tirmidhi 3474) &
+//   Maghrib (HR. Tirmidhi 3534), dengan tambahan "yuhyi wa yumit"
+// - Allahumma la mani'a: HR. Bukhari 844, Muslim 593
+// - Tasbih–tahmid–takbir 33x + tahlil ke-100: HR. Muslim 597
+// - Ayat Kursi: HR. An-Nasa'i (al-Kubra 9848), dinilai shahih oleh
+//   al-Albani (Shahih al-Jami' 6464); teks dipakai dari TAHLIL_STEPS
+//   no. 12 di file ini, bukan ditulis ulang
+// - Al-Ikhlas, Al-Falaq, An-Nas: teks Uthmani + terjemahan Kemenag 2019
+//   (Quran.com API v4, resource 33, diverifikasi per ayat 2026-11-20);
+//   1x setiap selesai salat (HR. Abu Dawud 1523, Shahih), 3x setelah
+//   Subuh & Maghrib (HR. Abu Dawud 5082, Hasan)
+// - Allahumma a'inni: HR. Abu Dawud 1522, Shahih (al-Albani)
+// - Doa setelah Subuh: HR. Ibnu Majah 925, Shahih (sudah terverifikasi
+//   di lib/doa-katalog/ibadah.ts)
+export type WiridItem = {
+  id: string;
+  title: string;
+  arabic: string;
+  latin: string;
+  translation: string;
+  count: number;
+  source: string;
+  status: "Shahih" | "Hasan" | "Al-Qur'an" | "Doa umum";
+  note?: string;
+  special?: string;
+};
+
+const AYAT_KURSI_STEP = TAHLIL_STEPS.find((s) => s.no === 12)!;
+
+export const WIRID_SESUDAH_SHALAT: WiridItem[] = [
+  {
+    id: "wirid-istighfar",
+    title: "Istighfar",
+    arabic: "أَسْتَغْفِرُ اللَّهَ",
+    latin: "Astaghfirullaah.",
+    translation: "Aku memohon ampun kepada Allah.",
+    count: 3,
+    source: "HR. Muslim 591–592",
+    status: "Shahih",
+    note: "Dibaca 3x segera setelah salam, sebelum beranjak dari tempat salat.",
+  },
+  {
+    id: "wirid-antas-salam",
+    title: "Allahumma Antas-Salam",
+    arabic:
+      "اللَّهُمَّ أَنْتَ السَّلَامُ وَمِنْكَ السَّلَامُ تَبَارَكْتَ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ",
+    latin:
+      "Allaahumma antas salaam, wa minkas salaam, tabaarakta yaa dzal jalaali wal ikraam.",
+    translation:
+      "Ya Allah, Engkaulah As-Salam (Maha Pemberi keselamatan), dan dari-Mu datangnya keselamatan. Maha Berkah Engkau, wahai Pemilik keagungan dan kemuliaan.",
+    count: 1,
+    source: "HR. Muslim 591–592",
+    status: "Shahih",
+  },
+  {
+    id: "wirid-tahlil",
+    title: "Tahlil",
+    arabic:
+      "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    latin:
+      "Laa ilaaha illallaahu wahdahu laa syariika lah, lahul mulku wa lahul hamdu wa huwa 'alaa kulli syai'in qadiir.",
+    translation:
+      "Tiada Tuhan selain Allah semata, tiada sekutu bagi-Nya. Milik-Nya segala kerajaan dan bagi-Nya segala puji, dan Dia Maha Kuasa atas segala sesuatu.",
+    count: 1,
+    source: "HR. Muslim 594",
+    status: "Shahih",
+    note: "Setelah Subuh dan Maghrib dibaca 10x, dengan tambahan 'yuhyi wa yumit': '... lahul-mulku wa lahul-hamdu, yuhyi wa yumit, wa huwa 'alaa kulli syai'in qadiir' (HR. Tirmidhi 3474 untuk Subuh; HR. Tirmidhi 3534 untuk Maghrib).",
+  },
+  {
+    id: "wirid-la-mania",
+    title: "Allahumma La Mani'a",
+    arabic:
+      "اللَّهُمَّ لَا مَانِعَ لِمَا أَعْطَيْتَ، وَلَا مُعْطِيَ لِمَا مَنَعْتَ، وَلَا يَنْفَعُ ذَا الْجَدِّ مِنْكَ الْجَدُّ",
+    latin:
+      "Allaahumma laa maani'a limaa a'thaita, wa laa mu'thiya limaa mana'ta, wa laa yanfa'u dzal-jaddi minkal-jadd.",
+    translation:
+      "Ya Allah, tidak ada yang dapat menghalangi apa yang Engkau berikan, dan tidak ada yang dapat memberi apa yang Engkau halangi; dan kekayaan tidak bermanfaat bagi pemiliknya di hadapan-Mu.",
+    count: 1,
+    source: "HR. Bukhari 844, Muslim 593",
+    status: "Shahih",
+  },
+  {
+    id: "wirid-subhanallah",
+    title: "Subhanallah",
+    arabic: "سُبْحَانَ اللَّهِ",
+    latin: "Subhaanallaah.",
+    translation: "Maha Suci Allah.",
+    count: 33,
+    source: "HR. Muslim 597",
+    status: "Shahih",
+  },
+  {
+    id: "wirid-alhamdulillah",
+    title: "Alhamdulillah",
+    arabic: "الْحَمْدُ لِلَّهِ",
+    latin: "Alhamdulillaah.",
+    translation: "Segala puji bagi Allah.",
+    count: 33,
+    source: "HR. Muslim 597",
+    status: "Shahih",
+  },
+  {
+    id: "wirid-allahu-akbar",
+    title: "Allahu Akbar",
+    arabic: "اللَّهُ أَكْبَرُ",
+    latin: "Allaahu Akbar.",
+    translation: "Allah Maha Besar.",
+    count: 33,
+    source: "HR. Muslim 597",
+    status: "Shahih",
+  },
+  {
+    id: "wirid-tahlil-100",
+    title: "Tahlil Penutup (bacaan ke-100)",
+    arabic:
+      "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    latin:
+      "Laa ilaaha illallaahu wahdahu laa syariika lah, lahul mulku wa lahul hamdu wa huwa 'alaa kulli syai'in qadiir.",
+    translation:
+      "Tiada Tuhan selain Allah semata, tiada sekutu bagi-Nya. Milik-Nya segala kerajaan dan bagi-Nya segala puji, dan Dia Maha Kuasa atas segala sesuatu.",
+    count: 1,
+    source: "HR. Muslim 597",
+    status: "Shahih",
+    note: "Dengan tahlil ini genap 100 bacaan; dosanya diampuni meski sebanyak buih di lautan.",
+  },
+  {
+    id: "wirid-ayat-kursi",
+    title: "Ayat Kursi (Al-Baqarah 255)",
+    arabic: AYAT_KURSI_STEP.arabic,
+    latin: AYAT_KURSI_STEP.latin,
+    translation: AYAT_KURSI_STEP.translation,
+    count: 1,
+    source: "HR. An-Nasa'i (al-Kubra 9848), dinilai shahih oleh al-Albani",
+    status: "Shahih",
+    note: "Siapa membacanya setelah salat fardu, tidak ada yang menghalanginya masuk surga kecuali kematian.",
+  },
+  {
+    id: "wirid-al-ikhlas",
+    title: "Surat Al-Ikhlas",
+    arabic:
+      "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ قُلْ هُوَ ٱللَّهُ أَحَدٌ ٱللَّهُ ٱلصَّمَدُ لَمْ يَلِدْ وَلَمْ يُولَدْ وَلَمْ يَكُن لَّهُۥ كُفُوًا أَحَدٌۢ",
+    latin:
+      "Bismillahirrahmanirrahim. Qul huwallaahu ahad. Allaahush-shamad. Lam yalid wa lam yuulad. Wa lam yakul-lahuu kufuwan ahad.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Katakanlah (Muhammad), 'Dialah Allah, Yang Maha Esa.' Allah tempat meminta segala sesuatu. (Allah) tidak beranak dan tidak pula diperanakkan. Dan tidak ada sesuatu yang setara dengan Dia.",
+    count: 1,
+    source: "HR. Abu Dawud 1523 (Shahih)",
+    status: "Al-Qur'an",
+    note: "Setelah Subuh dan Maghrib dibaca 3x (HR. Abu Dawud 5082, Hasan).",
+  },
+  {
+    id: "wirid-al-falaq",
+    title: "Surat Al-Falaq",
+    arabic:
+      "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ مِن شَرِّ مَا خَلَقَ وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ وَمِن شَرِّ ٱلنَّفَّـٰثَـٰتِ فِى ٱلْعُقَدِ وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ",
+    latin:
+      "Bismillahirrahmanirrahim. Qul a'uudzu birabbil-falaq. Min syarri maa khalaq. Wa min syarri ghaasiqin idzaa waqab. Wa min syarrin-naffaatsaati fil-'uqad. Wa min syarri haasidin idzaa hasad.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Katakanlah, 'Aku berlindung kepada Tuhan yang menguasai subuh (fajar), dari kejahatan (makhluk yang) Dia ciptakan, dan dari kejahatan malam apabila telah gelap gulita, dan dari kejahatan (perempuan-perempuan) penyihir yang meniup pada buhul-buhul (talinya), dan dari kejahatan orang yang dengki apabila dia dengki.'",
+    count: 1,
+    source: "HR. Abu Dawud 1523 (Shahih)",
+    status: "Al-Qur'an",
+    note: "Setelah Subuh dan Maghrib dibaca 3x (HR. Abu Dawud 5082, Hasan).",
+  },
+  {
+    id: "wirid-an-nas",
+    title: "Surat An-Nas",
+    arabic:
+      "بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ ٱلنَّاسِ مَلِكِ ٱلنَّاسِ إِلَـٰهِ ٱلنَّاسِ مِن شَرِّ ٱلْوَسْوَاسِ ٱلْخَنَّاسِ ٱلَّذِى يُوَسْوِسُ فِى صُدُورِ ٱلنَّاسِ مِنَ ٱلْجِنَّةِ وَٱلنَّاسِ",
+    latin:
+      "Bismillahirrahmanirrahim. Qul a'uudzu birabbin-naas. Malikin-naas. Ilaahin-naas. Min syarril-waswaasil-khannaas. Alladzii yuwaswisu fii shuduurin-naas. Minal-jinnati wan-naas.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Katakanlah, 'Aku berlindung kepada Tuhannya manusia, Raja manusia, sembahan manusia, dari kejahatan (bisikan) setan yang bersembunyi, yang membisikkan (kejahatan) ke dalam dada manusia, dari (golongan) jin dan manusia.'",
+    count: 1,
+    source: "HR. Abu Dawud 1523 (Shahih)",
+    status: "Al-Qur'an",
+    note: "Setelah Subuh dan Maghrib dibaca 3x (HR. Abu Dawud 5082, Hasan).",
+  },
+  {
+    id: "wirid-a-inni",
+    title: "Doa Penutup: Mohon Pertolongan Beribadah",
+    arabic: "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ وَشُكْرِكَ وَحُسْنِ عِبَادَتِكَ",
+    latin: "Allaahumma a'innii 'alaa dzikrika, wa syukrika, wa husni 'ibaadatik.",
+    translation:
+      "Ya Allah, tolonglah aku untuk mengingat-Mu, bersyukur kepada-Mu, dan beribadah kepada-Mu dengan sebaik-baiknya.",
+    count: 1,
+    source: "HR. Abu Dawud 1522",
+    status: "Shahih",
+    note: "Wasiat Nabi ﷺ kepada Mu'adz bin Jabal: jangan tinggalkan doa ini setiap selesai salat.",
+  },
+];
+
+// ---------- Grup Dzikir dan Wirid (Adam 2026-11-20) ----------
+// Menggantikan 10 entri "Doa Setelah Salat ..." di katalog Doa Harian
+// (dihapus dari lib/doa-katalog/ibadah.ts): wirid dan dzikir pagi/petang
+// kini tinggal di grup ini. Sumber tiap bacaan:
+// - Wirid sesudah salat: HR. Muslim 591-597, Bukhari 844, Abu Dawud 1522-1523
+// - Dzikir Pagi: Al-Ma'tsurat (Hasan al-Banna), teks Sonora.id
+// - Dzikir Petang: Hisnul Muslim (Sya'id bin Ali bin Wahf al-Qahthani),
+//   teks HijrahApp (hijrahapp.org/dzikir-petang)
+// - Doa Setelah Shalat: contoh Mung Media, diverifikasi ke sumber tepercaya
+//   (lihat catatan per item; redaksi shalawat contoh yang belum terverifikasi
+//   diganti redaksi standar — lihat note pada item doa-shalawat).
+
+export type DzikirWiridEntry = {
+  slug: string;
+  label: string;
+  desc: string;
+};
+
+export const DZIKIR_WIRID_MENU: DzikirWiridEntry[] = [
+  { slug: "wirid", label: "Dzikir Setelah Shalat Fardlu", desc: "Wirid berurutan sesudah salat fardu · 13 bacaan" },
+  { slug: "dzikir-pagi", label: "Dzikir Pagi", desc: "Al-Ma'tsurat pagi · 20 bacaan" },
+  { slug: "dzikir-petang", label: "Dzikir Petang", desc: "Al-Ma'tsurat petang · 17 bacaan" },
+];
+
+// Teks Quran dipakai ulang dari data yang sudah terverifikasi di aplikasi
+// (Ayat Kursi dari TAHLIL_STEPS; tiga surah dari WIRID_SESUDAH_SHALAT
+// yang teks Arabnya sudah dicocokkan byte-per-byte dengan Quran.com API v4).
+const WIRID_IKHLAS = WIRID_SESUDAH_SHALAT.find((w) => w.id === "wirid-al-ikhlas")!;
+const WIRID_FALAQ = WIRID_SESUDAH_SHALAT.find((w) => w.id === "wirid-al-falaq")!;
+const WIRID_NAS = WIRID_SESUDAH_SHALAT.find((w) => w.id === "wirid-an-nas")!;
+
+export const DZIKIR_PAGI: WiridItem[] = [
+  {
+    id: "pagi-taawudz",
+    title: "Ta'awudz",
+    arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+    latin: "A'udzu billahi minasy-syaithanir-rajim.",
+    translation: "Aku berlindung kepada Allah dari godaan setan yang terkutuk.",
+    count: 1,
+    source: "QS. An-Nahl: 98",
+    status: "Al-Qur'an",
+  },
+  {
+    id: "pagi-ayat-kursi",
+    title: "Ayat Kursi (Al-Baqarah 255)",
+    arabic: AYAT_KURSI_STEP.arabic,
+    latin: AYAT_KURSI_STEP.latin,
+    translation: AYAT_KURSI_STEP.translation,
+    count: 1,
+    source: "HR. al-Hakim (1:562), dinilai shahih oleh al-Albani",
+    status: "Shahih",
+    note: "Siapa membacanya ketika pagi, ia dilindungi (oleh Allah dari berbagai gangguan) hingga petang.",
+  },
+  {
+    id: "pagi-al-ikhlas",
+    title: "Surat Al-Ikhlas",
+    arabic: WIRID_IKHLAS.arabic,
+    latin: WIRID_IKHLAS.latin,
+    translation: WIRID_IKHLAS.translation,
+    count: 3,
+    source: "HR. Abu Dawud 5082, Hasan",
+    status: "Al-Qur'an",
+    note: "Dibaca 3x pagi dan petang; siapa mengucapkannya masing-masing tiga kali, segala sesuatu dicukupkan untuknya.",
+  },
+  {
+    id: "pagi-al-falaq",
+    title: "Surat Al-Falaq",
+    arabic: WIRID_FALAQ.arabic,
+    latin: WIRID_FALAQ.latin,
+    translation: WIRID_FALAQ.translation,
+    count: 3,
+    source: "HR. Abu Dawud 5082, Hasan",
+    status: "Al-Qur'an",
+    note: "Dibaca 3x pagi dan petang; siapa mengucapkannya masing-masing tiga kali, segala sesuatu dicukupkan untuknya.",
+  },
+  {
+    id: "pagi-an-nas",
+    title: "Surat An-Nas",
+    arabic: WIRID_NAS.arabic,
+    latin: WIRID_NAS.latin,
+    translation: WIRID_NAS.translation,
+    count: 3,
+    source: "HR. Abu Dawud 5082, Hasan",
+    status: "Al-Qur'an",
+    note: "Dibaca 3x pagi dan petang; siapa mengucapkannya masing-masing tiga kali, segala sesuatu dicukupkan untuknya.",
+  },
+  {
+    id: "pagi-asbahna",
+    title: "Asbahna wa Asbahal-Mulku Lillah",
+    arabic:
+      "أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لاَ إِلَـهَ إِلاَّ اللهُ وَحْدَهُ لاَ شَرِيْكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيْرُ. رَبِّ أَسْأَلُكَ خَيْرَ مَا فِيْ هَذَا الْيَوْمِ وَخَيْرَ مَا بَعْدَهُ، وَأَعُوْذُ بِكَ مِنْ شَرِّ مَا فِيْ هَذَا الْيَوْمِ وَشَرِّ مَا بَعْدَهُ، رَبِّ أَعُوْذُ بِكَ مِنَ الْكَسَلِ وَسُوْءِ الْكِبَرِ، رَبِّ أَعُوْذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
+    latin:
+      "Ash-bahnaa wa ash-bahal mulku lillah walhamdulillah, laa ilaha illallah wahdahu laa syarika lah, lahul mulku walahul hamdu wa huwa 'ala kulli syai-in qodir. Robbi as-aluka khoiro maa fii hadzal yaum wa khoiro maa ba'dahu, wa a'udzu bika min syarri maa fii hadzal yaum wa syarri maa ba'dahu. Robbi a'udzu bika minal kasali wa su-il kibar. Robbi a'udzu bika min 'adzabin fin naari wa 'adzabin fil qobri.",
+    translation:
+      "Kami telah memasuki waktu pagi dan kerajaan hanya milik Allah, segala puji bagi Allah. Tidak ada ilah (yang berhak disembah) kecuali Allah semata, tiada sekutu bagi-Nya. Milik Allah kerajaan dan bagi-Nya pujian. Dia-lah Yang Mahakuasa atas segala sesuatu. Wahai Rabbku, aku mohon kepada-Mu kebaikan di hari ini dan kebaikan sesudahnya. Aku berlindung kepada-Mu dari kejahatan hari ini dan kejahatan sesudahnya. Wahai Rabbku, aku berlindung kepada-Mu dari kemalasan dan kejelekan di hari tua. Wahai Rabbku, aku berlindung kepada-Mu dari siksaan di neraka dan siksaan di alam kubur.",
+    count: 1,
+    source: "HR. Muslim 2723",
+    status: "Shahih",
+  },
+  {
+    id: "pagi-bika-asbahna",
+    title: "Allahumma Bika Asbahna",
+    arabic:
+      "اَللَّهُمَّ بِكَ أَصْبَحْنَا، وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوْتُ وَإِلَيْكَ النُّشُوْرُ",
+    latin:
+      "Allahumma bika ash-bahnaa wa bika amsaynaa wa bika nahyaa wa bika namuutu wa ilaikan nusyuur.",
+    translation:
+      "Ya Allah, dengan rahmat dan pertolongan-Mu kami memasuki waktu pagi, dan dengan rahmat dan pertolongan-Mu kami memasuki waktu petang. Dengan rahmat dan pertolongan-Mu kami hidup dan dengan kehendak-Mu kami mati. Dan kepada-Mu kebangkitan (bagi semua makhluk).",
+    count: 1,
+    source: "HR. Tirmidzi 3391; Abu Dawud 5068",
+    status: "Shahih",
+  },
+  {
+    id: "pagi-sayyidul-istighfar",
+    title: "Sayyidul Istighfar",
+    arabic:
+      "اَللَّهُمَّ أَنْتَ رَبِّيْ لاَ إِلَـهَ إِلاَّ أَنْتَ، خَلَقْتَنِيْ وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوْذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوْءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوْءُ بِذَنْبِيْ فَاغْفِرْ لِيْ فَإِنَّهُ لاَ يَغْفِرُ الذُّنُوْبَ إِلاَّ أَنْتَ.",
+    latin:
+      "Allahumma anta robbii laa ilaha illa anta, kholaqtanii wa anaa 'abduka wa anaa 'ala 'ahdika wa wa'dika mas-tatho'tu. A'udzu bika min syarri maa shona'tu. Abu-u laka bi ni'matika 'alayya wa abu-u bi dzambii. Fagh-firlii fainnahu laa yagh-firudz dzunuuba illa anta.",
+    translation:
+      "Ya Allah, Engkau adalah Rabbku, tidak ada ilah yang berhak disembah kecuali Engkau, Engkaulah yang menciptakanku. Aku adalah hamba-Mu. Aku akan setia pada perjanjianku pada-Mu (yaitu aku akan mentauhidkan-Mu) semampuku dan aku yakin akan janji-Mu (berupa surga untukku). Aku berlindung kepada-Mu dari kejelekan yang kuperbuat. Aku mengakui nikmat-Mu kepadaku dan aku mengakui dosaku. Oleh karena itu, ampunilah aku. Sesungguhnya tiada yang mengampuni dosa kecuali Engkau.",
+    count: 1,
+    source: "HR. Bukhari 6306",
+    status: "Shahih",
+    note: "Siapa mengucapkannya di siang hari dengan penuh keyakinan lalu mati pada hari itu sebelum petang, ia termasuk penghuni surga.",
+  },
+  {
+    id: "pagi-usyhiduka",
+    title: "Allahumma Inni Asbahtu Usyhiduka",
+    arabic:
+      "اَللَّهُمَّ إِنِّيْ أَصْبَحْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ، وَمَلاَئِكَتَكَ وَجَمِيْعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللهُ لاَ إِلَـهَ إِلاَّ أَنْتَ وَحْدَكَ لاَ شَرِيْكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُوْلُكَ",
+    latin:
+      "Allahumma inni ash-bahtu usy-hiduka wa usy-hidu hamalata 'arsyika wa malaa-ikatak wa jami'a kholqik, annaka antallahu laa ilaha illa anta wahdaka laa syariika lak, wa anna Muhammadan 'abduka wa rosuuluk.",
+    translation:
+      "Ya Allah, sesungguhnya aku di waktu pagi ini mempersaksikan Engkau, malaikat yang memikul 'Arsy-Mu, malaikat-malaikat dan seluruh makhluk-Mu, bahwa sesungguhnya Engkau adalah Allah, tiada ilah yang berhak disembah kecuali Engkau semata, tiada sekutu bagi-Mu dan sesungguhnya Muhammad adalah hamba dan utusan-Mu.",
+    count: 4,
+    source: "HR. Abu Dawud 5069",
+    status: "Hasan",
+  },
+  {
+    id: "pagi-afwa",
+    title: "Allahumma Inni As'alukal-'Afwa wal-'Afiyah",
+    arabic:
+      "اَللَّهُمَّ إِنِّيْ أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَاْلآخِرَةِ، اَللَّهُمَّ إِنِّيْ أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِيْنِيْ وَدُنْيَايَ وَأَهْلِيْ وَمَالِيْ اللَّهُمَّ اسْتُرْ عَوْرَاتِى وَآمِنْ رَوْعَاتِى. اَللَّهُمَّ احْفَظْنِيْ مِنْ بَيْنِ يَدَيَّ، وَمِنْ خَلْفِيْ، وَعَنْ يَمِيْنِيْ وَعَنْ شِمَالِيْ، وَمِنْ فَوْقِيْ، وَأَعُوْذُ بِعَظَمَتِكَ أَنْ أُغْتَالَ مِنْ تَحْتِيْ",
+    latin:
+      "Allahumma innii as-alukal 'afwa wal 'aafiyah fid dunyaa wal aakhiroh. Allahumma innii as-alukal 'afwa wal 'aafiyah fii diinii wa dun-yaya wa ahlii wa maalii. Allahumas-tur 'awrootii wa aamin row'aatii. Allahummahfazh-nii mim bayni yadayya wa min kholfii wa 'an yamiinii wa 'an syimaalii wa min fawqii wa a'udzu bi 'azhomatik an ughtala min tahtii.",
+    translation:
+      "Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan di dunia dan akhirat. Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan dalam agama, dunia, keluarga dan hartaku. Ya Allah, tutupilah auratku (aib dan sesuatu yang tidak layak dilihat orang) dan tenteramkanlah aku dari rasa takut. Ya Allah, peliharalah aku dari muka, belakang, kanan, kiri dan atasku. Aku berlindung dengan kebesaran-Mu, agar aku tidak disambar dari bawahku.",
+    count: 1,
+    source: "HR. Abu Dawud 5074",
+    status: "Shahih",
+    note: "Rasulullah ﷺ tidak pernah meninggalkan doa ini di pagi dan petang hari.",
+  },
+  {
+    id: "pagi-alimal-ghaib",
+    title: "Allahumma 'Alimal-Ghaibi wasy-Syahadah",
+    arabic:
+      "اَللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَاْلأَرْضِ، رَبَّ كُلِّ شَيْءٍ وَمَلِيْكَهُ، أَشْهَدُ أَنْ لاَ إِلَـهَ إِلاَّ أَنْتَ، أَعُوْذُ بِكَ مِنْ شَرِّ نَفْسِيْ، وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ، وَأَنْ أَقْتَرِفَ عَلَى نَفْسِيْ سُوْءًا أَوْ أَجُرَّهُ إِلَى مُسْلِمٍ",
+    latin:
+      "Allahumma 'aalimal ghoybi wasy syahaadah faathiros samaawaati wal ardh. Robba kulli syai-in wa maliikah. Asyhadu alla ilaha illa anta. A'udzu bika min syarri nafsii wa min syarrisy syaythooni wa syirkihi, wa an aqtarifa 'alaa nafsii suu-an aw ajurrohu ilaa muslim.",
+    translation:
+      "Ya Allah, Yang Maha Mengetahui yang ghaib dan yang nyata, wahai Rabb pencipta langit dan bumi, Rabb segala sesuatu dan yang merajainya. Aku bersaksi bahwa tidak ada ilah yang berhak disembah kecuali Engkau. Aku berlindung kepada-Mu dari kejahatan diriku, setan dan balatentaranya (godaan untuk berbuat syirik pada Allah), dan aku (berlindung kepada-Mu) dari berbuat kejelekan terhadap diriku atau menyeretnya kepada seorang muslim.",
+    count: 1,
+    source: "HR. Tirmidzi 3392; Abu Dawud 5067",
+    status: "Shahih",
+  },
+  {
+    id: "pagi-bismillahilladzi",
+    title: "Bismillahilladzi La Yadhurru",
+    arabic:
+      "بِسْمِ اللَّهِ الَّذِى لاَ يَضُرُّ مَعَ اسْمِهِ شَىْءٌ فِى الأَرْضِ وَلاَ فِى السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+    latin:
+      "Bismillahilladzi laa yadhurru ma'asmihi syai-un fil ardhi wa laa fis samaa' wa huwas samii'ul 'aliim.",
+    translation:
+      "Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.",
+    count: 3,
+    source: "HR. Abu Dawud 5088; Tirmidzi 3388",
+    status: "Hasan",
+    note: "Siapa membacanya tiga kali di pagi dan tiga kali di petang hari, tidak ada bahaya yang tiba-tiba mencelakainya.",
+  },
+  {
+    id: "pagi-radhiitu",
+    title: "Radhiitu Billahi Rabba",
+    arabic:
+      "رَضِيْتُ بِاللهِ رَبًّا، وَبِاْلإِسْلاَمِ دِيْنًا، وَبِمُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا",
+    latin:
+      "Rodhiitu billaahi robbaa wa bil-islaami diinaa, wa bi-muhammadin shallallaahu 'alaihi wa sallama nabiyya.",
+    translation:
+      "Aku ridha Allah sebagai Rabb, Islam sebagai agama dan Muhammad shallallahu 'alaihi wa sallam sebagai nabi.",
+    count: 3,
+    source: "HR. Abu Dawud 5072; Tirmidzi 3389",
+    status: "Hasan",
+  },
+  {
+    id: "pagi-ya-hayyu",
+    title: "Ya Hayyu Ya Qayyum",
+    arabic:
+      "يَا حَيُّ يَا قَيُّوْمُ بِرَحْمَتِكَ أَسْتَغِيْثُ، وَأَصْلِحْ لِيْ شَأْنِيْ كُلَّهُ وَلاَ تَكِلْنِيْ إِلَى نَفْسِيْ طَرْفَةَ عَيْنٍ",
+    latin:
+      "Yaa Hayyu Yaa Qoyyum, bi-rohmatika as-taghiits, wa ash-lih lii sya'nii kullahu wa laa takilnii ilaa nafsii thorfata 'ainin.",
+    translation:
+      "Wahai Rabb Yang Maha Hidup, wahai Rabb Yang Berdiri Sendiri (tidak butuh segala sesuatu), dengan rahmat-Mu aku minta pertolongan, perbaikilah segala urusanku dan jangan diserahkan kepadaku sekali pun sekejap mata (tanpa mendapat pertolongan dari-Mu).",
+    count: 1,
+    source: "HR. al-Hakim (1:545), dinilai hasan oleh al-Albani",
+    status: "Hasan",
+    note: "Dzikir ini diajarkan Nabi ﷺ kepada Fathimah untuk diamalkan pagi dan petang. Sebagian redaksi menambah 'abadan' di akhir.",
+  },
+  {
+    id: "pagi-fithrah",
+    title: "Asbahna 'ala Fithratil-Islam",
+    arabic:
+      "أَصْبَحْنَا عَلَى فِطْرَةِ اْلإِسْلاَمِ وَعَلَى كَلِمَةِ اْلإِخْلاَصِ، وَعَلَى دِيْنِ نَبِيِّنَا مُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ، وَعَلَى مِلَّةِ أَبِيْنَا إِبْرَاهِيْمَ، حَنِيْفًا مُسْلِمًا وَمَا كَانَ مِنَ الْمُشْرِكِيْنَ",
+    latin:
+      "Ash-bahnaa 'ala fithrotil islaam wa 'alaa kalimatil ikhlaash, wa 'alaa diini nabiyyinaa Muhammadin shallallahu 'alaihi wa sallam, wa 'alaa millati abiina Ibraahiima haniifam muslimaaw wa maa kaana minal musyrikin.",
+    translation:
+      "Di waktu pagi kami memegang agama Islam, kalimat ikhlas (kalimat syahadat), agama Nabi kami Muhammad shallallahu 'alaihi wa sallam, dan agama bapak kami Ibrahim, yang berdiri di atas jalan yang lurus, muslim dan tidak tergolong orang-orang musyrik.",
+    count: 1,
+    source: "HR. Ahmad",
+    status: "Hasan",
+    special: "Khusus pagi",
+  },
+  {
+    id: "pagi-subhanallah",
+    title: "Subhanallahi wa Bihamdihi",
+    arabic: "سُبْحَانَ اللهِ وَبِحَمْدِهِ",
+    latin: "Subhanallah wa bi-hamdih.",
+    translation: "Maha Suci Allah, aku memuji-Nya.",
+    count: 100,
+    source: "HR. Muslim 2692; Bukhari 6405",
+    status: "Shahih",
+    note: "Siapa mengucapkannya 100x pagi dan petang, tidak ada yang datang pada hari kiamat dengan amalan lebih baik darinya, kecuali yang mengucapkan semisal atau lebih.",
+  },
+  {
+    id: "pagi-tahlil-100",
+    title: "La Ilaha Illallah",
+    arabic:
+      "لاَ إِلَـهَ إِلاَّ اللهُ وَحْدَهُ لاَ شَرِيْكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيْرُ",
+    latin:
+      "Laa ilaha illallah wahdahu laa syarika lah, lahul mulku walahul hamdu wa huwa 'ala kulli syai-in qodiir.",
+    translation:
+      "Tidak ada ilah yang berhak disembah selain Allah semata, tidak ada sekutu bagi-Nya. Bagi-Nya kerajaan dan segala pujian. Dia-lah yang berkuasa atas segala sesuatu.",
+    count: 100,
+    source: "HR. Bukhari 3293; Muslim 2691",
+    status: "Shahih",
+    note: "Dianjurkan 100x dalam sehari; minimal 10x pagi dan petang (10x: dicatat 10 kebaikan, dihapus 10 kesalahan, seperti memerdekakan 10 budak, dilindungi dari setan hingga petang).",
+  },
+  {
+    id: "pagi-adada-khalqihi",
+    title: "Subhanallahi wa Bihamdihi 'Adada Khalqihi",
+    arabic:
+      "سُبْحَانَ اللهِ وَبِحَمْدِهِ: عَدَدَ خَلْقِهِ، وَرِضَا نَفْسِهِ، وَزِنَةَ عَرْشِهِ وَمِدَادَ كَلِمَاتِهِ",
+    latin:
+      "Subhanallah wa bi-hamdih, 'adada kholqih wa ridhoo nafsih. wa zinata 'arsyih, wa midaada kalimaatih.",
+    translation:
+      "Maha Suci Allah, aku memuji-Nya sebanyak makhluk-Nya, sejauh kerelaan-Nya, seberat timbangan 'Arsy-Nya dan sebanyak tinta tulisan kalimat-Nya.",
+    count: 3,
+    source: "HR. Muslim 2726",
+    status: "Shahih",
+    special: "Khusus pagi",
+  },
+  {
+    id: "pagi-ilman-nafian",
+    title: "Doa Ilmu yang Bermanfaat",
+    arabic:
+      "اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلًا مُتَقَبَّلًا",
+    latin:
+      "Allaahumma innii as'aluka 'ilman naafi'an, wa rizqan thayyiban, wa 'amalan mutaqabbalaa.",
+    translation:
+      "Ya Allah, sesungguhnya aku memohon kepada-Mu ilmu yang bermanfaat, rezeki yang baik, dan amal yang diterima.",
+    count: 1,
+    source: "HR. Ibnu Majah 925",
+    status: "Shahih",
+    special: "Setelah Subuh",
+  },
+  {
+    id: "pagi-istighfar",
+    title: "Astaghfirullah wa Atubu Ilaih",
+    arabic: "أَسْتَغْفِرُ اللهَ وَأَتُوْبُ إِلَيْهِ",
+    latin: "Astaghfirullah wa atuubu ilaih.",
+    translation: "Aku memohon ampun kepada Allah dan bertobat kepada-Nya.",
+    count: 100,
+    source: "HR. Bukhari 6307; Muslim 2702",
+    status: "Shahih",
+    note: "Dibaca 100x dalam sehari.",
+  },
+];
+
+export const DZIKIR_PETANG: WiridItem[] = [
+  {
+    id: "petang-taawudz",
+    title: "Ta'awudz",
+    arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ",
+    latin: "A'udzu billahi minasy-syaithanir-rajim.",
+    translation: "Aku berlindung kepada Allah dari godaan setan yang terkutuk.",
+    count: 1,
+    source: "QS. An-Nahl: 98",
+    status: "Al-Qur'an",
+  },
+  {
+    id: "petang-ayat-kursi",
+    title: "Ayat Kursi (Al-Baqarah 255)",
+    arabic: AYAT_KURSI_STEP.arabic,
+    latin: AYAT_KURSI_STEP.latin,
+    translation: AYAT_KURSI_STEP.translation,
+    count: 1,
+    source: "HR. al-Hakim (1:562), dinilai shahih oleh al-Albani",
+    status: "Shahih",
+    note: "Siapa membacanya ketika petang, ia dilindungi (oleh Allah dari berbagai gangguan) hingga pagi.",
+  },
+  {
+    id: "petang-al-ikhlas",
+    title: "Surat Al-Ikhlas",
+    arabic: WIRID_IKHLAS.arabic,
+    latin: WIRID_IKHLAS.latin,
+    translation: WIRID_IKHLAS.translation,
+    count: 3,
+    source: "HR. Abu Dawud 5082, Hasan",
+    status: "Al-Qur'an",
+    note: "Dibaca 3x pagi dan petang; siapa mengucapkannya masing-masing tiga kali, segala sesuatu dicukupkan untuknya.",
+  },
+  {
+    id: "petang-al-falaq",
+    title: "Surat Al-Falaq",
+    arabic: WIRID_FALAQ.arabic,
+    latin: WIRID_FALAQ.latin,
+    translation: WIRID_FALAQ.translation,
+    count: 3,
+    source: "HR. Abu Dawud 5082, Hasan",
+    status: "Al-Qur'an",
+    note: "Dibaca 3x pagi dan petang; siapa mengucapkannya masing-masing tiga kali, segala sesuatu dicukupkan untuknya.",
+  },
+  {
+    id: "petang-an-nas",
+    title: "Surat An-Nas",
+    arabic: WIRID_NAS.arabic,
+    latin: WIRID_NAS.latin,
+    translation: WIRID_NAS.translation,
+    count: 3,
+    source: "HR. Abu Dawud 5082, Hasan",
+    status: "Al-Qur'an",
+    note: "Dibaca 3x pagi dan petang; siapa mengucapkannya masing-masing tiga kali, segala sesuatu dicukupkan untuknya.",
+  },
+  {
+    id: "petang-amsaina",
+    title: "Amsaina wa Amsal-Mulku Lillah",
+    arabic:
+      "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ، لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ، رَبِّ أَسْأَلُكَ خَيْرَ مَا فِي هَذِهِ اللَّيْلَةِ وَخَيْرَ مَا بَعْدَهَا، وَأَعُوذُ بِكَ مِنْ شَرِّ مَا فِي هَذِهِ اللَّيْلَةِ وَشَرِّ مَا بَعْدَهَا، رَبِّ أَعُوذُ بِكَ مِنَ الْكَسَلِ وَسُوءِ الْكِبَرِ، رَبِّ أَعُوذُ بِكَ مِنْ عَذَابٍ فِي النَّارِ وَعَذَابٍ فِي الْقَبْرِ",
+    latin:
+      "Amsaynaa wa amsal mulku lillah walhamdulillah, laa ilaha illallah wahdahu laa syarika lah, lahul mulku walahul hamdu wa huwa 'ala kulli syai-in qodir. Robbi as-aluka khoiro maa fii hadzihil lailah wa khoiro maa ba'dahaa, wa a'udzu bika min syarri maa fii hadzihil lailah wa syarri maa ba'dahaa. Robbi a'udzu bika minal kasali wa suu-il kibar. Robbi a'udzu bika min 'adzabin fin naari wa 'adzabin fil qobri.",
+    translation:
+      "Kami telah memasuki waktu petang dan kerajaan hanya milik Allah, segala puji bagi Allah. Tidak ada ilah (yang berhak disembah) kecuali Allah semata, tiada sekutu bagi-Nya. Milik Allah kerajaan dan bagi-Nya pujian. Dia-lah Yang Mahakuasa atas segala sesuatu. Wahai Rabbku, aku mohon kepada-Mu kebaikan di malam ini dan kebaikan sesudahnya. Aku berlindung kepada-Mu dari kejahatan malam ini dan kejahatan sesudahnya. Wahai Rabbku, aku berlindung kepada-Mu dari kemalasan dan kejelekan di hari tua. Wahai Rabbku, aku berlindung kepada-Mu dari siksaan di neraka dan siksaan di kubur.",
+    count: 1,
+    source: "HR. Muslim 2723",
+    status: "Shahih",
+  },
+  {
+    id: "petang-bika-amsaina",
+    title: "Allahumma Bika Amsaina",
+    arabic:
+      "اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ",
+    latin:
+      "Allahumma bika amsaynaa wa bika ash-bahnaa wa bika nahyaa wa bika namuutu wa ilaikal mashiir.",
+    translation:
+      "Ya Allah, dengan rahmat dan pertolongan-Mu kami memasuki waktu petang, dan dengan rahmat dan pertolongan-Mu kami memasuki waktu pagi. Dengan rahmat dan pertolongan-Mu kami hidup dan dengan kehendak-Mu kami mati. Dan kepada-Mu tempat kembali (bagi semua makhluk).",
+    count: 1,
+    source: "HR. Tirmidzi 3391; Abu Dawud 5068",
+    status: "Shahih",
+  },
+  {
+    id: "petang-sayyidul-istighfar",
+    title: "Sayyidul Istighfar",
+    arabic:
+      "اَللَّهُمَّ أَنْتَ رَبِّيْ لاَ إِلَـهَ إِلاَّ أَنْتَ، خَلَقْتَنِيْ وَأَنَا عَبْدُكَ، وَأَنَا عَلَى عَهْدِكَ وَوَعْدِكَ مَا اسْتَطَعْتُ، أَعُوْذُ بِكَ مِنْ شَرِّ مَا صَنَعْتُ، أَبُوْءُ لَكَ بِنِعْمَتِكَ عَلَيَّ، وَأَبُوْءُ بِذَنْبِيْ فَاغْفِرْ لِيْ فَإِنَّهُ لاَ يَغْفِرُ الذُّنُوْبَ إِلاَّ أَنْتَ.",
+    latin:
+      "Allahumma anta robbii laa ilaha illa anta, kholaqtanii wa anaa 'abduka wa anaa 'ala 'ahdika wa wa'dika mas-tatho'tu. A'udzu bika min syarri maa shona'tu. Abu-u laka bi ni'matika 'alayya wa abu-u bi dzambii. Fagh-firlii fainnahu laa yagh-firudz dzunuuba illa anta.",
+    translation:
+      "Ya Allah, Engkau adalah Rabbku, tidak ada ilah yang berhak disembah kecuali Engkau, Engkaulah yang menciptakanku. Aku adalah hamba-Mu. Aku akan setia pada perjanjianku pada-Mu (yaitu aku akan mentauhidkan-Mu) semampuku dan aku yakin akan janji-Mu (berupa surga untukku). Aku berlindung kepada-Mu dari kejelekan yang kuperbuat. Aku mengakui nikmat-Mu kepadaku dan aku mengakui dosaku. Oleh karena itu, ampunilah aku. Sesungguhnya tiada yang mengampuni dosa kecuali Engkau.",
+    count: 1,
+    source: "HR. Bukhari 6306",
+    status: "Shahih",
+    note: "Siapa mengucapkannya di malam hari dengan penuh keyakinan lalu mati sebelum pagi, ia termasuk penghuni surga.",
+  },
+  {
+    id: "petang-afini",
+    title: "Allahumma 'Afini fi Badani",
+    arabic:
+      "اللَّهُمَّ عَافِنِي فِي بَدَنِي، اللَّهُمَّ عَافِنِي فِي سَمْعِي، اللَّهُمَّ عَافِنِي فِي بَصَرِي، لَا إِلَهَ إِلَّا أَنْتَ، اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْكُفْرِ وَالْفَقْرِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، لَا إِلَهَ إِلَّا أَنْتَ",
+    latin:
+      "Allahumma 'afini fi badani, Allahumma 'afini fi sam'i, Allahumma 'afini fi bashori, lailahailla anta. Allahumma inni a'udzubika minal kufri wal faqori, wa a'udzubika min 'adzabil qobri, lailahailla anta.",
+    translation:
+      "Ya Allah, selamatkanlah tubuhku (dari penyakit dan dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah pendengaranku (dari penyakit dan maksiat atau dari apa yang tidak aku inginkan). Ya Allah, selamatkanlah penglihatanku, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau. Ya Allah, sesungguhnya aku berlindung kepada-Mu dari kekufuran dan kefakiran. Aku berlindung kepada-Mu dari siksa kubur, tidak ada Ilah yang berhak diibadahi dengan benar kecuali Engkau.",
+    count: 3,
+    source: "HR. Abu Dawud 5090",
+    status: "Hasan",
+  },
+  {
+    id: "petang-afwa",
+    title: "Allahumma Inni As'alukal-'Afwa wal-'Afiyah",
+    arabic:
+      "اَللَّهُمَّ إِنِّيْ أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَاْلآخِرَةِ، اَللَّهُمَّ إِنِّيْ أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِيْنِيْ وَدُنْيَايَ وَأَهْلِيْ وَمَالِيْ اللَّهُمَّ اسْتُرْ عَوْرَاتِى وَآمِنْ رَوْعَاتِى. اَللَّهُمَّ احْفَظْنِيْ مِنْ بَيْنِ يَدَيَّ، وَمِنْ خَلْفِيْ، وَعَنْ يَمِيْنِيْ وَعَنْ شِمَالِيْ، وَمِنْ فَوْقِيْ، وَأَعُوْذُ بِعَظَمَتِكَ أَنْ أُغْتَالَ مِنْ تَحْتِيْ",
+    latin:
+      "Allahumma innii as-alukal 'afwa wal 'aafiyah fid dunyaa wal aakhiroh. Allahumma innii as-alukal 'afwa wal 'aafiyah fii diinii wa dun-yaya wa ahlii wa maalii. Allahumas-tur 'awrootii wa aamin row'aatii. Allahummahfazh-nii mim bayni yadayya wa min kholfii wa 'an yamiinii wa 'an syimaalii wa min fawqii wa a'udzu bi 'azhomatik an ughtala min tahtii.",
+    translation:
+      "Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan di dunia dan akhirat. Ya Allah, sesungguhnya aku memohon kebajikan dan keselamatan dalam agama, dunia, keluarga dan hartaku. Ya Allah, tutupilah auratku (aib dan sesuatu yang tidak layak dilihat orang) dan tenteramkanlah aku dari rasa takut. Ya Allah, peliharalah aku dari muka, belakang, kanan, kiri dan atasku. Aku berlindung dengan kebesaran-Mu, agar aku tidak disambar dari bawahku.",
+    count: 1,
+    source: "HR. Abu Dawud 5074",
+    status: "Shahih",
+    note: "Rasulullah ﷺ tidak pernah meninggalkan doa ini di pagi dan petang hari.",
+  },
+  {
+    id: "petang-alimal-ghaib",
+    title: "Allahumma 'Alimal-Ghaibi wasy-Syahadah",
+    arabic:
+      "اَللَّهُمَّ عَالِمَ الْغَيْبِ وَالشَّهَادَةِ فَاطِرَ السَّمَاوَاتِ وَاْلأَرْضِ، رَبَّ كُلِّ شَيْءٍ وَمَلِيْكَهُ، أَشْهَدُ أَنْ لاَ إِلَـهَ إِلاَّ أَنْتَ، أَعُوْذُ بِكَ مِنْ شَرِّ نَفْسِيْ، وَمِنْ شَرِّ الشَّيْطَانِ وَشِرْكِهِ، وَأَنْ أَقْتَرِفَ عَلَى نَفْسِيْ سُوْءًا أَوْ أَجُرَّهُ إِلَى مُسْلِمٍ",
+    latin:
+      "Allahumma 'aalimal ghoybi wasy syahaadah faathiros samaawaati wal ardh. Robba kulli syai-in wa maliikah. Asyhadu alla ilaha illa anta. A'udzu bika min syarri nafsii wa min syarrisy syaythooni wa syirkihi, wa an aqtarifa 'alaa nafsii suu-an aw ajurrohu ilaa muslim.",
+    translation:
+      "Ya Allah, Yang Maha Mengetahui yang ghaib dan yang nyata, wahai Rabb pencipta langit dan bumi, Rabb segala sesuatu dan yang merajainya. Aku bersaksi bahwa tidak ada ilah yang berhak disembah kecuali Engkau. Aku berlindung kepada-Mu dari kejahatan diriku, setan dan balatentaranya (godaan untuk berbuat syirik pada Allah), dan aku (berlindung kepada-Mu) dari berbuat kejelekan terhadap diriku atau menyeretnya kepada seorang muslim.",
+    count: 1,
+    source: "HR. Tirmidzi 3392; Abu Dawud 5067",
+    status: "Shahih",
+  },
+  {
+    id: "petang-bismillahilladzi",
+    title: "Bismillahilladzi La Yadhurru",
+    arabic:
+      "بِسْمِ اللَّهِ الَّذِى لاَ يَضُرُّ مَعَ اسْمِهِ شَىْءٌ فِى الأَرْضِ وَلاَ فِى السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ",
+    latin:
+      "Bismillahilladzi laa yadhurru ma'asmihi syai-un fil ardhi wa laa fis samaa' wa huwas samii'ul 'aliim.",
+    translation:
+      "Dengan nama Allah yang bila disebut, segala sesuatu di bumi dan langit tidak akan berbahaya, Dia-lah Yang Maha Mendengar lagi Maha Mengetahui.",
+    count: 3,
+    source: "HR. Abu Dawud 5088; Tirmidzi 3388",
+    status: "Hasan",
+    note: "Siapa membacanya tiga kali di pagi dan tiga kali di petang hari, tidak ada bahaya yang tiba-tiba mencelakainya.",
+  },
+  {
+    id: "petang-radhiitu",
+    title: "Radhiitu Billahi Rabba",
+    arabic:
+      "رَضِيْتُ بِاللهِ رَبًّا، وَبِاْلإِسْلاَمِ دِيْنًا، وَبِمُحَمَّدٍ صَلَّى اللهُ عَلَيْهِ وَسَلَّمَ نَبِيًّا",
+    latin:
+      "Rodhiitu billaahi robbaa wa bil-islaami diinaa, wa bi-muhammadin shallallaahu 'alaihi wa sallama nabiyya.",
+    translation:
+      "Aku ridha Allah sebagai Rabb, Islam sebagai agama dan Muhammad shallallahu 'alaihi wa sallam sebagai nabi.",
+    count: 3,
+    source: "HR. Abu Dawud 5072; Tirmidzi 3389",
+    status: "Hasan",
+  },
+  {
+    id: "petang-ya-hayyu",
+    title: "Ya Hayyu Ya Qayyum",
+    arabic:
+      "يَا حَيُّ يَا قَيُّوْمُ بِرَحْمَتِكَ أَسْتَغِيْثُ، وَأَصْلِحْ لِيْ شَأْنِيْ كُلَّهُ وَلاَ تَكِلْنِيْ إِلَى نَفْسِيْ طَرْفَةَ عَيْنٍ",
+    latin:
+      "Yaa Hayyu Yaa Qoyyum, bi-rohmatika as-taghiits, wa ash-lih lii sya'nii kullahu wa laa takilnii ilaa nafsii thorfata 'ainin.",
+    translation:
+      "Wahai Rabb Yang Maha Hidup, wahai Rabb Yang Berdiri Sendiri (tidak butuh segala sesuatu), dengan rahmat-Mu aku minta pertolongan, perbaikilah segala urusanku dan jangan diserahkan kepadaku sekali pun sekejap mata (tanpa mendapat pertolongan dari-Mu).",
+    count: 1,
+    source: "HR. al-Hakim (1:545), dinilai hasan oleh al-Albani",
+    status: "Hasan",
+    note: "Dzikir ini diajarkan Nabi ﷺ kepada Fathimah untuk diamalkan pagi dan petang.",
+  },
+  {
+    id: "petang-subhanallah",
+    title: "Subhanallahi wa Bihamdihi",
+    arabic: "سُبْحَانَ اللهِ وَبِحَمْدِهِ",
+    latin: "Subhanallah wa bi-hamdih.",
+    translation: "Maha Suci Allah, aku memuji-Nya.",
+    count: 100,
+    source: "HR. Muslim 2692; Bukhari 6405",
+    status: "Shahih",
+    note: "Siapa mengucapkannya 100x pagi dan petang, tidak ada yang datang pada hari kiamat dengan amalan lebih baik darinya, kecuali yang mengucapkan semisal atau lebih.",
+  },
+  {
+    id: "petang-tahlil-100",
+    title: "La Ilaha Illallah",
+    arabic:
+      "لاَ إِلَـهَ إِلاَّ اللهُ وَحْدَهُ لاَ شَرِيْكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيْرُ",
+    latin:
+      "Laa ilaha illallah wahdahu laa syarika lah, lahul mulku walahul hamdu wa huwa 'ala kulli syai-in qodiir.",
+    translation:
+      "Tidak ada ilah yang berhak disembah selain Allah semata, tidak ada sekutu bagi-Nya. Bagi-Nya kerajaan dan segala pujian. Dia-lah yang berkuasa atas segala sesuatu.",
+    count: 100,
+    source: "HR. Bukhari 3293; Muslim 2691",
+    status: "Shahih",
+    note: "Dianjurkan 100x dalam sehari; minimal 10x pagi dan petang (10x: dicatat 10 kebaikan, dihapus 10 kesalahan, seperti memerdekakan 10 budak, dilindungi dari setan hingga petang).",
+  },
+  {
+    id: "petang-audzu-kalimatillah",
+    title: "A'udzu bi Kalimatillah",
+    arabic: "أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ",
+    latin: "A'udzu bikalimaatillahit-taammaati min syarri maa kholaq.",
+    translation:
+      "Aku berlindung dengan kalimat-kalimat Allah yang sempurna dari kejahatan makhluk yang diciptakan-Nya.",
+    count: 3,
+    source: "HR. Ahmad (2:290), dinilai shahih oleh Syu'aib al-Arnauth",
+    status: "Shahih",
+    special: "Khusus petang",
+    note: "Siapa mengucapkannya di petang hari, niscaya tidak ada racun atau binatang yang mencelakakannya di malam itu.",
+  },
+];
+
+// ---------- Doa Setelah Shalat Fardhu (tombol Doa di bawah wirid) ----------
+// Mengikuti contoh "DOA SETELAH SHOLAT" (Mung Media) yang dikirim Adam
+// 2026-11-20 09:32 WIB; tiap bagian diverifikasi ke sumber tepercaya.
+// Contoh terpotong di tengah kalimat — kelanjutan lengkap diambil dari
+// sumber yang sama (lihat note pada item doa-taqabbal).
+
+export const DOA_SETELAH_SHALAT: WiridItem[] = [
+  {
+    id: "doa-taawudz-bismillah",
+    title: "Ta'awudz dan Bismillah",
+    arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ، بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
+    latin: "A'udzu billahi minasy-syaithanir-rajim. Bismillahir-rahmanir-rahim.",
+    translation:
+      "Aku berlindung kepada Allah dari godaan setan yang terkutuk. Dengan menyebut nama Allah Yang Maha Pengasih lagi Maha Penyayang.",
+    count: 1,
+    source: "QS. An-Nahl: 98",
+    status: "Al-Qur'an",
+  },
+  {
+    id: "doa-shalawat",
+    title: "Shalawat",
+    arabic: "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ أَجْمَعِينَ",
+    latin: "Allahumma shalli wa sallim 'ala sayyidina Muhammadin wa 'ala alihi wa shahbihi ajma'in.",
+    translation:
+      "Ya Allah, limpahkanlah shalawat dan salam kepada junjungan kami Muhammad, serta kepada seluruh keluarga dan sahabat beliau.",
+    count: 1,
+    source: "QS. Al-Ahzab: 56; HR. Muslim",
+    status: "Shahih",
+    note: "Redaksi dalam contoh (Mung Media) berbunyi '...wa 'ala alihi wa shahbihi wat-tabi'ina wa barik wa sallim ajma'in' — redaksi persis itu belum terverifikasi dari sumber tepercaya dalam pengerjaan ini, sehingga dipakai redaksi shalawat standar yang terverifikasi ini.",
+  },
+  {
+    id: "doa-munjiat",
+    title: "Shalawat Munjiat",
+    arabic:
+      "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ صَلَاةً تُنْجِينَا بِهَا مِنْ جَمِيعِ الْأَهْوَالِ وَالْآفَاتِ، وَتَقْضِي لَنَا بِهَا جَمِيعَ الْحَاجَاتِ، وَتُطَهِّرُنَا بِهَا مِنْ جَمِيعِ السَّيِّئَاتِ، وَتَرْفَعُنَا بِهَا عِنْدَكَ أَعْلَى الدَّرَجَاتِ، وَتُبَلِّغُنَا بِهَا أَقْصَى الْغَايَاتِ مِنْ جَمِيعِ الْخَيْرَاتِ فِي الْحَيَاةِ وَبَعْدَ الْمَمَاتِ",
+    latin:
+      "Allahumma shalli 'ala sayyidina Muhammadin shalatan tunjina biha min jami'il-ahwali wal-afat, wa taqdhi lana biha jami'al-hajat, wa tuthahhiruna biha min jami'is-sayyi'at, wa tarfa'una biha 'indaka a'lad-darajat, wa tuballighuna biha aqshal-ghayat min jami'il-khairati fil-hayati wa ba'dal-mamat.",
+    translation:
+      "Ya Allah, limpahkanlah shalawat kepada junjungan kami Nabi Muhammad, suatu shalawat yang dengannya Engkau menyelamatkan kami dari segala ketakutan dan bencana, dan dengannya Engkau memenuhi segala hajat kami, dan dengannya Engkau menyucikan kami dari segala dosa, dan dengannya Engkau mengangkat kami ke derajat yang paling tinggi di sisi-Mu, dan dengannya Engkau menyampaikan kami kepada tujuan-tujuan tertinggi dari segala kebaikan, di dunia maupun setelah kematian.",
+    count: 1,
+    source: "Shalawat susunan ulama; dinukil as-Sakhawi dalam al-Qaul al-Badi'",
+    status: "Doa umum",
+  },
+  {
+    id: "doa-hamdalah",
+    title: "Puji-pujian (Hamdalah)",
+    arabic:
+      "الْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ، حَمْدَ الشَّاكِرِيْنَ حَمْدَ النَّاعِمِيْنَ، حَمْدًا يُّوَافِي نِعَمَهُ وَيُكَافِئُ مَزِيْدَهُ، يَا رَبَّنَا لَكَ الْحَمْدُ كَمَا يَنْبَغِيْ لِجَلَالِ وَجْهِكَ وَعَظِيْمِ سُلْطَانِكَ",
+    latin:
+      "Alhamdulillahi rabbil-'alamin, hamdasy-syakirin, hamdan-na'imin, hamdan yuwafi ni'amahu wa yukafi'u mazidah, ya rabbana lakal-hamdu kama yanbaghi li jalali wajhika wa 'azhimi sulthanik.",
+    translation:
+      "Segala puji bagi Allah, Tuhan semesta alam, sebagaimana orang-orang yang bersyukur dan orang yang memperoleh nikmat sama memuji, dengan pujian yang sesuai dengan nikmat-Nya dan memungkinkan ditambah nikmat-Nya. Tuhan kami, hanya bagi-Mu segala puji, sebagaimana yang patut terhadap kemuliaan-Mu dan keagungan-Mu.",
+    count: 1,
+    source: "NU Online (LBM PBNU) — doa tahlil",
+    status: "Doa umum",
+  },
+  {
+    id: "doa-berlindung",
+    title: "Doa Berlindung",
+    arabic:
+      "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْعَجْزِ وَالْكَسَلِ وَالْجُبْنِ وَالْهَرَمِ وَالْبُخْلِ، وَأَعُوذُ بِكَ مِنْ عَذَابِ الْقَبْرِ، وَمِنْ فِتْنَةِ الْمَحْيَا وَالْمَمَاتِ",
+    latin:
+      "Allahumma inni a'udzu bika minal-'ajzi wal-kasali wal-jubni wal-harami wal-bukhli, wa a'udzu bika min 'adzabil-qabri wa min fitnatil-mahya wal-mamat.",
+    translation:
+      "Ya Allah, sesungguhnya aku berlindung kepada-Mu dari kelemahan, kemalasan, ketakutan, kejelekan di waktu tua, dan kekikiran. Dan aku berlindung kepada-Mu dari siksa kubur dan dari fitnah kehidupan dan kematian.",
+    count: 1,
+    source: "HR. Muslim 2706; Bukhari 6367",
+    status: "Shahih",
+  },
+  {
+    id: "doa-taqabbal",
+    title: "Doa Terimalah Amal Kami",
+    arabic:
+      "اللَّهُمَّ رَبَّنَا تَقَبَّلْ مِنَّا صَلَاتَنَا وَصِيَامَنَا وَرُكُوعَنَا وَسُجُودَنَا وَقُعُودَنَا وَتَضَرُّعَنَا وَتَخَشُّعَنَا وَتَعَبُّدَنَا وَتَمِّمْ تَقْصِيرَنَا يَا اللَّهُ يَا رَبَّ الْعَالَمِينَ",
+    latin:
+      "Allahumma rabbana taqabbal minna shalatana wa shiyamana wa ruku'ana wa sujudana wa qu'udana wa tadharr'u'ana wa takhasy-syu'ana wa ta'abbudana wa tammim taqshirana ya Allah ya rabbal-'alamin.",
+    translation:
+      "Ya Allah, ya Tuhan kami, terimalah shalat kami, puasa kami, rukuk kami, sujud kami, duduk kami, kerendahan diri kami, kekhusyukan kami, pengabdian kami, dan sempurnakanlah kekurangan kami, ya Allah, Tuhan semesta alam.",
+    count: 1,
+    source: "Doa umum — diamalkan umat Islam Indonesia setelah shalat",
+    status: "Doa umum",
+    note: "Contoh terpotong di '...wa takhasy-syu'ana...'; kelanjutan lengkapnya: '...wa ta'abbudana wa tammim taqshirana ya Allah ya rabbal-'alamin'.",
   },
 ];
 
