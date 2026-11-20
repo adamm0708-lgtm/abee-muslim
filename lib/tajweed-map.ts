@@ -62,6 +62,23 @@ const SMALL_RECT = "\u06e0"; // sifir mustathil
 const SAKTAH = "\u06dc"; // saktah
 // Tanda waqaf Mushaf Standar Indonesia (Kemenag): U+06D6–U+06DC.
 const WAQAF_MARKS = new Set(["\u06d6", "\u06d7", "\u06d8", "\u06d9", "\u06da", "\u06db", "\u06dc"]);
+
+// Koreksi teks MSI dari screenshot Adam (2026-11-21): tanda waqaf akhir
+// ayat yang ADA di aplikasi pembanding (Mung Media / MSI cetak) tapi
+// TIDAK ADA di teks equran.id (sumber MSI utama). BUKAN tebakan:
+// - (56, 24) laa: terlihat JELAS di screenshot (centang merah Adam di
+//   atas يَعْمَلُونَ) + tercantum eksplisit di laporan; equran.id
+//   (live API maupun berkas lokal) tidak memilikinya.
+// - (56, 26) laa: centang merah Adam di atas سَلَامًا kedua (akhir ayat);
+//   bentuk tanda yang terlihat konsisten dengan laa (sama seperti
+//   tanda akhir ayat di sekitarnya: 56:24, 25, 28-33).
+// Tanda ditambahkan di AKHIR teks MSI ayat itu (setelah kata terakhir);
+// penempatan ke Simple memakai mekanisme normal (pembawa = kata terakhir).
+// Bila equran.id kelak melengkapinya, koreksi menjadi idempoten.
+const MSI_CORRECTIONS: Record<string, string[]> = {
+  "56:24": ["\u06d9"], // laa di akhir ayat (di atas يَعْمَلُونَ)
+  "56:26": ["\u06d9"], // laa di akhir ayat (di atas سَلَامًا kedua)
+};
 const ZWNJ = "\u200c";
 const SMALL_MEEM = "\u06e2"; // tanda iqlab
 const SMALL_TANWIN_MARK = "\u06ed"; // tanda tanwin kasra
@@ -105,6 +122,11 @@ function coreExpansion(ch: string): string[] {
   if (ch === "\u0622") return [ALIF]; // alef maddah
   if (ch === "\u0654" || ch === "\u0655") return ["\u0621"]; // combining hamza
   if (ch === "\u0649" || ch === "\u064a") return ["\u064a"]; // alef maksura / yeh
+  // --- Karakter KHUSUS MSI (hanya ada di teks equran.id; tidak ada di
+  // Uthmani/Simple — jadi aturan ini tidak mengubah alignment lama): ---
+  if (ch === "\u0656") return [ALIF]; // subscript alef (penanda vokal panjang, mis. بِهٖ)
+  if (ch === "\u0657") return ["\u064f"]; // inverted damma (mis. حَوْلَهٗ)
+  if (ch === "\u06d5" || ch === "\u08d6" || ch === "\u06d4") return []; // ە / ain kecil (ruku') / titik penuh — dibuang
   if (ch === TATWEEL || ch === MADDAH || ch === SMALL_ZERO || ch === ZWNJ) return [];
   if (isSmallHigh(ch)) return [];
   return [ch];
@@ -341,15 +363,60 @@ function pickClass(classes: ReadonlySet<string>): string | null {
 
 type CoreEntry = { ch: string; src: number[] };
 
+type BuildCoreOptions = {
+  dropWaqf?: boolean;
+  msiMode?: boolean;
+};
+
 function buildCore(
   items: string[],
-  swapTanwin: boolean
+  swapTanwin: boolean,
+  opts: BuildCoreOptions = {}
 ): { coreStr: string[]; core: CoreEntry[] } {
+  const { dropWaqf = false, msiMode = false } = opts;
   const core: CoreEntry[] = [];
   let i = 0;
   const n = items.length;
   while (i < n) {
     const ch = items[i];
+    // drop_waqf: buang tanda waqaf U+06D6–U+06DC dari core. Hanya untuk
+    // alignment MSI↔Simple: kedua teks MEMAKAI tanda waqaf yang berbeda
+    // di 2.999 tempat, sehingga tanda-tanda itu (sebagai karakter core)
+    // mengacaukan difflib — frasa berulang ("قَالُوا" 3x di 40:50)
+    // tersusun silang dan pembawa tanda tidak terpetakan. Tanda waqaf
+    // TIDAK diperlukan di core untuk penempatan MSI (penempatan memakai
+    // huruf pembawa, bukan tandanya). Alignment Uthmani↔Simple TIDAK
+    // memakai opsi ini (tandanya nyaris identik di kedua teks).
+    if (dropWaqf && WAQAF_MARKS.has(ch)) {
+      i += 1;
+      continue;
+    }
+    // msi_mode (a): hamzah awal kata -> [alif] saja. MSI menulisnya
+    // alif polos ("اِثْمَ"), Simple/Uthmani precomposed ("إِثْمَ").
+    // Hanya alignment MSI↔Simple; alignment Uthmani↔Simple TIDAK
+    // memakai ini supaya transfer warna tetap sama persis dengan
+    // baseline yang sudah tervalidasi (88,66%).
+    if (msiMode && (ch === "\u0623" || ch === "\u0625")) {
+      core.push({ ch: ALIF, src: [i] });
+      i += 1;
+      continue;
+    }
+    // msi_mode (b): dagger alif SEBELUM alef maksura (مُوسٰى) -> urutan
+    // core disamakan dengan Simple (مُوسَىٰ): [yeh, alif]. MSI memakai
+    // urutan ini di 2.249 tempat; Simple 0x (Simple memakai [ى][ٰ] di
+    // 1.909 tempat); Uthmani hanya 7x (kata إِيَّايَ / رُءْيَايَ —
+    // di sana Simple memakai ي biasa). Maddah di antara keduanya
+    // (مُوسٰٓى) dilewati — ia dibuang dari core.
+    if (msiMode && ch === "\u0670") {
+      let j = i + 1;
+      while (j < n && items[j] === MADDAH) j += 1;
+      if (j < n && items[j] === "\u0649") {
+        core.push({ ch: "\u064a", src: [j] }); // yeh (alef maksura) dulu
+        core.push({ ch: ALIF, src: [i] }); // alif (dagger) kemudian
+        i = j + 1;
+        continue;
+      }
+    }
     // Iqlab / tanwin Uthmani: [vokal + ۢ/ۭ] -> satu tanwin.
     if (
       ch in VOWEL_TO_TANWIN &&
@@ -418,6 +485,15 @@ export type MapResult = {
   zeroAlreadyPresent: number; // sifir sudah ada di teks Simple (idempotensi)
   zeroFallback: number; // sifir dijangkar ke huruf sebelumnya
   zeroUnplaced: string[]; // sifir gagal dipetakan (harus KOSONG)
+  msiPlaced: number; // tanda waqaf MSI yang ditambahkan (baru)
+  msiAlready: number; // tanda waqaf MSI yang sudah ada (posisi + lambang sama)
+  msiConflict: number; // tanda Madinah yang DIGANTI tanda MSI (MSI menang)
+  msiFallback: number; // penempatan MSI via jangkar (<=3 karakter mundur)
+  msiSkippedSaktah: number; // tanda MSI dilewati demi saktah (harus 1: 69:28)
+  msiSkippedSaktahMarks: string[]; // tanda yang dilewati demi saktah
+  msiUnplaced: string[]; // tanda MSI gagal dipetakan (harus KOSONG)
+  msiByMark: Record<string, number>; // tanda MSI -> jumlah placed
+  msiConflictByPair: Record<string, number>; // "MSI -> Madinah" -> jumlah
 };
 
 function neighborKeepsColor(
@@ -628,12 +704,159 @@ function placeRestoredMark(
 }
 
 /**
+ * Tempatkan satu tanda waqaf MSI setelah huruf Simple yang bersesuaian
+ * dengan huruf pembawanya di teks MSI.
+ * Sama mekanismenya dengan placeRestoredMark (pembawa = huruf tepat
+ * sebelum tanda; fallback <=3 karakter ke belakang; pindai ke depan
+ * untuk idempotensi), dengan tiga perbedaan khusus MSI:
+ * (1) walk-back melewati SPASI + U+06D5 + U+0656/U+0657 (lihat
+ *     MSI_WALK_SKIP) — teks MSI menulis tanda kadang terpisah spasi
+ *     dan memakai ە sebelum tanda;
+ * (2) alignment memakai core TANPA tanda waqaf (dropWaqf) supaya
+ *     perbedaan sistem waqaf MSI vs Madinah tidak mengacaukan difflib;
+ * (3) bila di posisi target sudah ada tanda waqaf LAIN (sistem
+ *     Madinah), statusnya "conflict" dan MSI MENANG (tanda diganti) —
+ *     kedua sistem memang memakai lambang berbeda di tempat yang sama
+ *     (mis. MSI ۙ laa di 2:5, Madinah ۖ shaly).
+ * Mengembalikan { target, fallbackUsed, status, oldPos }; status salah
+ * satu dari: "placed", "already", "conflict" (oldPos = posisi tanda
+ * Madinah yang diganti), "skip_saktah" (tanda MSI dilewati demi
+ * mempertahankan saktah yang sudah ada — hanya 69:28), "unplaced"
+ * (harus NOL di seluruh Qur'an).
+ */
+// Diakritik yang menempel pada huruf pembawa (dalam satu kata). Titik
+// sisip tanda waqaf adalah SETELAH huruf pembawa + SELURUH diakritiknya
+// — BUKAN langsung setelah hurufnya. Tanpa ini, tanda tersisip sebelum
+// sukun/fatha ("عَلَيْهِمْۙ", "يُنزِفُونَۙ"); yang benar adalah
+// "عَلَيْهِمْۙ", "يُنزِفُونَۙ".
+const WORD_TRAILING = new Set<string>([
+  ..."\u064b\u064c\u064d\u064e\u064f\u0650\u0651\u0652", // tanwin, vokal, syaddah, sukun
+  "\u0653",
+  "\u0654",
+  "\u0655",
+  "\u0656",
+  "\u0657", // maddah, hamza, subscript alef, inv. damma
+  "\u0670",
+  "\u0672",
+  "\u06df",
+  "\u06e0",
+  "\u06e5",
+  "\u06e6", // dagger alif, sifir, small waw/yeh
+  "\u0640",
+  "\u06e2",
+  "\u06ed",
+  "\u06ea",
+  "\u06eb",
+  "\u06ec", // tatweel, small meem/tanwin, imala/ishmam/tasheel
+]);
+
+function advancePastTrailing(chars: string[], idx: number): number {
+  // Dari indeks huruf pembawa, maju melewati seluruh diakritik yang
+  // menempel padanya (dalam satu kata). Mengembalikan indeks karakter
+  // terakhir milik kata itu (huruf pembawa bila tak ada diakritik).
+  // Berhenti di spasi, huruf, atau tanda waqaf.
+  let j = idx;
+  while (j + 1 < chars.length && WORD_TRAILING.has(chars[j + 1])) j += 1;
+  return j;
+}
+
+// Walk-back MSI: lewati combining marks + U+06D5 (ە, tidak ada glyph) +
+// U+0656/U+0657 (varian ejaan MSI) + SPASI (teks MSI kadang menulis
+// tanda sebagai token mandiri: "رَّبِّهِمْ ۙ وَ" — bukan menempel).
+const MSI_WALK_SKIP = new Set<string>([
+  ...MADDAH_CARRIER_SKIP,
+  " ",
+  "\u06d5",
+  "\u0656",
+  "\u0657",
+]);
+
+type MsiPlacement = {
+  target: number | null;
+  fallbackUsed: boolean;
+  status: "placed" | "already" | "conflict" | "skip_saktah" | "unplaced";
+  oldPos: number | null;
+};
+
+function placeMsiMark(
+  mark: string,
+  idx: number,
+  msiChars: string[],
+  msiCorePositionsOfChar: Map<number, number[]>,
+  m2s: Map<number, number>,
+  simCharOfCorePos: Map<number, number>,
+  simChars: string[]
+): MsiPlacement {
+  let j = idx - 1;
+  while (j >= 0 && MSI_WALK_SKIP.has(msiChars[j])) j -= 1;
+  if (j < 0) return { target: null, fallbackUsed: false, status: "unplaced", oldPos: null };
+  let simPos: number | undefined;
+  for (const cp of msiCorePositionsOfChar.get(j) ?? []) {
+    if (m2s.has(cp)) {
+      simPos = m2s.get(cp);
+      break;
+    }
+  }
+  let fallbackUsed = false;
+  if (simPos === undefined) {
+    for (let k = j - 1; k >= Math.max(j - 3, 0); k--) {
+      for (const cp of msiCorePositionsOfChar.get(k) ?? []) {
+        if (m2s.has(cp)) {
+          simPos = m2s.get(cp);
+          fallbackUsed = true;
+          break;
+        }
+      }
+      if (simPos !== undefined) break;
+    }
+  }
+  if (simPos === undefined) return { target: null, fallbackUsed, status: "unplaced", oldPos: null };
+  const target = simCharOfCorePos.get(simPos);
+  if (target === undefined) return { target: null, fallbackUsed, status: "unplaced", oldPos: null };
+  // Pindai ke depan (maks. 8 karakter) melewati spasi + diakritik kata:
+  // tanda yang sama -> "already"; tanda waqaf LAIN -> "conflict"
+  // (MSI menang, ganti); saktah (U+06DC) yang sudah ada -> "skip_saktah"
+  // (saktah adalah instruksi fonetik tersendiri — hanya 7 di Qur'an —
+  // dan TIDAK BOLEH diganti tanda waqaf biasa; satu-satunya kasus:
+  // 69:28, MSI memakai jaiz ۚ di tempat saktah); huruf lain dulu ->
+  // "placed".
+  const fwdSkip = new Set([...WORD_TRAILING, " "]);
+  let k = target + 1;
+  for (let step = 0; step < 8; step++) {
+    if (k >= simChars.length) break;
+    const c = simChars[k];
+    if (c === mark) return { target, fallbackUsed, status: "already", oldPos: k };
+    if (c === SAKTAH && mark !== SAKTAH) return { target, fallbackUsed, status: "skip_saktah", oldPos: k };
+    if (WAQAF_MARKS.has(c)) return { target, fallbackUsed, status: "conflict", oldPos: k };
+    if (fwdSkip.has(c)) {
+      k += 1;
+      continue;
+    }
+    break;
+  }
+  return { target, fallbackUsed, status: "placed", oldPos: null };
+}
+/**
  * Pindahkan warna tajwid dari satu ayat Uthmani ke ayat Simple-nya.
  * Mengembalikan HTML teks Simple + <span class="tj tj-X">.
  * `uthmaniText` (teks Uthmani polos ayat yang sama) = sumber sifir;
  * bila tidak diberikan, sifir tidak dikembalikan (waqaf + maddah tetap).
+ * `msiText` (teks MSI ayat yang sama, dari equran.id) = sumber tanda
+ * waqaf MSI, termasuk yang di AKHIR ayat (yang tidak dimiliki teks
+ * Uthmani/Madinah); bila diisi, tanda waqaf MSI ditempatkan ke teks
+ * Simple (tambah baru / ganti tanda Madinah bila konflik); bila tidak
+ * diisi, perilaku lama (hanya tanda yang ada di Uthmani/Simple).
+ * `surahNo` / `ayahNo` dipakai untuk koreksi MSI dari screenshot
+ * (MSI_CORRECTIONS).
  */
-export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: string): MapResult {
+export function mapVerse(
+  tajweedHtml: string,
+  simpleText: string,
+  uthmaniText?: string,
+  msiText?: string,
+  surahNo?: number,
+  ayahNo?: number
+): MapResult {
   const parsed = parseTajweed(tajweedHtml);
   const uthChars = parsed.chars.map((tc) => tc.ch);
   const simChars = Array.from(simpleText);
@@ -686,6 +909,15 @@ export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: 
     zeroAlreadyPresent: 0,
     zeroFallback: 0,
     zeroUnplaced: [],
+    msiPlaced: 0,
+    msiAlready: 0,
+    msiConflict: 0,
+    msiFallback: 0,
+    msiSkippedSaktah: 0,
+    msiSkippedSaktahMarks: [],
+    msiUnplaced: [],
+    msiByMark: {},
+    msiConflictByPair: {},
   };
   const mapped = new Set<number>();
   const lostItems: [number, TajweedChar][] = [];
@@ -902,6 +1134,88 @@ export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: 
     });
   }
 
+  // --- Tempatkan tanda waqaf MSI (Mushaf Standar Indonesia) ---
+  // Sumbernya teks MSI (msiText, dari equran.id) — BUKAN teks Uthmani:
+  // Uthmani/Madinah tidak memiliki tanda waqaf di akhir ayat (0 di
+  // surah 56), sedangkan MSI memilikinya (2.147 akhir ayat; total
+  // 7.234). Alignment ketiga (core MSI <-> Simple, keduanya TANPA
+  // tanda waqaf — dropWaqf — dan dengan normalisasi ejaan MSI —
+  // msiMode) dibangun terpisah; posisi diambil dari huruf pembawa
+  // tanda di MSI, BUKAN tebakan.
+  // Hasil: "placed" = tanda baru disisipkan setelah huruf pembawa;
+  // "conflict" = tanda Madinah di posisi itu DIGANTI tanda MSI
+  // (kedua sistem memakai lambang berbeda di tempat yang sama);
+  // "already" = tanda + posisi sudah sama (tidak berubah).
+  // Tanda waqaf MSI adalah BAGIAN TEKS: masuk ke plain DAN ke
+  // mappedHtml (dalam span wq sendiri, seperti saktah).
+  // U+06D5 (ە) TIDAK ditempatkan: tidak ada glyph di font me_quran;
+  // ia selalu menempel pada tanda waqaf, jadi tidak ada informasi
+  // waqaf yang hilang (tandanya sendiri yang ditempatkan).
+  const msiInsert = new Map<number, string>(); // target idx -> tanda MSI (placed)
+  const msiReplace = new Map<number, string>(); // idx tanda Madinah -> tanda MSI (conflict)
+  if (msiText) {
+    const msiChars = Array.from(msiText.trim());
+    // Koreksi dari screenshot Adam (2026-11-21): tanda waqaf akhir
+    // ayat yang ADA di aplikasi pembanding (Mung Media / MSI cetak)
+    // tapi TIDAK ADA di teks equran.id. BUKAN tebakan — keduanya
+    // terlihat di screenshot (centang merah Adam); 56:24 tercantum
+    // eksplisit di laporan. Bila equran.id kelak melengkapinya,
+    // koreksi ini menjadi idempoten (tanda sudah ada -> "already").
+    if (surahNo !== undefined && ayahNo !== undefined) {
+      for (const mk of MSI_CORRECTIONS[`${surahNo}:${ayahNo}`] ?? []) msiChars.push(mk);
+    }
+    const msiCore = buildCore(msiChars, false, { dropWaqf: true, msiMode: true });
+    const simCoreWaqf = buildCore(simChars, false, { dropWaqf: true, msiMode: true });
+    const m2s = alignCores(msiCore.coreStr, simCoreWaqf.coreStr);
+    const msiCorePositionsOfChar = new Map<number, number[]>();
+    msiCore.core.forEach((entry, pos) => {
+      for (const idx of entry.src) {
+        const lst = msiCorePositionsOfChar.get(idx) ?? [];
+        lst.push(pos);
+        msiCorePositionsOfChar.set(idx, lst);
+      }
+    });
+    const simCharOfCorePosWaqf = new Map<number, number>();
+    simCoreWaqf.core.forEach((entry, pos) => {
+      simCharOfCorePosWaqf.set(pos, entry.src[0]);
+    });
+    msiChars.forEach((ch, idx) => {
+      if (!WAQAF_MARKS.has(ch)) return;
+      const { target, fallbackUsed, status, oldPos } = placeMsiMark(
+        ch,
+        idx,
+        msiChars,
+        msiCorePositionsOfChar,
+        m2s,
+        simCharOfCorePosWaqf,
+        simChars
+      );
+      if (status === "placed" && target !== null) {
+        const insertAt = advancePastTrailing(simChars, target);
+        msiInsert.set(insertAt, ch);
+        res.msiPlaced += 1;
+        res.msiByMark[ch] = (res.msiByMark[ch] ?? 0) + 1;
+        if (fallbackUsed) res.msiFallback += 1;
+      } else if (status === "already") {
+        res.msiAlready += 1;
+        if (fallbackUsed) res.msiFallback += 1;
+      } else if (status === "conflict" && oldPos !== null) {
+        msiReplace.set(oldPos, ch);
+        res.msiConflict += 1;
+        res.msiByMark[ch] = (res.msiByMark[ch] ?? 0) + 1;
+        const old = simChars[oldPos];
+        const key = `${ch} -> ${old}`;
+        res.msiConflictByPair[key] = (res.msiConflictByPair[key] ?? 0) + 1;
+        if (fallbackUsed) res.msiFallback += 1;
+      } else if (status === "skip_saktah") {
+        res.msiSkippedSaktah += 1;
+        res.msiSkippedSaktahMarks.push(ch);
+      } else {
+        res.msiUnplaced.push(`waqaf MSI ${JSON.stringify(ch)} idx ${idx} pembawa tidak terpetakan ke Simple`);
+      }
+    });
+  }
+
   // Render HTML: gabungkan run huruf berurutan dengan kelas yang sama.
   // Tanda maddah + sifir disisipkan tepat setelah huruf pembawanya —
   // di dalam span warna yang sama bila hurufnya berwarna, sebagai teks
@@ -915,7 +1229,9 @@ export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: 
   const out: string[] = [];
   let cur: string | null = null; // kelas span yang sedang terbuka: nama kelas tj, "wq", atau null
   simChars.forEach((ch, idx) => {
-    const cls = WAQAF_MARKS.has(ch)
+    // Conflict MSI: tanda Madinah di posisi ini diganti tanda MSI.
+    const renderCh = msiReplace.get(idx) ?? ch;
+    const cls = WAQAF_MARKS.has(renderCh)
       ? "wq"
       : pickClass(simClasses.get(idx) ?? new Set<string>());
     if (cls !== cur) {
@@ -926,7 +1242,7 @@ export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: 
       }
       cur = cls;
     }
-    out.push(ch);
+    out.push(renderCh);
     if (maddahAfter.has(idx)) out.push(MADDAH);
     const zero = zeroAfter.get(idx);
     if (zero !== undefined) out.push(zero);
@@ -942,16 +1258,27 @@ export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: 
       out.push(SAKTAH);
       out.push("</span>");
     }
+    if (msiInsert.has(idx)) {
+      // Tanda waqaf MSI yang baru: span wq sendiri (seperti saktah).
+      if (cur !== null) {
+        out.push("</span>");
+        cur = null;
+      }
+      out.push(`<span class="wq">`);
+      out.push(msiInsert.get(idx)!);
+      out.push("</span>");
+    }
   });
   if (cur !== null) out.push("</span>");
   res.mappedHtml = out.join("");
   res.plain = simChars
     .map(
       (ch, i) =>
-        ch +
+        (msiReplace.get(i) ?? ch) +
         (maddahAfter.has(i) ? MADDAH : "") +
         (zeroAfter.get(i) ?? "") +
-        (saktahAfter.has(i) ? SAKTAH : "")
+        (saktahAfter.has(i) ? SAKTAH : "") +
+        (msiInsert.get(i) ?? "")
     )
     .join("");
   return res;
@@ -968,21 +1295,34 @@ function range(a: number, b: number): number[] {
  * mentah dari fetchSurahTajweed, `simpleLines` = teks Simple dari
  * fetchSurahText (sudah dinormalisasi), `uthmaniLines` = teks Uthmani
  * polos dari fetchSurahUthmani (sumber sifir; boleh tidak ada — sifir
- * tidak dikembalikan bila tidak ada). Mengembalikan per ayat:
- * `html` (teks Simple + warna tajwid + maddah + sifir + saktah) dan
- * `plain` (teks Simple + tanda yang dikembalikan, tanpa warna — dipakai
- * saat toggle Warna Tajwid OFF dan di Yasin). Bila jumlah baris tidak
- * sama, kembalikan null (pemanggil memakai teks polos).
+ * tidak dikembalikan bila tidak ada), `msiLines` = teks MSI dari
+ * fetchSurahMsi (sumber tanda waqaf MSI, termasuk akhir ayat; boleh
+ * tidak ada — waqaf MSI tidak ditambahkan bila tidak ada). Mengembalikan
+ * per ayat: `html` (teks Simple + warna tajwid + maddah + sifir +
+ * saktah + waqaf MSI) dan `plain` (teks Simple + tanda yang
+ * dikembalikan, tanpa warna — dipakai saat toggle Warna Tajwid OFF dan
+ * di Yasin). Bila jumlah baris tidak sama, kembalikan null (pemanggil
+ * memakai teks polos).
  */
 export function mapTajweedSurah(
   tajweedLines: string[],
   simpleLines: string[],
-  uthmaniLines?: string[]
+  uthmaniLines?: string[],
+  msiLines?: string[],
+  surahNo?: number
 ): { html: string; plain: string }[] | null {
   if (tajweedLines.length !== simpleLines.length) return null;
   if (uthmaniLines !== undefined && uthmaniLines.length !== simpleLines.length) return null;
+  if (msiLines !== undefined && msiLines.length !== simpleLines.length) return null;
   return tajweedLines.map((line, i) => {
-    const r = mapVerse(line, normalizeArabicText(simpleLines[i]), uthmaniLines?.[i]);
+    const r = mapVerse(
+      line,
+      normalizeArabicText(simpleLines[i]),
+      uthmaniLines?.[i],
+      msiLines?.[i],
+      surahNo,
+      i + 1
+    );
     return { html: r.mappedHtml, plain: r.plain };
   });
 }

@@ -102,6 +102,16 @@ export const TAJWEED_LEGEND: { swatch: string; name: string; desc: string }[] = 
  * dibungkus <span class="wq"> supaya tampil besar dan terbaca
  * (CSS .mushaf .wq). `mark` dirender dengan font mushaf (me_quran)
  * supaya bentuknya benar.
+ *
+ * SUMBER POSISI: teks MSI dari equran.id (api/v2/surat) — 7.234 tanda di
+ * seluruh Qur'an, termasuk ~2.100 di AKHIR ayat (MSI memang menaruh
+ * tanda waqaf di akhir ayat, berbeda dengan Mushaf Madinah yang
+ * tidak). Bila tanda Madinah dan MSI berbeda di tempat yang sama, MSI
+ * menang (tanda diganti); bila hanya Madinah yang punya tanda di satu
+ * tempat, tanda Madinah itu dipertahankan (gabungan, bukan penggantian
+ * murni). Dua tanda akhir ayat (56:24, 56:26 — لا) tidak ada di teks
+ * equran.id dan ditambahkan dari screenshot pembanding (lihat
+ * MSI_CORRECTIONS di lib/tajweed-map.ts).
  */
 export const WAQAF_LEGEND: { mark: string; name: string; desc: string }[] = [
   { mark: "ۘ", name: "م — Waqaf lazim", desc: "wajib berhenti" },

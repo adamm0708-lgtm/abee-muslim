@@ -18,6 +18,7 @@ import {
 import {
   QURAN_SOURCE_NOTE,
   embeddedSurahMeta,
+  fetchSurahMsi,
   fetchSurahText,
   fetchSurahTajweed,
   fetchSurahUthmani,
@@ -312,6 +313,7 @@ export function BacaPage() {
   const [showTajweed, setShowTajweed] = useState(true);
   const [tajweedLines, setTajweedLines] = useState<string[] | null>(null);
   const [uthmaniLines, setUthmaniLines] = useState<string[] | null>(null);
+  const [msiLines, setMsiLines] = useState<string[] | null>(null);
   // Ukuran teks baca bersama (A- A A+ A++, tersimpan di localStorage).
   const { size: fontSize, setSize: setFontSize, arabicClass: fontSizeClass } =
     useReaderFontSize();
@@ -388,12 +390,15 @@ export function BacaPage() {
   // mengembalikan tanda maddah (mad panjang), saktah, dan sifir ke teks,
   // dan tanda-tanda itu harus tampil juga saat warna dimatikan.
   // Teks Uthmani polos = sumber sifir (teks tajwid HTML membuang hampir
-  // semua sifir). Gagal = teks polos (tanpa sifir, waqaf + maddah tetap
-  // dari jalur Simple bila tersedia).
+  // semua sifir). Teks MSI (equran.id) = sumber tanda waqaf MSI,
+  // termasuk yang di AKHIR ayat (teks Uthmani/Madinah tidak memilikinya).
+  // Gagal = teks polos (tanpa sifir/waqaf MSI, waqaf Madinah yang sudah
+  // ada di teks Simple + maddah tetap dari jalur Simple bila tersedia).
   useEffect(() => {
     if (readerSurah == null) {
       setTajweedLines(null);
       setUthmaniLines(null);
+      setMsiLines(null);
       return;
     }
     let alive = true;
@@ -403,6 +408,9 @@ export function BacaPage() {
     fetchSurahUthmani(readerSurah)
       .then((lines) => alive && setUthmaniLines(lines))
       .catch(() => alive && setUthmaniLines(null));
+    fetchSurahMsi(readerSurah)
+      .then((lines) => alive && setMsiLines(lines))
+      .catch(() => alive && setMsiLines(null));
     return () => {
       alive = false;
     };
@@ -419,13 +427,19 @@ export function BacaPage() {
   // ditampilkan — ejaan TIDAK berubah saat toggle tajwid dimatikan atau
   // dinyalakan. Dihitung sekali per surah (memo, bukan per render).
   // mapTajweedSurah mengembalikan per ayat: html (warna + maddah + sifir
-  // + saktah) dan plain (teks Simple + tanda yang dikembalikan, tanpa
-  // warna — dipakai saat toggle OFF, supaya tanda mad panjang, saktah,
-  // dan sifir tetap tampil).
+  // + saktah + waqaf MSI) dan plain (teks Simple + tanda yang
+  // dikembalikan, tanpa warna — dipakai saat toggle OFF, supaya tanda
+  // mad panjang, saktah, sifir, dan waqaf MSI tetap tampil).
   const mappedTajweedLines = useMemo(() => {
     if (!tajweedAvailable || tajweedLines == null) return null;
-    return mapTajweedSurah(tajweedLines, arabicLines, uthmaniLines ?? undefined);
-  }, [tajweedAvailable, tajweedLines, arabicLines, uthmaniLines]);
+    return mapTajweedSurah(
+      tajweedLines,
+      arabicLines,
+      uthmaniLines ?? undefined,
+      msiLines ?? undefined,
+      readerSurah ?? undefined
+    );
+  }, [tajweedAvailable, tajweedLines, arabicLines, uthmaniLines, msiLines, readerSurah]);
   const transLines = embedded ? embedded.translation : apiTrans;
   const readerMeta =
     surahs?.find((s) => s.number === readerSurah) ??
@@ -823,7 +837,10 @@ export function BacaPage() {
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
             Tanda waqaf dan sifir mengikuti Mushaf Standar Indonesia (Kemenag RI) dan
-            dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan.
+            dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan. Tanda waqaf
+            juga ada di akhir ayat (mis. لا di akhir ayat Al-Waqi&apos;ah) — karena
+            MSI memang menaruh tanda waqaf di akhir ayat, berbeda dengan Mushaf
+            Madinah yang tidak.
           </p>
         </Card>
 

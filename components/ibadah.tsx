@@ -9,6 +9,7 @@ import {
   HIJRI_MONTHS_SHORT_ID,
   JADWAL_ORDER,
   QURAN_SOURCE_NOTE,
+  fetchSurahMsi,
   fetchSurahTajweed,
   fetchSurahText,
   fetchSurahUthmani,
@@ -1674,18 +1675,28 @@ function YasinReader({
         if (!alive) return;
         setAyahs(arabic.map((text, i) => ({ numberInSurah: i + 1, text })));
         setTrans(translation);
-        // Tanda maddah + saktah + sifir dikembalikan lewat pemetaan tajwid
-        // dari teks Uthmani ke teks Simple — Yasin tidak memakai warna
-        // tajwid, tapi tandanya harus tampil. Teks Uthmani polos adalah
-        // sumber sifir. Gagal = teks Simple polos.
+        // Tanda maddah + saktah + sifir + waqaf MSI dikembalikan lewat
+        // pemetaan tajwid dari teks Uthmani ke teks Simple — Yasin tidak
+        // memakai warna tajwid, tapi tandanya harus tampil. Teks Uthmani
+        // polos adalah sumber sifir; teks MSI (equran.id) adalah sumber
+        // tanda waqaf MSI (termasuk akhir ayat). Gagal = teks Simple polos.
         fetchSurahTajweed(36)
           .then((lines) => {
             if (!alive) return;
             fetchSurahUthmani(36)
               .then((uthmani) => {
                 if (!alive) return;
-                const mapped = mapTajweedSurah(lines, arabic, uthmani);
-                if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+                fetchSurahMsi(36)
+                  .then((msi) => {
+                    if (!alive) return;
+                    const mapped = mapTajweedSurah(lines, arabic, uthmani, msi, 36);
+                    if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+                  })
+                  .catch(() => {
+                    if (!alive) return;
+                    const mapped = mapTajweedSurah(lines, arabic, uthmani, undefined, 36);
+                    if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+                  });
               })
               .catch(() => {
                 if (!alive) return;
@@ -1876,7 +1887,9 @@ function YasinReader({
         </div>
         <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
           Tanda waqaf dan sifir mengikuti Mushaf Standar Indonesia (Kemenag RI) dan
-          dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan.
+          dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan. Tanda waqaf
+          juga ada di akhir ayat — karena MSI memang menaruh tanda waqaf di akhir
+          ayat, berbeda dengan Mushaf Madinah yang tidak.
         </p>
       </Card>
     </div>

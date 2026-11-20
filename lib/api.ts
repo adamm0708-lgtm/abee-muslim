@@ -623,6 +623,35 @@ export async function fetchSurahUthmani(surahNo: number): Promise<string[]> {
   return lines;
 }
 
+/**
+ * Teks MSI (Mushaf Standar Indonesia, Kemenag) satu surah dari equran.id
+ * API v2 (`https://equran.id/api/v2/surat/{n}`, field `data.ayat[].teksArab`)
+ * — SUMBER tanda waqaf MSI, termasuk yang di AKHIR ayat. Teks Uthmani
+ * Quran.com mengikuti Mushaf Madinah yang TIDAK memakai tanda waqaf di
+ * akhir ayat (0 di surah 56), sedangkan MSI 1984 memilikinya (2.147
+ * akhir ayat; total 7.234 di seluruh Qur'an — terverifikasi dari data
+ * ini). Dipakai bersama fetchSurahTajweed sebagai masukan mapper
+ * (mapTajweedSurah). Tidak ada cadangan: kalau gagal, pemanggil memakai
+ * mapper tanpa teks MSI (waqaf MSI tidak ditambahkan; waqaf Madinah yang
+ * sudah ada di teks Simple + maddah + sifir + saktah tetap tampil).
+ * CATATAN: API resmi Kemenag (quran-api.kemenag.go.id) TIDAK bisa
+ * dipakai — butuh registrasi + API key dan endpoint-nya tidak dapat
+ * dijangkau dari sini; equran.id adalah sumber MSI yang bekerja tanpa
+ * kunci dan terverifikasi (7.234 tanda waqaf, termasuk ~2.100 akhir ayat).
+ * Dua tanda akhir ayat di 56:24 + 56:26 TIDAK ADA di teks equran.id —
+ * ditambahkan mapper dari screenshot Adam (MSI_CORRECTIONS, lib/tajweed-map).
+ */
+export async function fetchSurahMsi(surahNo: number): Promise<string[]> {
+  const json = (await fetchJson(
+    `https://equran.id/api/v2/surat/${surahNo}`
+  )) as { data?: { ayat?: { teksArab?: string }[] } };
+  const ayat = json.data?.ayat;
+  if (!ayat || ayat.length === 0) throw new Error("equran.id MSI: tidak ada ayat");
+  const lines = ayat.map((a) => (a.teksArab ?? "").trim());
+  if (lines.some((l) => !l)) throw new Error("equran.id MSI: teks ayat kosong");
+  return lines;
+}
+
 export async function fetchSurahText(surahNo: number): Promise<SurahText> {
   try {
     const json = (await fetchJson(
