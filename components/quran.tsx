@@ -26,6 +26,7 @@ import {
 import { TAJWEED_LEGEND, tajweedToSafeHtml } from "@/lib/tajweed";
 import {
   CSS_FULLSCREEN_CLASS,
+  normalizeArabicText,
   READER_FONT_SIZES,
   READER_FONT_SIZE_LABELS,
   useFullscreen,
@@ -69,8 +70,8 @@ export function HafalanPage() {
                   {done ? "Hafal" : "Tandai Hafal"}
                 </button>
               </div>
-              <p className="arabic mt-2 border-t border-black/5 pt-2 text-right text-lg leading-loose text-neutral-700 dark:border-white/10 dark:text-neutral-300">
-                {s.arabic[0]}
+              <p className="mushaf mt-2 border-t border-black/5 pt-2 text-right text-lg leading-loose text-neutral-700 dark:border-white/10 dark:text-neutral-300">
+                {normalizeArabicText(s.arabic[0])}
               </p>
               <p className="mt-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">{s.translation[0]}</p>
             </Card>
@@ -684,7 +685,7 @@ export function BacaPage() {
           ) : (
             <>
               {readerSurah !== 1 && readerSurah !== 9 && (
-                <p className={`arabic mb-5 text-center text-neutral-900 dark:text-neutral-100 ${fontSizeClass}`}>
+                <p className={`mushaf mb-5 !text-center text-neutral-900 dark:text-neutral-100 ${fontSizeClass}`}>
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </p>
               )}
@@ -1142,7 +1143,7 @@ export function VideoPage() {
             <p className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
               QS. {s.name} ({s.no})
             </p>
-            <p className="arabic mt-1 text-right text-xl leading-loose text-neutral-700 dark:text-neutral-300">{s.arabic[0]}</p>
+            <p className="mushaf mt-1 text-right text-xl leading-loose text-neutral-700 dark:text-neutral-300">{normalizeArabicText(s.arabic[0])}</p>
             <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">{s.translation[0]}</p>
             <a
               href={s.video}

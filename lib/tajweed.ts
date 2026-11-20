@@ -1,3 +1,5 @@
+import { normalizeArabicText } from "./reading";
+
 // Warna tajwid untuk mode baca Al-Qur'an (Ngaji).
 //
 // Data: Quran.com API v4 — endpoint `quran/verses/uthmani_tajweed`
@@ -37,14 +39,13 @@ export const TAJWEED_CLASSES = [
  */
 export function tajweedToSafeHtml(html: string): string {
   return (
-    html
-      // Normalisasi U+0672 (ٲ) -> U+0670 (ٰ alif khanjariyah / harakat tegak
-      // berdiri). Data tajwid API memakai U+0672 di sebagian span madda
-      // (mis. ٱلْوَٰلِدَانِ, أَمْوَٰلَهُمْ di An-Nisaa 4:6-4:7), padahal teks
-      // Uthmani biasa (Tanzil) memakai U+0670 di kata yang sama — dan font
-      // UthmanicHafs menggambar U+0672 sebagai BULATAN, bukan garis tegak.
-      // Tanpa normalisasi, tanda mad tampil sebagai "bulatan biru".
-      .replace(/ٲ/g, "ٰ")
+    normalizeArabicText(html)
+      // Normalisasi maddah global (helper bersama di lib/reading):
+      // U+0672 -> U+0670. Data tajwid API memakai U+0672 di sebagian span
+      // madda, padahal teks Uthmani biasa (Tanzil) memakai U+0670 di kata
+      // yang sama — dan font UthmanicHafs menggambar U+0672 sebagai
+      // BULATAN, bukan garis tegak. Tanpa normalisasi, tanda mad tampil
+      // sebagai "bulatan biru".
       // Buang penanda akhir ayat bawaan API (aplikasi memakai penanda sendiri).
       .replace(/<span class=end>.*?<\/span>/g, "")
       // Tag tajwid -> span dengan class warna (hanya kelas yang di-allowlist).

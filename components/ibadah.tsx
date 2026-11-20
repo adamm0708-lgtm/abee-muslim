@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Card, Icon, Note, PageHeader, ProgressBar, toArabicIndic } from "@/components/ui";
 import { ReaderToolbar } from "@/components/reading";
-import { CSS_FULLSCREEN_CLASS, useFullscreen, useReaderFontSize } from "@/lib/reading";
+import { CSS_FULLSCREEN_CLASS, normalizeArabicText, useFullscreen, useReaderFontSize } from "@/lib/reading";
 import { useProgress } from "@/lib/store";
 import {
   HIJRI_MONTHS_SHORT_ID,
@@ -97,7 +97,7 @@ function DuaCard({
       {open && (
         <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
           <p className={`arabic text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
-            {d.arabic}
+            {normalizeArabicText(d.arabic)}
           </p>
           <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{d.latin}</p>
           <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
@@ -560,7 +560,7 @@ export function DzikirPage() {
           const done = count >= d.count;
           return (
             <Card key={d.id}>
-              <p className={`arabic text-right text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>{d.arabic}</p>
+              <p className={`arabic text-right text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>{normalizeArabicText(d.arabic)}</p>
               <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{d.latin}</p>
               <p className={`text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{d.translation}</p>
               <div className="mt-3 flex items-center gap-2">
@@ -674,7 +674,7 @@ function WiridCard({
             </span>
           </div>
           <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
-            {item.arabic}
+            {normalizeArabicText(item.arabic)}
           </p>
           <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{item.latin}</p>
           <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
@@ -847,7 +847,7 @@ export function TahlilPage() {
       <PageHeader title="Tahlil & Doa" subtitle="Bacaan tahlil" backHref="/ibadah" />
       <ReaderToolbar size={size} onSizeChange={setSize} showFullscreen={false} />
       <Card>
-        <p className={`arabic text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>{TAHLIL_TEXT.arabic}</p>
+        <p className={`arabic text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>{normalizeArabicText(TAHLIL_TEXT.arabic)}</p>
         <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{TAHLIL_TEXT.latin}</p>
         <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{TAHLIL_TEXT.translation}</p>
         <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">{TAHLIL_TEXT.note}</p>
@@ -1063,7 +1063,7 @@ export function AsmaulHusnaPage() {
               <p className={`font-extrabold text-neutral-900 dark:text-neutral-100 ${bodyClass}`}>{a.latin}</p>
               <p className={`text-neutral-500 dark:text-neutral-400 ${bodyClass}`}>{a.meaning}</p>
             </div>
-            <span className={`arabic text-[#0B3D39] dark:text-[#D4AF37] ${arabicClass}`}>{a.arabic}</span>
+            <span className={`arabic text-[#0B3D39] dark:text-[#D4AF37] ${arabicClass}`}>{normalizeArabicText(a.arabic)}</span>
           </Card>
         ))}
         {filtered.length === 0 && <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">Tidak ditemukan. Coba kata lain.</p>}
@@ -1291,7 +1291,7 @@ function TahlilSteps({
             {open === s.no && (
               <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
                 <p className={`arabic whitespace-pre-line text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
-                  {s.arabic}
+                  {normalizeArabicText(s.arabic)}
                 </p>
                 <p className={`mt-2 italic leading-relaxed text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
                   {s.latin}
@@ -1310,7 +1310,7 @@ function TahlilSteps({
           Hitung tahlil — {TAHLIL_TEXT.title} 100x
         </p>
         <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
-          {TAHLIL_TEXT.arabic}
+          {normalizeArabicText(TAHLIL_TEXT.arabic)}
         </p>
         <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{TAHLIL_TEXT.latin}</p>
         <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
@@ -1362,7 +1362,7 @@ function DoaTahlil({
           <Card key={d.title}>
             <h2 className="font-extrabold text-neutral-900 dark:text-neutral-100">{d.title}</h2>
             <p className={`arabic mt-3 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
-              {d.arabic}
+              {normalizeArabicText(d.arabic)}
             </p>
             <p className={`mt-2 italic leading-relaxed text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
               {d.latin}

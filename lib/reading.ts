@@ -5,6 +5,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type ReaderFontSize = "md" | "lg" | "xl" | "xxl";
 
+/** Normalisasi maddah global (Adam 2026-11-20): U+0672 (ٲ — di font
+ *  UthmanicHafs digambar sebagai BULATAN berisi) → U+0670 (ٰ — alif
+ *  khanjariyah / harakat tegak berdiri, garis tegak lurus kecil). Dipakai di
+ *  SEMUA teks Arab yang dirender — reader Qur'an, Yasin, doa, wirid, tahlil —
+ *  bukan hanya tajwid. Font lain (Amiri, Scheherazade, Noto) menggambar
+ *  keduanya sebagai garis tegak, tapi normalisasi ini tetap diterapkan supaya
+ *  teksnya konsisten apa pun font yang dipakai. */
+export function normalizeArabicText(s: string): string {
+  return s.replace(/\u0672/g, "\u0670");
+}
+
 export const READER_FONT_SIZES: ReaderFontSize[] = ["md", "lg", "xl", "xxl"];
 
 export const READER_FONT_SIZE_LABELS: Record<ReaderFontSize, string> = {

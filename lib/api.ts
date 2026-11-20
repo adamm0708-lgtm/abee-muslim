@@ -6,6 +6,7 @@
 // gagal, UI menampilkan status memuat/error, bukan tanggal tebakan.
 
 import { JUZ30_SURAHS } from "./data";
+import { normalizeArabicText } from "./reading";
 
 export type City = { name: string; lat: number; lon: number; myquranId: string };
 
@@ -596,7 +597,10 @@ export async function fetchSurahText(surahNo: number): Promise<SurahText> {
     };
     const verses = json.verses;
     if (!verses || verses.length === 0) throw new Error("Quran.com: tidak ada ayat");
-    const arabic = verses.map((v) => (v.text_uthmani ?? "").trim());
+    // Normalisasi maddah global (U+0672 -> U+0670): teks polos Quran.com
+    // sudah bersih hari ini, tapi normalisasi di sini menutup semua jalur
+    // API — reader Qur'an + Yasin — bila suatu saat datanya berubah.
+    const arabic = verses.map((v) => normalizeArabicText((v.text_uthmani ?? "").trim()));
     const translation = verses.map((v) =>
       stripTranslationHtml(v.translations?.[0]?.text ?? "")
     );
@@ -611,7 +615,9 @@ export async function fetchSurahText(surahNo: number): Promise<SurahText> {
       data?: { ayahs?: { text?: string }[] };
     }[];
     if (ar.code !== 200 || id.code !== 200) throw new Error("Surah tidak ditemukan");
-    let arabic = (ar.data?.ayahs ?? []).map((a) => (a.text ?? "").trim());
+    let arabic = (ar.data?.ayahs ?? []).map((a) =>
+      normalizeArabicText((a.text ?? "").trim())
+    );
     const translation = (id.data?.ayahs ?? []).map((a) => (a.text ?? "").trim());
     if (arabic.length === 0) throw new Error("Surah tidak ditemukan");
     if (surahNo !== 1 && arabic[0]) arabic = [stripLeadingBismillah(arabic[0]), ...arabic.slice(1)];
