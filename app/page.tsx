@@ -37,8 +37,7 @@ const MISSIONS = [
   { id: "kata", title: "Belajar kata (Inggris/Arab)", target: 10, href: "/belajar" },
 ];
 
-function greeting(): string {
-  const h = new Date().getHours();
+function greetingFromHour(h: number): string {
   if (h < 5) return "Selamat malam";
   if (h < 11) return "Selamat pagi";
   if (h < 15) return "Selamat siang";
@@ -55,6 +54,9 @@ export default function Home() {
   const [ramadhanError, setRamadhanError] = useState(false);
   const [hijri, setHijri] = useState<string | null>(null);
   const [hijriError, setHijriError] = useState(false);
+  // Sapaan + jam/tanggal hanya dirender setelah mount di klien, supaya HTML
+  // server (jam UTC Vercel) tidak membekukan sapaan yang salah.
+  const [mounted, setMounted] = useState(false);
 
   const city = CITIES.find((c) => c.name === progress.city) ?? CITIES[0];
   const { level, title } = levelFromPoints(progress.points);
@@ -79,6 +81,7 @@ export default function Home() {
   }, [progress.city]);
 
   useEffect(() => {
+    setMounted(true);
     const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
@@ -94,11 +97,10 @@ export default function Home() {
       <div>
         <div className="flex items-center justify-between">
           <div>
-            <p
-              className="text-sm text-neutral-500 dark:text-neutral-400"
-              suppressHydrationWarning
-            >
-              Assalamu&apos;alaikum, {greeting()}
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              {mounted
+                ? `Assalamu'alaikum, ${greetingFromHour(now.getHours())}`
+                : "Assalamu'alaikum"}
             </p>
             <p className="mt-0.5 text-lg font-extrabold text-neutral-900 dark:text-neutral-100">
               {progress.name}
@@ -118,12 +120,15 @@ export default function Home() {
             </span>
           </div>
         </div>
-        <p
-          className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400"
-          suppressHydrationWarning
-        >
-          {clockStr} WIB · {weekdayShort}, {gregShortId(now)} ·{" "}
-          {hijri ?? (hijriError ? "Tanggal Hijriah tidak bisa dimuat" : "Memuat tanggal Hijriah…")}
+        <p className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400">
+          {mounted ? (
+            <>
+              {clockStr} WIB · {weekdayShort}, {gregShortId(now)} ·{" "}
+              {hijri ?? (hijriError ? "Tanggal Hijriah tidak bisa dimuat" : "Memuat tanggal Hijriah…")}
+            </>
+          ) : (
+            "Memuat waktu…"
+          )}
         </p>
       </div>
 
