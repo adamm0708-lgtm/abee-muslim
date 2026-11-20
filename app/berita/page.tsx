@@ -6,12 +6,12 @@ export default function BeritaPage() {
     <div>
       <PageHeader
         title="Berita & Artikel"
-        subtitle="Berita Islam terbaru dari Republika dan NU Online"
+        subtitle="Berita Islam terbaru dari Republika, NU Online, dan Muslim.or.id"
         backHref="/"
       />
       <BeritaList limit={20} />
       <p className="mt-4 text-center text-xs text-neutral-400 dark:text-neutral-500">
-        Sumber: Republika &middot; NU Online &middot; Ketuk berita untuk membaca artikel aslinya.
+        Sumber: Republika &middot; NU Online &middot; Muslim.or.id &middot; Ketuk berita untuk membaca artikel aslinya.
       </p>
     </div>
   );
