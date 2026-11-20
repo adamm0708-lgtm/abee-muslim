@@ -12,6 +12,8 @@ import { useProgress } from "@/lib/store";
 const PATHS: Partial<Record<IconName, ReactNode>> = {
   menu: (<><path d="M4 6h16M4 12h16M4 18h16" /></>),
   close: (<><path d="M6 6l12 12M18 6L6 18" /></>),
+  maximize: (<><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" /></>),
+  minimize: (<><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" /></>),
   search: (<><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.8-3.8" /></>),
   settings: (
     <>

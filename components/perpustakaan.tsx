@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { BUKU_KATEGORI, BUKU_PILIHAN, PERPUSTAKAAN, type Buku } from "@/lib/data";
 import { Chip, SectionTitle } from "@/components/ui";
+import { FullscreenButton } from "@/components/reading";
+import { CSS_FULLSCREEN_CLASS, useFullscreen } from "@/lib/reading";
 
 /** Sampul CSS — gradasi zamrud/emas + judul + pengarang. Tidak hotlink gambar
  *  eksternal (rapuh), jadi sampul selalu tampil apa pun kondisi sumber. */
@@ -172,6 +174,7 @@ export function PerpustakaanSection() {
 
 /** Detail satu buku: pembaca di dalam aplikasi + tombol download. */
 function DetailBuku({ book }: { book: Buku }) {
+  const fs = useFullscreen();
   return (
     <div className="flex flex-col gap-3">
       <Link
@@ -200,16 +203,34 @@ function DetailBuku({ book }: { book: Buku }) {
       </div>
 
       {book.embedId ? (
-        <div>
+        <div
+          ref={fs.ref}
+          className={
+            fs.cssActive
+              ? `${CSS_FULLSCREEN_CLASS} flex flex-col`
+              : fs.active
+                ? "flex flex-col"
+                : undefined
+          }
+        >
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <p className="text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+              Pembaca buku dari Archive.org — perbesar tulisan pakai tombol zoom
+              (+/−) di dalam pembaca buku.
+            </p>
+            <FullscreenButton active={fs.active} onToggle={fs.toggle} />
+          </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <iframe
             src={`https://archive.org/embed/${book.embedId}`}
             title={`Baca ${book.title}`}
-            className="h-[70vh] w-full rounded-2xl ring-1 ring-black/5 dark:ring-white/10"
+            className={`w-full rounded-2xl ring-1 ring-black/5 dark:ring-white/10 ${
+              fs.active ? "min-h-0 flex-1" : "h-[70vh]"
+            }`}
             allowFullScreen
           />
           <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-            Pembaca buku dari Archive.org — bila tidak tampil, pakai tombol Download PDF di bawah.
+            Bila pembaca tidak tampil, pakai tombol Download PDF di bawah.
           </p>
         </div>
       ) : (

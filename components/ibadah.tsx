@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Card, Icon, Note, PageHeader, ProgressBar, toArabicIndic } from "@/components/ui";
+import { ReaderToolbar } from "@/components/reading";
+import { CSS_FULLSCREEN_CLASS, useFullscreen, useReaderFontSize } from "@/lib/reading";
 import { useProgress } from "@/lib/store";
 import {
   HIJRI_MONTHS_SHORT_ID,
@@ -54,11 +56,15 @@ function DuaCard({
   open,
   onToggle,
   showCategory,
+  arabicClass,
+  bodyClass,
 }: {
   d: (typeof DUAS)[number];
   open: boolean;
   onToggle: () => void;
   showCategory?: boolean;
+  arabicClass: string;
+  bodyClass: string;
 }) {
   const catLabel = DUA_CATEGORIES.find((c) => c.slug === d.category)?.label ?? d.category;
   return (
@@ -90,11 +96,11 @@ function DuaCard({
       </button>
       {open && (
         <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
-          <p className="arabic text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+          <p className={`arabic text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
             {d.arabic}
           </p>
-          <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{d.latin}</p>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+          <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{d.latin}</p>
+          <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
             {d.translation}
           </p>
           {d.note && (
@@ -119,6 +125,8 @@ export function DoaPage() {
   const [cat, setCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const q = search.trim().toLowerCase();
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
+  const fs = useFullscreen();
 
   const shown = useMemo(() => {
     let list = DUAS;
@@ -135,11 +143,18 @@ export function DoaPage() {
   const countFor = (slug: string) => DUAS.filter((d) => d.category === slug).length;
 
   return (
-    <div>
+    <div ref={fs.ref} className={fs.cssActive ? CSS_FULLSCREEN_CLASS : undefined}>
       <PageHeader
         title="Doa Harian"
         subtitle={`${DUAS.length} doa dalam ${DUA_CATEGORIES.length} kategori — ketuk kategori atau cari judulnya`}
         backHref="/ibadah"
+      />
+
+      <ReaderToolbar
+        size={size}
+        onSizeChange={setSize}
+        fullscreenActive={fs.active}
+        onFullscreenToggle={fs.toggle}
       />
 
       {/* Cari doa */}
@@ -192,6 +207,8 @@ export function DoaPage() {
                 open={open === d.id}
                 onToggle={() => toggle(d.id)}
                 showCategory={q !== ""}
+                arabicClass={arabicClass}
+                bodyClass={bodyClass}
               />
             ))
           )}
@@ -221,6 +238,8 @@ export function DoaPage() {
                       d={d}
                       open={open === d.id}
                       onToggle={() => toggle(d.id)}
+                      arabicClass={arabicClass}
+                      bodyClass={bodyClass}
                     />
                   ))}
                   {items.length > 3 && (
@@ -497,9 +516,11 @@ export function KalenderPage() {
 export function ShalatWudhuPage() {
   const [tab, setTab] = useState<"wudhu" | "shalat">("wudhu");
   const steps = tab === "wudhu" ? WUDHU_STEPS : SHALAT_STEPS;
+  const { size, setSize, bodyClass } = useReaderFontSize();
   return (
     <div>
       <PageHeader title="Belajar Shalat & Wudhu" subtitle="Langkah demi langkah" backHref="/ibadah" />
+      <ReaderToolbar size={size} onSizeChange={setSize} showFullscreen={false} />
       <div className="mb-3">
         <Note>Panduan ibadah dalam aplikasi ini mengikuti mazhab Syafi&apos;i.</Note>
       </div>
@@ -517,7 +538,7 @@ export function ShalatWudhuPage() {
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
               {i + 1}
             </span>
-            <p className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{s}</p>
+            <p className={`leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{s}</p>
           </Card>
         ))}
       </div>
@@ -528,18 +549,20 @@ export function ShalatWudhuPage() {
 // ---------- Dzikir Harian ----------
 export function DzikirPage() {
   const { progress, setTasbih } = useProgress();
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
   return (
     <div>
       <PageHeader title="Dzikir Harian" subtitle="Ketuk untuk menghitung, target per dzikir" backHref="/ibadah" />
+      <ReaderToolbar size={size} onSizeChange={setSize} showFullscreen={false} />
       <div className="flex flex-col gap-3">
         {DZIKIR.map((d) => {
           const count = progress.tasbihCounts[d.id] ?? 0;
           const done = count >= d.count;
           return (
             <Card key={d.id}>
-              <p className="arabic text-right text-2xl text-neutral-900 dark:text-neutral-100">{d.arabic}</p>
-              <p className="mt-1 text-sm italic text-neutral-600 dark:text-neutral-400">{d.latin}</p>
-              <p className="text-sm text-neutral-700 dark:text-neutral-300">{d.translation}</p>
+              <p className={`arabic text-right text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>{d.arabic}</p>
+              <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{d.latin}</p>
+              <p className={`text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{d.translation}</p>
               <div className="mt-3 flex items-center gap-2">
                 <button
                   onClick={() => !done && setTasbih(d.id, count + 1)}
@@ -613,10 +636,14 @@ function WiridCard({
   item,
   index,
   showCounter = true,
+  arabicClass,
+  bodyClass,
 }: {
   item: WiridItem;
   index: number;
   showCounter?: boolean;
+  arabicClass: string;
+  bodyClass: string;
 }) {
   const { progress, setTasbih } = useProgress();
   const count = progress.tasbihCounts[item.id] ?? 0;
@@ -646,11 +673,11 @@ function WiridCard({
               {item.count}x
             </span>
           </div>
-          <p className="arabic mt-2 text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+          <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
             {item.arabic}
           </p>
-          <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{item.latin}</p>
-          <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+          <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{item.latin}</p>
+          <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
             {item.translation}
           </p>
           {item.note && (
@@ -716,9 +743,17 @@ function WiridListPage({
 }) {
   const { progress, setTasbih } = useProgress();
   const doneCount = items.filter((i) => (progress.tasbihCounts[i.id] ?? 0) >= i.count).length;
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
+  const fs = useFullscreen();
   return (
-    <div>
+    <div ref={fs.ref} className={fs.cssActive ? CSS_FULLSCREEN_CLASS : undefined}>
       <PageHeader title={title} subtitle={subtitle} backHref={backHref} />
+      <ReaderToolbar
+        size={size}
+        onSizeChange={setSize}
+        fullscreenActive={fs.active}
+        onFullscreenToggle={fs.toggle}
+      />
       <Card className="mb-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-bold text-neutral-700 dark:text-neutral-300">
@@ -737,7 +772,7 @@ function WiridListPage({
       </Card>
       <div className="flex flex-col gap-3">
         {items.map((item, i) => (
-          <WiridCard key={item.id} item={item} index={i} />
+          <WiridCard key={item.id} item={item} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
         ))}
       </div>
       {children}
@@ -747,6 +782,7 @@ function WiridListPage({
 
 export function WiridPage() {
   const [showDoa, setShowDoa] = useState(false);
+  const { arabicClass, bodyClass } = useReaderFontSize();
   return (
     <WiridListPage
       items={WIRID_SESUDAH_SHALAT}
@@ -769,7 +805,7 @@ export function WiridPage() {
               Doa dibaca setelah wirid selesai — mengikuti contoh doa sesudah salat fardhu.
             </Note>
             {DOA_SETELAH_SHALAT.map((d, i) => (
-              <WiridCard key={d.id} item={d} index={i} showCounter={false} />
+              <WiridCard key={d.id} item={d} index={i} showCounter={false} arabicClass={arabicClass} bodyClass={bodyClass} />
             ))}
           </div>
         )}
@@ -805,13 +841,15 @@ export function TahlilPage() {
   const { progress, setTasbih } = useProgress();
   const count = progress.tasbihCounts["tahlil"] ?? 0;
   const target = 100;
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
   return (
     <div>
       <PageHeader title="Tahlil & Doa" subtitle="Bacaan tahlil" backHref="/ibadah" />
+      <ReaderToolbar size={size} onSizeChange={setSize} showFullscreen={false} />
       <Card>
-        <p className="arabic text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">{TAHLIL_TEXT.arabic}</p>
-        <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{TAHLIL_TEXT.latin}</p>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">{TAHLIL_TEXT.translation}</p>
+        <p className={`arabic text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>{TAHLIL_TEXT.arabic}</p>
+        <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{TAHLIL_TEXT.latin}</p>
+        <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{TAHLIL_TEXT.translation}</p>
         <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">{TAHLIL_TEXT.note}</p>
         <div className="mt-4 flex items-center gap-2">
           <button
@@ -997,6 +1035,7 @@ export function AmalPage() {
 // ---------- Asmaul Husna ----------
 export function AsmaulHusnaPage() {
   const [q, setQ] = useState("");
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return ASMAUL_HUSNA;
@@ -1007,6 +1046,7 @@ export function AsmaulHusnaPage() {
   return (
     <div>
       <PageHeader title="Asmaul Husna" subtitle="99 nama Allah yang indah" backHref="/ibadah" />
+      <ReaderToolbar size={size} onSizeChange={setSize} showFullscreen={false} />
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
@@ -1020,10 +1060,10 @@ export function AsmaulHusnaPage() {
               {a.no}
             </span>
             <div className="flex-1">
-              <p className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">{a.latin}</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">{a.meaning}</p>
+              <p className={`font-extrabold text-neutral-900 dark:text-neutral-100 ${bodyClass}`}>{a.latin}</p>
+              <p className={`text-neutral-500 dark:text-neutral-400 ${bodyClass}`}>{a.meaning}</p>
             </div>
-            <span className="arabic text-2xl text-[#0B3D39] dark:text-[#D4AF37]">{a.arabic}</span>
+            <span className={`arabic text-[#0B3D39] dark:text-[#D4AF37] ${arabicClass}`}>{a.arabic}</span>
           </Card>
         ))}
         {filtered.length === 0 && <p className="text-center text-sm text-neutral-500 dark:text-neutral-400">Tidak ditemukan. Coba kata lain.</p>}
@@ -1036,7 +1076,13 @@ export function AsmaulHusnaPage() {
 
 type YasinAyah = { numberInSurah: number; text: string };
 
-function YasinReader() {
+function YasinReader({
+  arabicClass,
+  bodyClass,
+}: {
+  arabicClass: string;
+  bodyClass: string;
+}) {
   const { progress, setLastRead } = useProgress();
   const [ayahs, setAyahs] = useState<YasinAyah[]>([]);
   const [trans, setTrans] = useState<string[]>([]);
@@ -1045,7 +1091,6 @@ function YasinReader() {
   const [qari, setQari] = useState(QARIS[0]);
   const [audioError, setAudioError] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
-  const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("lg");
   const audioUrl = surahAudioUrl(qari.edition, 36);
   const lastReadAyah = progress.lastRead?.surahNo === 36 ? progress.lastRead.ayah : null;
 
@@ -1081,9 +1126,6 @@ function YasinReader() {
       .getElementById(`yasin-ayah-${ayah}`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
-
-  const fontSizeClass =
-    fontSize === "md" ? "text-[24px]" : fontSize === "xl" ? "text-[32px]" : "text-[28px]";
 
   return (
     <div>
@@ -1140,21 +1182,8 @@ function YasinReader() {
               {showTranslation ? "Tampil" : "Sembunyi"}
             </span>
           </button>
-          <span className="flex items-center gap-1">
-            <span className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Ukuran teks</span>
-            {(["md", "lg", "xl"] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setFontSize(s)}
-                className={`rounded-lg px-2.5 py-1 text-xs font-extrabold ${
-                  fontSize === s
-                    ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
-                    : "bg-black/5 dark:bg-white/10"
-                }`}
-              >
-                {s === "md" ? "A-" : s === "lg" ? "A" : "A+"}
-              </button>
-            ))}
+          <span className="text-xs text-neutral-500 dark:text-neutral-400">
+            Ukuran teks &amp; layar penuh ada di toolbar di atas
           </span>
         </div>
       </Card>
@@ -1180,10 +1209,10 @@ function YasinReader() {
           <p className="text-center text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : (
           <>
-            <p className="arabic mb-5 text-center text-2xl text-neutral-900 dark:text-neutral-100">
+            <p className={`arabic mb-5 text-center text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
               بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
             </p>
-            <p className={`mushaf ${fontSizeClass} text-neutral-900 dark:text-neutral-100`}>
+            <p className={`mushaf text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
               {ayahs.map((a) => (
                 <span
                   key={a.numberInSurah}
@@ -1205,7 +1234,7 @@ function YasinReader() {
                 {trans.map((t, i) => (
                   <p
                     key={i}
-                    className="mb-2 text-sm leading-relaxed text-neutral-600 dark:text-neutral-400"
+                    className={`mb-2 leading-relaxed text-neutral-600 dark:text-neutral-400 ${bodyClass}`}
                   >
                     <span className="font-extrabold text-[#C9A227]">{i + 1}.</span> {t}
                   </p>
@@ -1219,7 +1248,13 @@ function YasinReader() {
   );
 }
 
-function TahlilSteps() {
+function TahlilSteps({
+  arabicClass,
+  bodyClass,
+}: {
+  arabicClass: string;
+  bodyClass: string;
+}) {
   const { progress, setTasbih } = useProgress();
   const [open, setOpen] = useState<number | null>(1);
   const count = progress.tasbihCounts["tahlil"] ?? 0;
@@ -1255,13 +1290,13 @@ function TahlilSteps() {
             </button>
             {open === s.no && (
               <div className="mt-3 border-t border-black/5 pt-3 dark:border-white/10">
-                <p className="arabic whitespace-pre-line text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+                <p className={`arabic whitespace-pre-line text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
                   {s.arabic}
                 </p>
-                <p className="mt-2 text-sm italic leading-relaxed text-neutral-600 dark:text-neutral-400">
+                <p className={`mt-2 italic leading-relaxed text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
                   {s.latin}
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+                <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
                   {s.translation}
                 </p>
               </div>
@@ -1274,11 +1309,11 @@ function TahlilSteps() {
         <p className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
           Hitung tahlil — {TAHLIL_TEXT.title} 100x
         </p>
-        <p className="arabic mt-2 text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+        <p className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
           {TAHLIL_TEXT.arabic}
         </p>
-        <p className="mt-2 text-sm italic text-neutral-600 dark:text-neutral-400">{TAHLIL_TEXT.latin}</p>
-        <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+        <p className={`mt-2 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>{TAHLIL_TEXT.latin}</p>
+        <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
           {TAHLIL_TEXT.translation}
         </p>
         <div className="mt-4 flex items-center gap-2">
@@ -1306,7 +1341,13 @@ function TahlilSteps() {
   );
 }
 
-function DoaTahlil() {
+function DoaTahlil({
+  arabicClass,
+  bodyClass,
+}: {
+  arabicClass: string;
+  bodyClass: string;
+}) {
   return (
     <div>
       <div className="mb-3">
@@ -1320,13 +1361,13 @@ function DoaTahlil() {
         {DOA_TAHLIL.map((d) => (
           <Card key={d.title}>
             <h2 className="font-extrabold text-neutral-900 dark:text-neutral-100">{d.title}</h2>
-            <p className="arabic mt-3 text-right text-2xl leading-loose text-neutral-900 dark:text-neutral-100">
+            <p className={`arabic mt-3 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
               {d.arabic}
             </p>
-            <p className="mt-2 text-sm italic leading-relaxed text-neutral-600 dark:text-neutral-400">
+            <p className={`mt-2 italic leading-relaxed text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
               {d.latin}
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-neutral-700 dark:text-neutral-300">
+            <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
               {d.translation}
             </p>
           </Card>
@@ -1338,6 +1379,8 @@ function DoaTahlil() {
 
 export function YasinTahlilPage() {
   const [tab, setTab] = useState<"yasin" | "tahlil" | "doa">("yasin");
+  const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
+  const fs = useFullscreen();
   const tabs = [
     { id: "yasin", label: "Surat Yasin" },
     { id: "tahlil", label: "Tahlil" },
@@ -1350,24 +1393,32 @@ export function YasinTahlilPage() {
         subtitle="Surat Yasin, susunan tahlil, dan doa arwah"
         backHref="/ibadah"
       />
-      <div className="mb-3 flex gap-2">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex-1 rounded-2xl py-3 text-sm font-bold ${
-              tab === t.id
-                ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
-                : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/10"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      <div ref={fs.ref} className={fs.cssActive ? CSS_FULLSCREEN_CLASS : undefined}>
+        <ReaderToolbar
+          size={size}
+          onSizeChange={setSize}
+          fullscreenActive={fs.active}
+          onFullscreenToggle={fs.toggle}
+        />
+        <div className="mb-3 flex gap-2">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`flex-1 rounded-2xl py-3 text-sm font-bold ${
+                tab === t.id
+                  ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+                  : "bg-white text-neutral-600 ring-1 ring-black/10 dark:bg-[#171717] dark:text-neutral-300 dark:ring-white/10"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {tab === "yasin" && <YasinReader arabicClass={arabicClass} bodyClass={bodyClass} />}
+        {tab === "tahlil" && <TahlilSteps arabicClass={arabicClass} bodyClass={bodyClass} />}
+        {tab === "doa" && <DoaTahlil arabicClass={arabicClass} bodyClass={bodyClass} />}
       </div>
-      {tab === "yasin" && <YasinReader />}
-      {tab === "tahlil" && <TahlilSteps />}
-      {tab === "doa" && <DoaTahlil />}
     </div>
   );
 }

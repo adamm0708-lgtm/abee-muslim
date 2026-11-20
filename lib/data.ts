@@ -73,6 +73,8 @@ export type IconName =
   | "settings"
   | "menu"
   | "close"
+  | "maximize"
+  | "minimize"
   | "chevron-right"
   | "arrow-left"
   | "clock"

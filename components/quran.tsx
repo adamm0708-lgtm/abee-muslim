@@ -24,6 +24,13 @@ import {
   type SurahMeta,
 } from "@/lib/api";
 import { TAJWEED_LEGEND, tajweedToSafeHtml } from "@/lib/tajweed";
+import {
+  CSS_FULLSCREEN_CLASS,
+  READER_FONT_SIZES,
+  READER_FONT_SIZE_LABELS,
+  useFullscreen,
+  useReaderFontSize,
+} from "@/lib/reading";
 
 // ---------- Hafalan Juz 30 ----------
 export function HafalanPage() {
@@ -301,7 +308,10 @@ export function BacaPage() {
   const [showTranslation, setShowTranslation] = useState(true);
   const [showTajweed, setShowTajweed] = useState(true);
   const [tajweedLines, setTajweedLines] = useState<string[] | null>(null);
-  const [fontSize, setFontSize] = useState<"md" | "lg" | "xl">("lg");
+  // Ukuran teks baca bersama (A- A A+ A++, tersimpan di localStorage).
+  const { size: fontSize, setSize: setFontSize, arabicClass: fontSizeClass } =
+    useReaderFontSize();
+  const fs = useFullscreen();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [ayahJumpOpen, setAyahJumpOpen] = useState(false);
   const [ayahInput, setAyahInput] = useState("");
@@ -447,7 +457,6 @@ export function BacaPage() {
     );
   }, [surahs, search, juzFilter]);
 
-  const fontSizeClass = fontSize === "md" ? "text-[24px]" : fontSize === "xl" ? "text-[32px]" : "text-[28px]";
   const lastRead = progress.lastRead;
 
   // ================= MODE BACA (mushaf) =================
@@ -463,9 +472,13 @@ export function BacaPage() {
       : `Surah ${readerSurah}`;
 
     return (
-      <div>
+      <div ref={fs.ref} className={fs.cssActive ? CSS_FULLSCREEN_CLASS : undefined}>
         {/* Header hitam ala mushaf */}
-        <div className="sticky top-16 z-30 mb-3 rounded-2xl bg-[#0A0A0A] px-3 py-2.5 text-white shadow-md">
+        <div
+          className={`sticky z-30 mb-3 rounded-2xl bg-[#0A0A0A] px-3 py-2.5 text-white shadow-md ${
+            fs.active ? "top-0" : "top-16"
+          }`}
+        >
           <div className="flex items-center gap-1">
             <button
               onClick={() => setReaderSurah(null)}
@@ -499,6 +512,13 @@ export function BacaPage() {
               aria-label="Ke ayat terakhir dibaca"
             >
               <Icon name="bookmark" className="h-5 w-5" />
+            </button>
+            <button
+              onClick={fs.toggle}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-white/85 hover:bg-white/10"
+              aria-label={fs.active ? "Keluar dari layar penuh" : "Layar penuh"}
+            >
+              <Icon name={fs.active ? "minimize" : "maximize"} className="h-5 w-5" />
             </button>
             <div className="relative">
               <button
@@ -538,17 +558,18 @@ export function BacaPage() {
                   <div className="mt-1 flex items-center justify-between rounded-xl px-2 py-2">
                     <span className="text-sm font-bold">Ukuran teks</span>
                     <span className="flex gap-1">
-                      {(["md", "lg", "xl"] as const).map((s) => (
+                      {READER_FONT_SIZES.map((s) => (
                         <button
                           key={s}
                           onClick={() => setFontSize(s)}
+                          aria-label={`Ukuran teks ${READER_FONT_SIZE_LABELS[s]}`}
                           className={`rounded-lg px-2.5 py-1 text-xs font-extrabold ${
                             fontSize === s
                               ? "bg-[#0A0A0A] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
                               : "bg-black/5 dark:bg-white/10"
                           }`}
                         >
-                          {s === "md" ? "A-" : s === "lg" ? "A" : "A+"}
+                          {READER_FONT_SIZE_LABELS[s]}
                         </button>
                       ))}
                     </span>
@@ -663,7 +684,7 @@ export function BacaPage() {
           ) : (
             <>
               {readerSurah !== 1 && readerSurah !== 9 && (
-                <p className="arabic mb-5 text-center text-2xl text-neutral-900 dark:text-neutral-100">
+                <p className={`arabic mb-5 text-center text-neutral-900 dark:text-neutral-100 ${fontSizeClass}`}>
                   بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </p>
               )}
