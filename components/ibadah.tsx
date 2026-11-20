@@ -1168,6 +1168,12 @@ export function KiblatPage() {
   const [supported, setSupported] = useState(true);
   const [source, setSource] = useState<"mutlak" | "relatif" | null>(null);
   const [needsCalibration, setNeedsCalibration] = useState(false);
+  // Status tombol: "Mengaktifkan…" (sibuk sementara) / "Kompas Aktif" /
+  // "Coba Lagi" (setelah gagal atau sensor tak merespons).
+  const [activating, setActivating] = useState(false);
+  const [active, setActive] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [noSensor, setNoSensor] = useState(false);
 
   const activeRef = useRef(false);
   const bearingRef = useRef<number | null>(null);
@@ -1177,18 +1183,46 @@ export function KiblatPage() {
   const stableRef = useRef(0);
   const lastShownRef = useRef<{ heading: number; arrow: number } | null>(null);
   const listenersRef = useRef<{ type: string; fn: EventListener }[]>([]);
+  const noSensorRef = useRef(false);
+  const headingSeenRef = useRef(false);
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Lepas semua listener + timer (dipakai saat ketuk ulang & saat unmount).
+  const cleanupListeners = () => {
+    for (const { type, fn } of listenersRef.current) {
+      window.removeEventListener(type as "deviceorientation", fn);
+    }
+    listenersRef.current = [];
+    if (watchdogRef.current !== null) {
+      clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  };
+
+  const armWatchdog = () => {
+    // Bila 5 detik setelah arah kiblat terhitung tidak ada satu pun event
+    // heading yang bisa dipakai, beri tahu pengguna — jangan biarkan panah
+    // diam tanpa penjelasan (laporan Adam: tombol seperti tidak berfungsi).
+    if (watchdogRef.current !== null) clearTimeout(watchdogRef.current);
+    watchdogRef.current = setTimeout(() => {
+      if (!headingSeenRef.current) {
+        noSensorRef.current = true;
+        setNoSensor(true);
+        setStatus(
+          "Sensor kompas tidak merespons — panah tidak bisa bergerak. Angka kiblat di atas tetap benar."
+        );
+      }
+    }, 5000);
+  };
 
   // Lepas semua listener saat halaman ditinggalkan (sebelumnya listener
   // deviceorientation tidak pernah dilepas).
   useEffect(() => {
-    const listeners = listenersRef.current;
     return () => {
-      for (const { type, fn } of listeners) {
-        window.removeEventListener(type as "deviceorientation", fn);
-      }
-      listeners.length = 0;
+      cleanupListeners();
       activeRef.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const activate = () => {
@@ -1197,10 +1231,36 @@ export function KiblatPage() {
       setStatus("Perangkat ini tidak mendukung sensor kompas.");
       return;
     }
-    if (activeRef.current) return;
+    // Umpan balik LANGSUNG: ketukan selalu terlihat diterima — status
+    // berubah saat itu juga, bukan setelah geolocation selesai (yang bisa
+    // makan waktu sampai 10 detik). Inilah yang dilaporkan Adam: "ketuk
+    // aktifkan kompas, tidak berubah".
+    setFailed(false);
+    setNoSensor(false);
+    noSensorRef.current = false;
+    headingSeenRef.current = false;
+    smoothRef.current = null;
+    lastShownRef.current = null;
+    setHeading(null);
+    setSource(null);
+    setNeedsCalibration(false);
+    setActivating(true);
+    setStatus("Mengaktifkan kompas…");
+    // Bersihkan listener lama supaya ketukan ulang tidak menggandakan
+    // listener. Tombol tidak pernah mati permanen: ketuk ulang selalu
+    // memulai aktivasi baru yang bersih (guard activeRef yang lama
+    // dihapus — dialah yang membuat ketukan kedua mati total).
+    cleanupListeners();
+    activeRef.current = false;
+    setActive(false);
     const start = () => {
       activeRef.current = true;
+      setActive(true);
       if (!navigator.geolocation) {
+        activeRef.current = false;
+        setActive(false);
+        setActivating(false);
+        setFailed(true);
         setStatus("Geolocation tidak tersedia di perangkat ini.");
         return;
       }
@@ -1209,14 +1269,36 @@ export function KiblatPage() {
           const b = qiblaBearing(pos.coords.latitude, pos.coords.longitude);
           bearingRef.current = b;
           setBearing(b);
+          setActivating(false);
           setStatus("Kompas aktif — putar HP sampai panah menunjuk ke atas.");
+          armWatchdog();
         },
-        () => setStatus("Izin lokasi ditolak — arah kiblat tidak bisa dihitung."),
+        () => {
+          // Gagal / timeout / izin ditolak: kembalikan tombol ke keadaan
+          // bisa diketuk lagi. Sebelumnya activeRef tetap true selamanya
+          // sampai halaman ditutup — pengguna tidak bisa mencoba lagi.
+          cleanupListeners();
+          activeRef.current = false;
+          setActive(false);
+          setActivating(false);
+          setFailed(true);
+          setStatus("Izin lokasi ditolak — ketuk “Coba Lagi” untuk mencoba lagi.");
+        },
         { timeout: 10000 }
       );
       const handler = (e: DeviceOrientationEvent) => {
         const res = headingFromEvent(e);
         if (!res) return;
+        // Event heading pertama yang bisa dipakai: sensor merespons.
+        if (!headingSeenRef.current) {
+          headingSeenRef.current = true;
+          if (watchdogRef.current !== null) {
+            clearTimeout(watchdogRef.current);
+            watchdogRef.current = null;
+          }
+          noSensorRef.current = false;
+          setNoSensor(false);
+        }
         setSource(res.absolute ? "mutlak" : "relatif");
         // Perhalus heading (EMA di lingkaran) supaya panah tidak gemetar.
         const prev = smoothRef.current;
@@ -1270,8 +1352,18 @@ export function KiblatPage() {
     if (typeof doe.requestPermission === "function") {
       doe
         .requestPermission()
-        .then((res) => (res === "granted" ? start() : setStatus("Izin kompas ditolak.")))
-        .catch(() => setStatus("Izin kompas tidak bisa diminta."));
+        .then((res) =>
+          res === "granted"
+            ? start()
+            : (setActivating(false),
+              setFailed(true),
+              setStatus("Izin kompas ditolak — ketuk lagi untuk mencoba."))
+        )
+        .catch(() => {
+          setActivating(false);
+          setFailed(true);
+          setStatus("Izin kompas tidak bisa diminta — ketuk lagi untuk mencoba.");
+        });
     } else {
       start();
     }
@@ -1313,8 +1405,28 @@ export function KiblatPage() {
             Kompas perlu kalibrasi: gerakkan HP membentuk angka 8 beberapa kali sampai panah stabil.
           </Note>
         )}
-        <button onClick={activate} className="rounded-2xl bg-[#0A0A0A] px-6 py-3 text-sm font-bold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
-          Aktifkan Kompas
+        {noSensor && (
+          <Note>
+            Sensor kompas tidak merespons — panah tidak bisa bergerak. Coba tutup lalu buka lagi
+            halaman ini, dan pastikan izin lokasi & gerakan (motion) diizinkan. Sementara itu angka
+            kiblat di atas tetap benar:{" "}
+            {bearing !== null
+              ? `hadap ke ${Math.round(bearing)}° memakai kompas bawaan HP.`
+              : "hadap ke sekitar 295° (barat laut, patokan Jawa) memakai kompas bawaan HP."}
+          </Note>
+        )}
+        <button
+          onClick={activate}
+          disabled={activating || (active && !noSensor)}
+          className="rounded-2xl bg-[#0A0A0A] px-6 py-3 text-sm font-bold text-white disabled:opacity-60 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+        >
+          {activating
+            ? "Mengaktifkan…"
+            : active && !noSensor
+              ? "Kompas Aktif"
+              : noSensor || failed
+                ? "Coba Lagi"
+                : "Aktifkan Kompas"}
         </button>
         {!supported && (
           <Note>
