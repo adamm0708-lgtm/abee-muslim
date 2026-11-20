@@ -21,6 +21,7 @@ export type BeritaItem = {
   link: string;
   source: string;
   publishedAt: string; // ISO
+  imageUrl?: string; // gambar sampul (untuk slider beranda)
 };
 
 const SOURCES: { name: string; urls: string[]; islamOnly: boolean }[] = [
@@ -67,8 +68,63 @@ function pick(block: string, tag: string): string {
   return m ? decodeEntities(stripCdata(m[1].trim())) : "";
 }
 
-function parseRss(xml: string): { title: string; link: string; publishedAt: string; description: string }[] {
-  const out: { title: string; link: string; publishedAt: string; description: string }[] = [];
+// Isi mentah (masih ada tag HTML) — untuk mencari <img>.
+function rawPick(block: string, tag: string): string {
+  const m = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`));
+  return m ? stripCdata(m[1].trim()) : "";
+}
+
+// Gambar dari feed RSS: media:content / media:thumbnail / enclosure, lalu
+// <img> pertama di content:encoded / description. (Diuji 20 Nov 2026: ketiga
+// feed TIDAK menyediakan gambar di RSS — NU Online & Muslim.or.id tanpa
+// media:content/enclosure/img sama sekali — jadi gambar utama diambil dari
+// og:image halaman artikel, lihat fetchOgImage di bawah.)
+function extractImgSrc(html: string): string | null {
+  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return m ? decodeEntities(m[1].trim()) : null;
+}
+
+function extractMediaUrl(block: string): string | null {
+  const m =
+    block.match(/<media:content[^>]+url=["']([^"']+)["']/i) ||
+    block.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i) ||
+    block.match(/<enclosure[^>]+url=["']([^"']+)["'][^>]*type=["']image\//i);
+  return m ? decodeEntities(m[1].trim()) : null;
+}
+
+// Gambar sampul dari halaman artikel (og:image, fallback twitter:image).
+// Dipakai karena RSS ketiga sumber tidak membawa gambar.
+function extractOgImage(html: string): string | null {
+  const m =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
+    html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i);
+  return m ? decodeEntities(m[1].trim()) : null;
+}
+
+async function fetchOgImage(link: string): Promise<string | null> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(link, {
+      signal: ctrl.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36",
+      },
+      next: { revalidate: 600 },
+    });
+    if (!res.ok) return null;
+    return extractOgImage(await res.text());
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function parseRss(xml: string): { title: string; link: string; publishedAt: string; description: string; imageUrl?: string }[] {
+  const out: { title: string; link: string; publishedAt: string; description: string; imageUrl?: string }[] = [];
   const blocks = xml.match(/<item>([\s\S]*?)<\/item>/g) ?? [];
   for (const block of blocks) {
     const title = pick(block, "title");
@@ -79,6 +135,11 @@ function parseRss(xml: string): { title: string; link: string; publishedAt: stri
       link,
       publishedAt: pick(block, "pubDate"),
       description: pick(block, "description").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+      imageUrl:
+        extractMediaUrl(block) ??
+        extractImgSrc(rawPick(block, "content:encoded")) ??
+        extractImgSrc(rawPick(block, "description")) ??
+        undefined,
     });
   }
   return out;
@@ -123,6 +184,7 @@ async function fetchSource(src: (typeof SOURCES)[number]): Promise<BeritaItem[]>
         link: it.link,
         source: src.name,
         publishedAt: it.publishedAt ? new Date(it.publishedAt).toISOString() : new Date(0).toISOString(),
+        imageUrl: it.imageUrl,
       }));
     } catch (e) {
       lastErr = e;
@@ -140,6 +202,16 @@ export async function GET() {
     else failedSources.push(SOURCES[i].name);
   });
   items.sort((a, b) => +new Date(b.publishedAt) - +new Date(a.publishedAt));
+  // Lengkapi gambar sampul untuk 10 item teratas (dipakai slider beranda):
+  // ambil og:image dari halaman artikel, paralel, gagal = item tanpa gambar.
+  await Promise.all(
+    items.slice(0, 10).map(async (it) => {
+      if (!it.imageUrl) {
+        const og = await fetchOgImage(it.link);
+        if (og) it.imageUrl = og;
+      }
+    })
+  );
   const body = {
     items: items.slice(0, 30),
     sources: SOURCES.filter((s) => !failedSources.includes(s.name)).map((s) => s.name),
