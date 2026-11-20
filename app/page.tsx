@@ -9,10 +9,12 @@ import {
   Note,
   PhotoCard,
   PrayerCard,
+  PrayerMini,
   ProgressBar,
   QuoteCard,
   SectionTitle,
 } from "@/components/ui";
+import { BeritaSection } from "@/components/berita";
 import { useProgress, levelFromPoints, todayKey } from "@/lib/store";
 import {
   FITUR_UTAMA,
@@ -25,6 +27,7 @@ import {
   getHijriToday,
   getRamadhanInfo,
   getWeather,
+  gregShortId,
   type Weather,
 } from "@/lib/api";
 
@@ -50,6 +53,8 @@ export default function Home() {
   const [now, setNow] = useState(() => new Date());
   const [ramadhanDays, setRamadhanDays] = useState<number | null>(null);
   const [ramadhanError, setRamadhanError] = useState(false);
+  const [hijri, setHijri] = useState<string | null>(null);
+  const [hijriError, setHijriError] = useState(false);
 
   const city = CITIES.find((c) => c.name === progress.city) ?? CITIES[0];
   const { level, title } = levelFromPoints(progress.points);
@@ -63,6 +68,10 @@ export default function Home() {
     getRamadhanInfo()
       .then((info) => alive && setRamadhanDays(info.days))
       .catch(() => alive && setRamadhanError(true));
+    // Tanggal Hijriah HANYA dari API (Aladhan gToH) — tanpa fallback/karangan.
+    getHijriToday()
+      .then((h) => alive && setHijri(h))
+      .catch(() => alive && setHijriError(true));
     return () => {
       alive = false;
     };
@@ -76,41 +85,81 @@ export default function Home() {
 
   const t = todayKey();
   const missionsDoneCount = progress.missionsDone[t] ?? 0;
+  const clockStr = `${String(now.getHours()).padStart(2, "0")}.${String(now.getMinutes()).padStart(2, "0")}.${String(now.getSeconds()).padStart(2, "0")}`;
+  const weekdayShort = now.toLocaleDateString("id-ID", { weekday: "short" });
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Sapaan & progres */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p
-            className="text-sm text-neutral-500 dark:text-neutral-400"
-            suppressHydrationWarning
-          >
-            Assalamu&apos;alaikum, {greeting()}
-          </p>
-          <p className="mt-0.5 text-lg font-extrabold text-neutral-900 dark:text-neutral-100">
-            {progress.name}
-          </p>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            Level {level} · {title}
-          </p>
+      {/* Sapaan & progres + baris kecil jam/tanggal */}
+      <div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p
+              className="text-sm text-neutral-500 dark:text-neutral-400"
+              suppressHydrationWarning
+            >
+              Assalamu&apos;alaikum, {greeting()}
+            </p>
+            <p className="mt-0.5 text-lg font-extrabold text-neutral-900 dark:text-neutral-100">
+              {progress.name}
+            </p>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              Level {level} · {title}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-bold text-neutral-600 dark:text-neutral-300">
+            <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-black/5 dark:bg-[#171717] dark:ring-white/10">
+              <Icon name="flame" className="h-3.5 w-3.5 text-[#C9A227]" />
+              {progress.streak} hari
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-black/5 dark:bg-[#171717] dark:ring-white/10">
+              <Icon name="star" className="h-3.5 w-3.5 text-[#C9A227]" />
+              {progress.points} poin
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs font-bold text-neutral-600 dark:text-neutral-300">
-          <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-black/5 dark:bg-[#171717] dark:ring-white/10">
-            <Icon name="flame" className="h-3.5 w-3.5 text-[#C9A227]" />
-            {progress.streak} hari
-          </span>
-          <span className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 ring-1 ring-black/5 dark:bg-[#171717] dark:ring-white/10">
-            <Icon name="star" className="h-3.5 w-3.5 text-[#C9A227]" />
-            {progress.points} poin
-          </span>
+        <p
+          className="mt-1.5 text-xs text-neutral-500 dark:text-neutral-400"
+          suppressHydrationWarning
+        >
+          {clockStr} WIB · {weekdayShort}, {gregShortId(now)} ·{" "}
+          {hijri ?? (hijriError ? "Tanggal Hijriah tidak bisa dimuat" : "Memuat tanggal Hijriah…")}
+        </p>
+      </div>
+
+      {/* Fitur Utama */}
+      <div>
+        <SectionTitle title="Fitur Utama" />
+        <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
+          {FITUR_UTAMA.map((f) => (
+            <PhotoCard key={f.href} href={f.href} label={f.label} photo={f.photo} />
+          ))}
         </div>
       </div>
 
-      {/* Kartu shalat berikutnya (gelap) */}
+      {/* Berita & Artikel */}
+      <BeritaSection />
+
+      {/* Waktu shalat kecil */}
+      <PrayerMini />
+
+      {/* Menu Lainnya */}
+      <div>
+        <SectionTitle title="Menu Lainnya" />
+        <MenuGrid>
+          {IBADAH_MENU.map((m) => (
+            <MenuItem key={`i-${m.slug}`} href={`/ibadah/${m.slug}`} icon={m.icon} label={m.label} />
+          ))}
+          {QURAN_MENU.map((m) => (
+            <MenuItem key={`q-${m.slug}`} href={`/quran/${m.slug}`} icon={m.icon} label={m.label} />
+          ))}
+        </MenuGrid>
+      </div>
+
+      {/* Kartu shalat lengkap */}
       <PrayerCard />
 
-      {/* Cuaca (tanggal Hijriah sudah ada di kartu hero di atas) */}
+      {/* Cuaca */}
       <Card>
         <p className="text-[11px] font-extrabold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
           Cuaca · {progress.city}
@@ -152,29 +201,6 @@ export default function Home() {
           </span>
         </div>
       </Link>
-
-      {/* Fitur Utama */}
-      <div>
-        <SectionTitle title="Fitur Utama" />
-        <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
-          {FITUR_UTAMA.map((f) => (
-            <PhotoCard key={f.href} href={f.href} label={f.label} photo={f.photo} />
-          ))}
-        </div>
-      </div>
-
-      {/* Menu Lainnya */}
-      <div>
-        <SectionTitle title="Menu Lainnya" />
-        <MenuGrid>
-          {IBADAH_MENU.map((m) => (
-            <MenuItem key={`i-${m.slug}`} href={`/ibadah/${m.slug}`} icon={m.icon} label={m.label} />
-          ))}
-          {QURAN_MENU.map((m) => (
-            <MenuItem key={`q-${m.slug}`} href={`/quran/${m.slug}`} icon={m.icon} label={m.label} />
-          ))}
-        </MenuGrid>
-      </div>
 
       {/* Mutiara hari ini */}
       <div>

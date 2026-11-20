@@ -642,6 +642,64 @@ function AnalogClock({ now }: { now: Date }) {
   );
 }
 
+// ---------- Kartu shalat kecil (strip ringkas di beranda) ----------
+
+/** Shalat berikutnya + jam + hitung mundur kata-kata, satu baris ringkas.
+ * Menautkan ke /ibadah/jadwal. Kartu lengkap tetap ada di PrayerCard di bawah. */
+export function PrayerMini() {
+  const { progress } = useProgress();
+  const [timings, setTimings] = useState<Timings | null>(null);
+  const [error, setError] = useState(false);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    setError(false);
+    getTimings(progress.city)
+      .then((t) => alive && setTimings(t))
+      .catch(() => alive && setError(true));
+    return () => {
+      alive = false;
+    };
+  }, [progress.city]);
+
+  const next = useMemo(() => (timings ? nextPrayer(timings, now) : null), [timings, now]);
+
+  return (
+    <Link href="/ibadah/jadwal" aria-label="Lihat jadwal shalat lengkap">
+      <div
+        className="flex min-h-[64px] items-center justify-between gap-3 rounded-2xl bg-[#0A0A0A] px-4 py-3 text-white shadow-sm transition active:scale-[0.99]"
+        suppressHydrationWarning
+      >
+        {timings && next ? (
+          <>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-extrabold">
+                {next.name} · <span className="text-[#D4AF37]">{timings[next.name]}</span>
+              </p>
+              <p className="truncate text-xs text-white/70">
+                {formatCountdownWords(next.at.getTime() - now.getTime())}
+              </p>
+            </div>
+            <span className="flex shrink-0 items-center gap-1 text-xs font-bold text-[#D4AF37]">
+              Jadwal lengkap <Icon name="chevron-right" className="h-4 w-4" />
+            </span>
+          </>
+        ) : error ? (
+          <p className="text-sm font-bold">Jadwal shalat tidak bisa dimuat</p>
+        ) : (
+          <p className="text-sm font-bold">Memuat jadwal shalat…</p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 // ---------- Kartu shalat berikutnya (kartu gelap besar) ----------
 
 function toMinutes(hhmm: string): number {
