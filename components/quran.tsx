@@ -23,7 +23,8 @@ import {
   getSurahList,
   type SurahMeta,
 } from "@/lib/api";
-import { TAJWEED_LEGEND, tajweedToSafeHtml } from "@/lib/tajweed";
+import { TAJWEED_LEGEND } from "@/lib/tajweed";
+import { mapTajweedSurah } from "@/lib/tajweed-map";
 import {
   CSS_FULLSCREEN_CLASS,
   normalizeArabicText,
@@ -394,9 +395,19 @@ export function BacaPage() {
     };
   }, [readerSurah, showTajweed]);
 
-  const arabicLines = embedded ? embedded.arabic : apiSurah?.ayahs.map((a) => a.text) ?? [];
+  const arabicLines = useMemo(
+    () => (embedded ? embedded.arabic : apiSurah?.ayahs.map((a) => a.text) ?? []),
+    [embedded, apiSurah]
+  );
   const tajweedOn =
     showTajweed && tajweedLines != null && tajweedLines.length === arabicLines.length;
+  // Warna tajwid dipetakan dari teks Uthmani sumber ke ejaan Simple yang
+  // ditampilkan — ejaan TIDAK berubah saat toggle tajwid dimatikan atau
+  // dinyalakan. Dihitung sekali per surah (memo, bukan per render).
+  const mappedTajweedLines = useMemo(() => {
+    if (!tajweedOn || tajweedLines == null) return null;
+    return mapTajweedSurah(tajweedLines, arabicLines);
+  }, [tajweedOn, tajweedLines, arabicLines]);
   const transLines = embedded ? embedded.translation : apiTrans;
   const readerMeta =
     surahs?.find((s) => s.number === readerSurah) ??
@@ -698,10 +709,10 @@ export function BacaPage() {
                     className={`ayah ${lastReadAyah === i + 1 ? "last-read" : ""}`}
                     title={`Ketuk untuk menandai Ayat ${i + 1} sebagai terakhir dibaca`}
                   >
-                    {showTajweed && tajweedLines && tajweedLines.length === arabicLines.length ? (
+                    {mappedTajweedLines ? (
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: tajweedToSafeHtml(tajweedLines[i]),
+                          __html: mappedTajweedLines[i],
                         }}
                       />
                     ) : (
@@ -749,8 +760,8 @@ export function BacaPage() {
             </div>
             <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
               Warna mengikuti hukum bacaan pada hurufnya. Data warna tajwid: Quran.com API
-              (teks Uthmani yang sama). Matikan lewat Pengaturan → Warna Tajwid kalau mau
-              tampilan mushaf polos.
+              (dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan). Matikan lewat
+              Pengaturan → Warna Tajwid kalau mau tampilan mushaf polos.
             </p>
           </Card>
         )}

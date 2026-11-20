@@ -515,7 +515,7 @@ export function embeddedSurahMeta(): SurahMeta[] {
 
 /** Catatan sumber yang ditampilkan di aplikasi (halaman baca + Atur). */
 export const QURAN_SOURCE_NOTE =
-  "Teks Arab: Mushaf Uthmani (Tanzil) · Terjemahan: Kemenag RI (Edisi Penyempurnaan 2019)";
+  "Teks Arab: Ejaan Simple (Imla'i, Tanzil) · Terjemahan: Kemenag RI (Edisi Penyempurnaan 2019)";
 
 export type SurahText = { arabic: string[]; translation: string[] };
 
@@ -553,12 +553,12 @@ function stripLeadingBismillah(text: string): string {
 }
 
 /**
- * Ambil teks satu surah: Arab Uthmani + terjemahan Kemenag 2019.
- * Utama: Quran.com API v4 — fields=text_uthmani (Mushaf Uthmani, Tanzil) +
- * translations=33 ("Indonesian Islamic Affairs Ministry" = Kemenag RI
- * Edisi Penyempurnaan 2019). Satu panggilan untuk Arab + terjemahan;
- * per_page=300 menutupi surah terpanjang (286 ayat).
- * Cadangan kalau Quran.com gagal: AlQuran Cloud edisi "quran-uthmani"
+ * Ambil teks satu surah: Arab Simple (Imla'i) + terjemahan Kemenag 2019.
+ * Utama: Quran.com API v4 — fields=text_imlaei (ejaan Simple / Imla'i,
+ * Tanzil) + translations=33 ("Indonesian Islamic Affairs Ministry" =
+ * Kemenag RI Edisi Penyempurnaan 2019). Satu panggilan untuk Arab +
+ * terjemahan; per_page=300 menutupi surah terpanjang (286 ayat).
+ * Cadangan kalau Quran.com gagal: AlQuran Cloud edisi "quran-simple"
  * (standar, BUKAN edisi default "quran-uthmani-quran-academy") +
  * "id.indonesian" (terjemahan Kemenag edisi lama — tetap valid, hanya cadangan).
  * Ayat 1 dari cadangan dibersihkan dari Basmalah yang menempel, karena
@@ -568,10 +568,14 @@ function stripLeadingBismillah(text: string): string {
 /**
  * Teks tajwid satu surah (warna per hukum bacaan) dari Quran.com API v4:
  * `quran/verses/uthmani_tajweed` — teks Mushaf Uthmani yang sama dengan
- * fetchSurahText, ditambah tag `<tajweed class=X>` per huruf dan
+ * sumber data tajwid, ditambah tag `<tajweed class=X>` per huruf dan
  * `<span class=end>` penanda akhir ayat. per_page=300 menutupi surah
  * terpanjang (286 ayat); tanpa per_page API hanya mengembalikan 10 ayat.
  * Tidak ada cadangan: kalau gagal, pemanggil memakai teks polos.
+ * CATATAN: baris-baris ini masih ejaan Uthmani — pemanggil (reader)
+ * memetakan warna tajwidnya ke ejaan Simple via lib/tajweed-map
+ * (mapTajweedSurah), supaya ejaan TIDAK berubah saat toggle tajwid
+ * dimatikan/dinyalakan.
  */
 export async function fetchSurahTajweed(surahNo: number): Promise<string[]> {
   const json = (await fetchJson(
@@ -587,11 +591,11 @@ export async function fetchSurahTajweed(surahNo: number): Promise<string[]> {
 export async function fetchSurahText(surahNo: number): Promise<SurahText> {
   try {
     const json = (await fetchJson(
-      `https://api.quran.com/api/v4/verses/by_chapter/${surahNo}?translations=33&fields=text_uthmani&per_page=300`
+      `https://api.quran.com/api/v4/verses/by_chapter/${surahNo}?translations=33&fields=text_imlaei&per_page=300`
     )) as {
       verses?: {
         verse_number?: number;
-        text_uthmani?: string;
+        text_imlaei?: string;
         translations?: { text?: string }[];
       }[];
     };
@@ -600,7 +604,7 @@ export async function fetchSurahText(surahNo: number): Promise<SurahText> {
     // Normalisasi maddah global (U+0672 -> U+0670): teks polos Quran.com
     // sudah bersih hari ini, tapi normalisasi di sini menutup semua jalur
     // API — reader Qur'an + Yasin — bila suatu saat datanya berubah.
-    const arabic = verses.map((v) => normalizeArabicText((v.text_uthmani ?? "").trim()));
+    const arabic = verses.map((v) => normalizeArabicText((v.text_imlaei ?? "").trim()));
     const translation = verses.map((v) =>
       stripTranslationHtml(v.translations?.[0]?.text ?? "")
     );
@@ -608,7 +612,7 @@ export async function fetchSurahText(surahNo: number): Promise<SurahText> {
     return { arabic, translation };
   } catch {
     const [ar, id] = (await Promise.all([
-      fetchJson(`https://api.alquran.cloud/v1/surah/${surahNo}/quran-uthmani`),
+      fetchJson(`https://api.alquran.cloud/v1/surah/${surahNo}/quran-simple`),
       fetchJson(`https://api.alquran.cloud/v1/surah/${surahNo}/id.indonesian`),
     ])) as {
       code?: number;
