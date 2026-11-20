@@ -1877,3 +1877,231 @@ export function pageRangeOfJuz(juz: number): [number, number] {
   const end = juz >= 30 ? 604 : JUZ_PAGE_STARTS[juz] - 1;
   return [start, end];
 }
+
+// ---------- Perpustakaan / Ruang Baca (menu baru, Adam 2026-11-20) ----------
+// Buku TIDAK disimpan di repo — hanya metadata + tautan ke file gratis di
+// situs sumbernya (Archive.org, SantriOnline). Semua URL download di bawah
+// ini terverifikasi hidup (HTTP 200 + application/pdf) pada 2026-11-20.
+// SantriOnline memblokir framing (X-Frame-Options: SAMEORIGIN) jadi halamannya
+// dibuka di tab baru; Archive.org bisa di-embed (archive.org/embed/<id>).
+
+export type BukuKategori = "Kitab" | "Novel & Cerita" | "Pendidikan";
+
+export type Buku = {
+  slug: string;
+  title: string;
+  author: string;
+  category: BukuKategori;
+  language: string; // "Indonesia" | "Arab"
+  desc: string;
+  source: string; // nama situs sumber (atribusi)
+  embedId?: string; // identifier Archive.org — dibaca di dalam aplikasi
+  readUrl?: string; // halaman baca di situs sumber (alternatif / bila tak bisa di-embed)
+  downloadUrl: string; // file PDF langsung di situs sumber
+};
+
+export const BUKU_KATEGORI: { slug: string; label: string }[] = [
+  { slug: "semua", label: "Semua" },
+  { slug: "Kitab", label: "Kitab" },
+  { slug: "Novel & Cerita", label: "Novel & Cerita" },
+  { slug: "Pendidikan", label: "Pendidikan" },
+];
+
+export const PERPUSTAKAAN: Buku[] = [
+  {
+    slug: "safinatun-najah",
+    title: "Safinatun Najah",
+    author: "Salim bin Sumair Al-Hadhrami",
+    category: "Kitab",
+    language: "Arab",
+    desc: "Matan fiqih mazhab Syafi'i untuk pemula — thaharah, shalat, dan dasar-dasar ibadah.",
+    source: "Archive.org",
+    embedId: "SafinatunNajah_201901",
+    readUrl: "https://app.santrionline.com/kitab/safinatun-najah/baca",
+    downloadUrl: "https://archive.org/download/SafinatunNajah_201901/Safinatun%20Najah.pdf",
+  },
+  {
+    slug: "aqidatul-awam",
+    title: "Aqidatul Awam (Terjemah)",
+    author: "Ahmad Al-Marzuqi",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Nadzam aqidah Ahlussunnah wal Jama'ah yang biasa dihafal santri pesantren, lengkap dengan terjemahannya.",
+    source: "Archive.org",
+    embedId: "terjemah-aqidatul-awam",
+    readUrl: "https://app.santrionline.com/kitab/aqidatul-awam/baca",
+    downloadUrl: "https://archive.org/download/terjemah-aqidatul-awam/Terjemah_Aqidatul_Awam.pdf",
+  },
+  {
+    slug: "talim-mutaallim",
+    title: "Ta'lim Muta'allim (Terjemah)",
+    author: "Az-Zarnuji",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Kitab klasik tentang adab menuntut ilmu — niat, guru, dan cara belajar yang benar.",
+    source: "Archive.org",
+    embedId: "terjemahan-talim-mutaallim",
+    downloadUrl:
+      "https://archive.org/download/terjemahan-talim-mutaallim/Terjemahan%20Ta%27lim%20Muta%27allim.pdf",
+  },
+  {
+    slug: "arbain-nawawi",
+    title: "Arbain Nawawi (Terjemah)",
+    author: "Imam An-Nawawi",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Kumpulan 42 hadis pokok agama pilihan Imam An-Nawawi, lengkap dengan terjemahannya.",
+    source: "Archive.org",
+    embedId: "terjemah-hadits-arbain-nawawi",
+    readUrl: "https://app.santrionline.com/kitab/arbain-nawawi/baca",
+    downloadUrl:
+      "https://archive.org/download/terjemah-hadits-arbain-nawawi/Terjemah_Hadits_Arbain_Nawawi.pdf",
+  },
+  {
+    slug: "riyadhus-shalihin",
+    title: "Riyadhus Shalihin — Buku 1",
+    author: "Imam An-Nawawi",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Kumpulan hadis tentang akhlak dan amal saleh dari Imam An-Nawawi — buku pertama.",
+    source: "Archive.org",
+    embedId: "riyadhus-shalihin-buku-2-imam-nawawi",
+    downloadUrl:
+      "https://archive.org/download/riyadhus-shalihin-buku-2-imam-nawawi/Riyadhus%20Shalihin%20Buku%201%20-%20Imam-Nawawi.pdf",
+  },
+  {
+    slug: "bulughul-maram",
+    title: "Bulughul Maram (Terjemah Indonesia)",
+    author: "Ibnu Hajar Al-Asqalani",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Kumpulan hadis hukum (fiqih) karya Ibnu Hajar Al-Asqalani, lengkap dengan terjemah Indonesia.",
+    source: "Archive.org",
+    embedId: "BulughulMaramTerjIndonesia",
+    downloadUrl:
+      "https://archive.org/download/BulughulMaramTerjIndonesia/Bulughul%20Maram%20-Terj%20Indonesia.pdf",
+  },
+  {
+    slug: "tafsir-jalalain",
+    title: "Tafsir Jalalain (Terjemah 30 Juz)",
+    author: "Jalaluddin Al-Mahalli & Jalaluddin As-Suyuthi",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Tafsir Al-Qur'an 30 juz karya Jalaluddin Al-Mahalli dan Jalaluddin As-Suyuthi, terjemah Indonesia.",
+    source: "Archive.org",
+    embedId: "terjemah-tafsir-jalalain-30-juz",
+    downloadUrl:
+      "https://archive.org/download/terjemah-tafsir-jalalain-30-juz/Terjemah%20Tafsir%20Jalalain%2030%20Juz.pdf",
+  },
+  {
+    slug: "fathul-qorib",
+    title: "Fathul Qorib (Terjemah)",
+    author: "Ibnu Qasim Al-Ghazi",
+    category: "Kitab",
+    language: "Indonesia",
+    desc: "Syarah Matan Taqrib — fiqih mazhab Syafi'i lengkap, terjemah Indonesia.",
+    source: "Archive.org",
+    embedId: "fathul-qorib-terjemah",
+    downloadUrl: "https://archive.org/download/fathul-qorib-terjemah/Fathul%20Qorib%20Terjemah.pdf",
+  },
+  {
+    slug: "sirah-nabawiyah",
+    title: "Sirah Nabawiyah",
+    author: "Shafiyyurrahman Al-Mubarakfuri",
+    category: "Novel & Cerita",
+    language: "Indonesia",
+    desc: "Sirah Nabi Muhammad ﷺ karya Syaikh Shafiyyurrahman Al-Mubarakfuri (Ar-Raheeq Al-Makhtum), terjemah Indonesia.",
+    source: "Archive.org",
+    embedId: "sirah-nabawiyah_202403",
+    downloadUrl: "https://archive.org/download/sirah-nabawiyah_202403/Sirah%20Nabawiyah.pdf",
+  },
+  {
+    slug: "kisah-para-nabi",
+    title: "Kisah Para Nabi — 31 Nabi dari Adam hingga Isa",
+    author: "Tidak tercantum",
+    category: "Novel & Cerita",
+    language: "Indonesia",
+    desc: "Kisah 31 nabi dari Adam hingga Isa dalam bahasa Indonesia.",
+    source: "Archive.org",
+    embedId: "kisah-para-nabi-kisah-31-nabi-dari-adam-hingga-isa",
+    downloadUrl:
+      "https://archive.org/download/kisah-para-nabi-kisah-31-nabi-dari-adam-hingga-isa/Kisah%20Para%20Nabi%20-%20Kisah%2031%20Nabi%20dari%20Adam%20hingga%20Isa.pdf",
+  },
+  {
+    slug: "sejarah-hidup-nabi",
+    title: "Sejarah Hidup Nabi Muhammad SAW",
+    author: "Tidak tercantum",
+    category: "Novel & Cerita",
+    language: "Indonesia",
+    desc: "Riwayat hidup Rasulullah ﷺ dari kelahiran hingga wafat.",
+    source: "Archive.org",
+    embedId: "KISAH_SIRAH_DLL",
+    downloadUrl:
+      "https://archive.org/download/KISAH_SIRAH_DLL/001-Sejarah-hidup-nabi-muhammad-saw.pdf",
+  },
+  {
+    slug: "cerita-anak-kemendikbud",
+    title: "Kumpulan Buku Cerita Anak Kemendikbud",
+    author: "Kementerian Pendidikan dan Kebudayaan",
+    category: "Novel & Cerita",
+    language: "Indonesia",
+    desc: "Kumpulan buku cerita anak dari Kementerian Pendidikan dan Kebudayaan.",
+    source: "Archive.org",
+    embedId: "kumpulan-buku-cerita-anak-kemendikbud",
+    downloadUrl:
+      "https://archive.org/download/kumpulan-buku-cerita-anak-kemendikbud/Kumpulan%20Buku%20Cerita%20Anak%20Kemendikbud.pdf",
+  },
+  {
+    slug: "tuntunan-shalat-nu",
+    title: "Tuntunan Shalat untuk Warga NU & Dalil-Dalilnya",
+    author: "M. Sholeh Qosim & A. Afif Amrullah",
+    category: "Pendidikan",
+    language: "Indonesia",
+    desc: "Panduan shalat ala warga NU beserta dalil-dalilnya, dari LTM-PBNU (2014).",
+    source: "Archive.org",
+    embedId: "kh-m.-sholeh-qosim-tuntunan-shalat-untuk-warga-nu-dalil-dalilnya-unlocked",
+    downloadUrl:
+      "https://archive.org/download/kh-m.-sholeh-qosim-tuntunan-shalat-untuk-warga-nu-dalil-dalilnya-unlocked/KH%20M.%20Sholeh%20Qosim%20-%20Tuntunan%20Shalat%20untuk%20Warga%20NU%20%26%20Dalil-Dalilnya%20UNLOCKED.pdf",
+  },
+  {
+    slug: "pengantar-nahwu",
+    title: "Pengantar Ilmu Nahwu — Belajar Bahasa Arab sampai Bisa",
+    author: "Muhammad Haris Zubaidillah",
+    category: "Pendidikan",
+    language: "Indonesia",
+    desc: "Belajar bahasa Arab dari dasar sampai bisa — pengantar ilmu nahwu (2017).",
+    source: "Archive.org",
+    embedId: "muhammad-haris-zubaidilllah-pengantar-ilmu-nahwu-belajar-bahasa-arab-sampai-bisa-2017",
+    downloadUrl:
+      "https://archive.org/download/muhammad-haris-zubaidilllah-pengantar-ilmu-nahwu-belajar-bahasa-arab-sampai-bisa-2017/Muhammad%20Haris%20Zubaidilllah%20-%20Pengantar%20Ilmu%20Nahwu_Belajar%20Bahasa%20Arab%20sampai%20Bisa%20-%202017.pdf",
+  },
+  {
+    slug: "belajar-arab-dasar",
+    title: "Ringkasan Belajar Bahasa Arab Dasar dari Nol",
+    author: "Abu Yusuf Akhmad Ja'far",
+    category: "Pendidikan",
+    language: "Indonesia",
+    desc: "Ringkasan belajar bahasa Arab dasar dari nol (materi Ustadz Firanda).",
+    source: "Archive.org",
+    embedId: "ringkasan-belajar-bahasa-arab-dasar-dari-nol",
+    downloadUrl:
+      "https://archive.org/download/ringkasan-belajar-bahasa-arab-dasar-dari-nol/Ringkasan%20Belajar%20Bahasa%20Arab%20Dasar%20Dari%20Nol%20Bersama%20Ustadz%20Firanda%20oleh%20Ustadz%20Abu%20Yusuf%20Akhmad%20Ja%27far.pdf",
+  },
+];
+
+/** Buku yang tampil di slider beranda (campuran kitab, cerita, dan pendidikan). */
+export const BUKU_PILIHAN: string[] = [
+  "safinatun-najah",
+  "arbain-nawawi",
+  "sirah-nabawiyah",
+  "kisah-para-nabi",
+  "riyadhus-shalihin",
+  "tuntunan-shalat-nu",
+];
+
+/** Menu tambahan di luar /ibadah/* dan /quran/* (dirender di Menu Lainnya). */
+export type MenuLink = MenuEntry & { href: string };
+
+export const MENU_TAMBAHAN: MenuLink[] = [
+  { slug: "perpustakaan", label: "Perpustakaan", icon: "book-open", href: "/perpustakaan" },
+];

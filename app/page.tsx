@@ -15,10 +15,12 @@ import {
   SectionTitle,
 } from "@/components/ui";
 import { BeritaSection } from "@/components/berita";
+import { PerpustakaanSection } from "@/components/perpustakaan";
 import { useProgress, levelFromPoints, todayKey } from "@/lib/store";
 import {
   FITUR_UTAMA,
   IBADAH_MENU,
+  MENU_TAMBAHAN,
   QURAN_MENU,
   mutiaraHariIni,
 } from "@/lib/data";
@@ -145,6 +147,9 @@ export default function Home() {
       {/* Berita & Artikel */}
       <BeritaSection />
 
+      {/* Perpustakaan */}
+      <PerpustakaanSection />
+
       {/* Waktu shalat kecil */}
       <PrayerMini />
 
@@ -157,6 +162,9 @@ export default function Home() {
           ))}
           {QURAN_MENU.map((m) => (
             <MenuItem key={`q-${m.slug}`} href={`/quran/${m.slug}`} icon={m.icon} label={m.label} />
+          ))}
+          {MENU_TAMBAHAN.map((m) => (
+            <MenuItem key={`t-${m.slug}`} href={m.href} icon={m.icon} label={m.label} />
           ))}
         </MenuGrid>
       </div>
