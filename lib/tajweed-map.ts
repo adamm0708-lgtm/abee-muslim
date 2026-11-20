@@ -18,13 +18,32 @@
 // - Iqlab/tanwin Uthmani [vokal + ۢ U+06E2 / ۭ U+06ED] -> satu tanwin.
 // - Buang: tatweel, U+06DF, small-high U+06DD-U+06ED (KECUALI waw
 //   kecil U+06E5 -> waw dan yeh kecil U+06E6 -> yeh), ZWNJ.
-//   Tanda waqf U+06D6-U+06DC TETAP (ada di Simple).
+//   Tanda waqf U+06D6-U+06DC TETAP (ada di Simple — kecuali saktah
+//   U+06DC: Simple hanya 5 dari 7).
 // - Tanda maddah (U+0653) DIKEMBALIKAN ke teks Simple: setiap U+0653
 //   di teks Uthmani adalah tanda mad panjang yang ditulis mushaf
 //   (wajib/jaiz/lazim); teks Simple membuangnya. Posisi diambil dari
 //   teks Uthmani lewat alignment (huruf pembawa maddah), BUKAN dari
 //   tebakan. Pengecualian: bila huruf Simple-nya آ (U+0622, maddah
 //   menyatu — mad badal, 2 ketukan) tidak ditambah lagi.
+// - Tanda saktah (U+06DC, 7 tempat) DIKEMBALIKAN bila belum ada di
+//   Simple (2 tempat: 2:245, 7:69 — pembawanya shad U+0635 di Uthmani,
+//   sin U+0633 di Simple; kompat shad<->sin di alignCores). 5 saktah
+//   lainnya sudah ada di Simple (idempoten — teks Simple menulisnya
+//   sebagai token mandiri " ۜ ", kadang dengan sukun pada pembawa).
+// - Tanda sifir DIKEMBALIKAN dari teks Uthmani POLOS (argumen
+//   `uthmaniText`, sumber ketiga — teks tajwid HTML membuang hampir
+//   semua sifir, jadi BUKAN sumber yang cukup): mustadir U+06DF
+//   (3.988 — huruf diam, tidak dibaca) dan mustathil U+06E0 (66 —
+//   dibaca saat waqaf, diam saat wasal). Posisi lewat alignment kedua
+//   (core Uthmani polos <-> Simple) + fallback jangkar ≤3 karakter.
+//   Bila `uthmaniText` tidak diberikan, sifir tidak dikembalikan
+//   (degradasi anggun — waqaf + maddah tetap).
+// - Tanda waqaf (U+06D6–U+06DC) sudah ada di teks Simple, jadi TIDAK
+//   perlu dikembalikan — tapi di HTML ia dibungkus `<span class="wq">`
+//   supaya tampil BESAR dan terbaca (font me_quran menggambarnya kecil
+//   dan melayang tinggi di atas teks; CSS `.mushaf .wq { font-size:
+//   1.4em }`). Di teks polos ia tampil apa adanya (bagian dari teks).
 // - Sisi tajwid: [alif, tanwin] -> [tanwin, alif]; [alif, syaddah, tanwin]
 //   -> [syaddah, tanwin, alif].
 
@@ -38,7 +57,11 @@ const TANWIN = new Set(["\u064b", "\u064c", "\u064d"]); // fathatan, dammatan, k
 const ALIF = "\u0627";
 const TATWEEL = "\u0640";
 const MADDAH = "\u0653";
-const SMALL_ZERO = "\u06df";
+const SMALL_ZERO = "\u06df"; // sifir mustadir
+const SMALL_RECT = "\u06e0"; // sifir mustathil
+const SAKTAH = "\u06dc"; // saktah
+// Tanda waqaf Mushaf Standar Indonesia (Kemenag): U+06D6–U+06DC.
+const WAQAF_MARKS = new Set(["\u06d6", "\u06d7", "\u06d8", "\u06d9", "\u06da", "\u06db", "\u06dc"]);
 const ZWNJ = "\u200c";
 const SMALL_MEEM = "\u06e2"; // tanda iqlab
 const SMALL_TANWIN_MARK = "\u06ed"; // tanda tanwin kasra
@@ -373,7 +396,7 @@ function buildCore(
 
 export type MapResult = {
   mappedHtml: string;
-  plainWithMaddah: string; // teks Simple + tanda maddah (tanpa warna)
+  plain: string; // teks Simple + tanda yang dikembalikan (maddah + sifir + saktah), tanpa warna
   kept: number;
   replaced: number;
   lost: number;
@@ -387,6 +410,14 @@ export type MapResult = {
   maddahFallback: number; // maddah dijangkar ke huruf sebelumnya (silah kubra)
   maddahUnplaced: string[]; // maddah gagal dipetakan (harus KOSONG)
   maddahByCarrierClass: Record<string, number>; // kelas huruf pembawa -> jumlah
+  saktahPlaced: number; // saktah U+06DC yang dikembalikan (2:245, 7:69)
+  saktahAlreadyPresent: number; // saktah sudah ada di teks Simple (5 tempat)
+  saktahUnplaced: string[]; // saktah gagal dipetakan (harus KOSONG)
+  zeroMustadirPlaced: number; // sifir mustadir U+06DF yang dikembalikan
+  zeroMustathilPlaced: number; // sifir mustathil U+06E0 yang dikembalikan
+  zeroAlreadyPresent: number; // sifir sudah ada di teks Simple (idempotensi)
+  zeroFallback: number; // sifir dijangkar ke huruf sebelumnya
+  zeroUnplaced: string[]; // sifir gagal dipetakan (harus KOSONG)
 };
 
 function neighborKeepsColor(
@@ -457,20 +488,18 @@ function lossReason(
 }
 
 /**
- * Pindahkan warna tajwid dari satu ayat Uthmani ke ayat Simple-nya.
- * Mengembalikan HTML teks Simple + <span class="tj tj-X">.
+ * Alignment difflib pada core -> peta uth_core_pos -> sim_core_pos.
+ * Dipakai dua kali per ayat: (1) sisi tajwid — warna + maddah + saktah;
+ * (2) sisi Uthmani polos — sifir. Logikanya SATU (harus identik dengan
+ * port Python), supaya differential test tetap byte-identik.
+ * Blok replace: coba alignment ulang di dalam blok; bila masih replace,
+ * padankan huruf yang sama secara berurutan; sisa lagi: padankan huruf
+ * yang "kompatibel" (varian ejaan): yeh <-> alif dan shad <-> sin
+ * (varian ejaan mushaf: يَبْصُطُ/يَبْسُطُ, بَصْطَةً/بَسْطَةً,
+ * مُصَيْطِر/مُسَيْطِر — diperlukan supaya saktah 2:245 & 7:69 yang
+ * pembawanya shad bisa dipetakan ke sin di Simple).
  */
-export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
-  const parsed = parseTajweed(tajweedHtml);
-  const uthChars = parsed.chars.map((tc) => tc.ch);
-  const simChars = Array.from(simpleText);
-
-  const uth = buildCore(uthChars, true);
-  const sim = buildCore(simChars, false);
-  const uthCoreStr = uth.coreStr;
-  const simCoreStr = sim.coreStr;
-
-  // Alignment difflib pada core.
+function alignCores(uthCoreStr: string[], simCoreStr: string[]): Map<number, number> {
   const sm = new SequenceMatcher(uthCoreStr, simCoreStr);
   const u2s = new Map<number, number>();
   for (const [tag, i1, i2, j1, j2] of sm.getOpcodes()) {
@@ -507,10 +536,15 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
           doneS.add(t);
         }
       }
-      // Sisa lagi: padankan huruf yang "kompatibel" (yeh <-> alif).
+      // Sisa lagi: padankan huruf yang "kompatibel" (varian ejaan).
       remU = range(i1, i2).filter((p) => !doneU.has(p));
       remS = range(j1, j2).filter((p) => !doneS.has(p));
-      const compat: Record<string, string> = { "\u064a": "\u0627", "\u0627": "\u064a" };
+      const compat: Record<string, string> = {
+        "\u064a": "\u0627",
+        "\u0627": "\u064a",
+        "\u0635": "\u0633",
+        "\u0633": "\u0635",
+      };
       const sByCompat = new Map<string, number[]>();
       for (const p of remS) {
         const lst = sByCompat.get(simCoreStr[p]) ?? [];
@@ -527,6 +561,90 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
     }
     // 'delete' dan 'insert': tidak ada pemetaan.
   }
+  return u2s;
+}
+
+/**
+ * Tempatkan satu tanda yang dikembalikan (saktah/sifir) setelah huruf
+ * Simple yang bersesuaian dengan huruf pembawanya di Uthmani.
+ * Mengembalikan { target, fallbackUsed, status } dengan status salah satu
+ * dari: "placed" (tanda disisipkan setelah target), "already" (tanda sudah
+ * ada setelah target — idempoten), "unplaced" (pembawa tidak bisa dipetakan
+ * — harus NOL di seluruh Qur'an).
+ */
+function placeRestoredMark(
+  mark: string,
+  idx: number,
+  uthChars: string[],
+  uthCorePositionsOfChar: Map<number, number[]>,
+  u2s: Map<number, number>,
+  simCharOfCorePos: Map<number, number>,
+  simChars: string[]
+): { target: number | null; fallbackUsed: boolean; status: "placed" | "already" | "unplaced" } {
+  let j = idx - 1;
+  while (j >= 0 && MADDAH_CARRIER_SKIP.has(uthChars[j])) j -= 1;
+  if (j < 0) return { target: null, fallbackUsed: false, status: "unplaced" };
+  const corePositions = uthCorePositionsOfChar.get(j) ?? [];
+  let simPos: number | undefined;
+  for (const cp of corePositions) {
+    if (u2s.has(cp)) {
+      simPos = u2s.get(cp);
+      break;
+    }
+  }
+  let fallbackUsed = false;
+  if (simPos === undefined) {
+    for (let k = j - 1; k >= Math.max(j - 3, 0); k--) {
+      for (const cp of uthCorePositionsOfChar.get(k) ?? []) {
+        if (u2s.has(cp)) {
+          simPos = u2s.get(cp);
+          fallbackUsed = true;
+          break;
+        }
+      }
+      if (simPos !== undefined) break;
+    }
+  }
+  if (simPos === undefined) return { target: null, fallbackUsed, status: "unplaced" };
+  const target = simCharOfCorePos.get(simPos);
+  if (target === undefined) return { target: null, fallbackUsed, status: "unplaced" };
+  // Idempotensi: tanda sudah ada setelah target — menempel langsung, atau
+  // sebagai token mandiri setelah spasi dan/atau harakat pada huruf pembawa
+  // (teks Simple menulis 5 saktah yang sudah ada sebagai " ۜ ", dan pada
+  // 69:28/75:27/83:14 ada sukun pada huruf pembawa, mis. "مَالِيَهْ ۜ").
+  const fwdSkip = new Set([" ", "\u064b", "\u064c", "\u064d", "\u064e", "\u064f", "\u0650", "\u0651", "\u0652"]);
+  let k = target + 1;
+  for (let step = 0; step < 5; step++) {
+    if (k >= simChars.length) break;
+    const c = simChars[k];
+    if (c === mark) return { target, fallbackUsed, status: "already" };
+    if (fwdSkip.has(c)) {
+      k += 1;
+      continue;
+    }
+    break;
+  }
+  return { target, fallbackUsed, status: "placed" };
+}
+
+/**
+ * Pindahkan warna tajwid dari satu ayat Uthmani ke ayat Simple-nya.
+ * Mengembalikan HTML teks Simple + <span class="tj tj-X">.
+ * `uthmaniText` (teks Uthmani polos ayat yang sama) = sumber sifir;
+ * bila tidak diberikan, sifir tidak dikembalikan (waqaf + maddah tetap).
+ */
+export function mapVerse(tajweedHtml: string, simpleText: string, uthmaniText?: string): MapResult {
+  const parsed = parseTajweed(tajweedHtml);
+  const uthChars = parsed.chars.map((tc) => tc.ch);
+  const simChars = Array.from(simpleText);
+
+  const uth = buildCore(uthChars, true);
+  const sim = buildCore(simChars, false);
+  const uthCoreStr = uth.coreStr;
+  const simCoreStr = sim.coreStr;
+
+  // Alignment difflib pada core (uth_core_pos -> sim_core_pos).
+  const u2s = alignCores(uthCoreStr, simCoreStr);
 
   // Peta posisi core -> posisi karakter asli.
   const uthCorePositionsOfChar = new Map<number, number[]>();
@@ -546,7 +664,7 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
   const simClasses = new Map<number, Set<string>>();
   const res: MapResult = {
     mappedHtml: "",
-    plainWithMaddah: "",
+    plain: "",
     kept: 0,
     replaced: 0,
     lost: 0,
@@ -560,6 +678,14 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
     maddahFallback: 0,
     maddahUnplaced: [],
     maddahByCarrierClass: {},
+    saktahPlaced: 0,
+    saktahAlreadyPresent: 0,
+    saktahUnplaced: [],
+    zeroMustadirPlaced: 0,
+    zeroMustathilPlaced: 0,
+    zeroAlreadyPresent: 0,
+    zeroFallback: 0,
+    zeroUnplaced: [],
   };
   const mapped = new Set<number>();
   const lostItems: [number, TajweedChar][] = [];
@@ -621,8 +747,8 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
   // (b) teks Simple sudah mengandung U+0653 tepat setelah huruf itu
   // (idempotensi — mis. teks tertanam yang sudah dibubuhi maddah).
   // Tanda maddah adalah BAGIAN TEKS (bukan warna): ia masuk ke
-  // plainWithMaddah (dipakai mode tajwid OFF + Yasin) DAN ke
-  // mappedHtml (di dalam span warna huruf pembawanya, mode ON).
+  // plain (dipakai mode tajwid OFF + Yasin) DAN ke mappedHtml
+  // (di dalam span warna huruf pembawanya, mode ON).
   const maddahAfter = new Set<number>();
   parsed.chars.forEach((tc, idx) => {
     if (tc.ch !== MADDAH) return;
@@ -696,26 +822,137 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
     res.maddahByCarrierClass[key] = (res.maddahByCarrierClass[key] ?? 0) + 1;
   });
 
+  // --- Kembalikan tanda saktah (U+06DC) ---
+  // Teks Simple memuat 5 dari 7 saktah; 2 hilang (2:245, 7:69) karena
+  // pembawanya shad U+0635 di Uthmani tapi sin U+0633 di Simple
+  // (varian ejaan mushaf — kompat shad<->sin di alignCores).
+  // Saktah ada di teks tajwid HTML (7/7), jadi sumbernya parsed.chars
+  // (sisi tajwid) — sama seperti maddah. Tanda saktah adalah BAGIAN
+  // TEKS: masuk ke plain DAN ke mapped_html (dengan span wq, seperti
+  // tanda waqaf lainnya — lihat render di bawah).
+  const saktahAfter = new Set<number>();
+  parsed.chars.forEach((tc, idx) => {
+    if (tc.ch !== SAKTAH) return;
+    const { target, status } = placeRestoredMark(
+      SAKTAH,
+      idx,
+      uthChars,
+      uthCorePositionsOfChar,
+      u2s,
+      simCharOfCorePos,
+      simChars
+    );
+    if (status === "placed" && target !== null) {
+      saktahAfter.add(target);
+      res.saktahPlaced += 1;
+    } else if (status === "already") {
+      res.saktahAlreadyPresent += 1;
+    } else {
+      res.saktahUnplaced.push(`saktah idx ${idx} pembawa tidak terpetakan ke Simple`);
+    }
+  });
+
+  // --- Kembalikan tanda sifir (U+06DF mustadir, U+06E0 mustathil) ---
+  // Sumbernya teks Uthmani POLOS (uthmaniText) — teks tajwid HTML
+  // membuang hampir semua sifir (hanya 66/3.988 mustadir + 1/66
+  // mustathil yang tersisa), jadi BUKAN sumber yang cukup. Alignment
+  // kedua (core Uthmani polos <-> Simple) dibangun terpisah; posisi
+  // diambil dari huruf pembawa sifir di Uthmani, BUKAN tebakan.
+  // Sifir adalah BAGIAN TEKS: masuk ke plain DAN ke mapped_html
+  // (di dalam span warna huruf pembawanya, seperti maddah — tanpa
+  // span sendiri, karena tandanya menempel pada huruf diamnya).
+  // Urutan sisipan setelah satu huruf yang sama: maddah dulu, lalu
+  // sifir — mengikuti urutan Uthmani (11 ayat: maddah pada huruf mad,
+  // sifir pada alif fariqah berikutnya yang dibuang di Simple, mis.
+  // 2:221 ادْعُوٓا۟ -> وٓ۟).
+  const zeroAfter = new Map<number, string>(); // target idx -> tanda (U+06DF / U+06E0)
+  if (uthmaniText) {
+    const uthPlainChars = Array.from(uthmaniText);
+    const uth2 = buildCore(uthPlainChars, true);
+    const u2sUth = alignCores(uth2.coreStr, sim.coreStr);
+    const uth2CorePositionsOfChar = new Map<number, number[]>();
+    uth2.core.forEach((entry, pos) => {
+      for (const ci of entry.src) {
+        const lst = uth2CorePositionsOfChar.get(ci) ?? [];
+        lst.push(pos);
+        uth2CorePositionsOfChar.set(ci, lst);
+      }
+    });
+    uthPlainChars.forEach((ch, idx) => {
+      if (ch !== SMALL_ZERO && ch !== SMALL_RECT) return;
+      const { target, fallbackUsed, status } = placeRestoredMark(
+        ch,
+        idx,
+        uthPlainChars,
+        uth2CorePositionsOfChar,
+        u2sUth,
+        simCharOfCorePos,
+        simChars
+      );
+      if (status === "placed" && target !== null) {
+        zeroAfter.set(target, ch);
+        if (ch === SMALL_ZERO) res.zeroMustadirPlaced += 1;
+        else res.zeroMustathilPlaced += 1;
+        if (fallbackUsed) res.zeroFallback += 1;
+      } else if (status === "already") {
+        res.zeroAlreadyPresent += 1;
+      } else {
+        res.zeroUnplaced.push(`sifir ${JSON.stringify(ch)} idx ${idx} pembawa tidak terpetakan ke Simple`);
+      }
+    });
+  }
+
   // Render HTML: gabungkan run huruf berurutan dengan kelas yang sama.
-  // Tanda maddah disisipkan tepat setelah huruf pembawanya — di dalam
-  // span warna yang sama bila hurufnya berwarna, sebagai teks polos
-  // bila tidak.
+  // Tanda maddah + sifir disisipkan tepat setelah huruf pembawanya —
+  // di dalam span warna yang sama bila hurufnya berwarna, sebagai teks
+  // polos bila tidak (urutan: maddah dulu, lalu sifir — urutan Uthmani).
+  // Tanda saktah yang disisipkan (2 tempat) dirender dalam span wq
+  // sendiri (tutup span warna sementara, lalu buka lagi) — sama seperti
+  // tanda waqaf yang sudah ada di teks Simple: tiap tanda waqaf
+  // (U+06D6–U+06DC) dibungkus <span class="wq"> supaya tampil besar
+  // dan terbaca di font me_quran (CSS .mushaf .wq, 1.4em) — TANPA
+  // mengubah kelas warna tajwid huruf di sekitarnya.
   const out: string[] = [];
-  let cur: string | null = null;
+  let cur: string | null = null; // kelas span yang sedang terbuka: nama kelas tj, "wq", atau null
   simChars.forEach((ch, idx) => {
-    const cls = pickClass(simClasses.get(idx) ?? new Set<string>());
+    const cls = WAQAF_MARKS.has(ch)
+      ? "wq"
+      : pickClass(simClasses.get(idx) ?? new Set<string>());
     if (cls !== cur) {
       if (cur !== null) out.push("</span>");
-      if (cls !== null) out.push(`<span class="tj tj-${cls}">`);
+      if (cls !== null) {
+        if (cls === "wq") out.push(`<span class="wq">`);
+        else out.push(`<span class="tj tj-${cls}">`);
+      }
       cur = cls;
     }
     out.push(ch);
     if (maddahAfter.has(idx)) out.push(MADDAH);
+    const zero = zeroAfter.get(idx);
+    if (zero !== undefined) out.push(zero);
+    if (saktahAfter.has(idx)) {
+      // Saktah = tanda waqaf yang berdiri sendiri: tutup span warna,
+      // render dalam span wq, lalu biarkan huruf berikutnya membuka
+      // span-nya sendiri (cur=null).
+      if (cur !== null) {
+        out.push("</span>");
+        cur = null;
+      }
+      out.push(`<span class="wq">`);
+      out.push(SAKTAH);
+      out.push("</span>");
+    }
   });
   if (cur !== null) out.push("</span>");
   res.mappedHtml = out.join("");
-  res.plainWithMaddah = simChars
-    .map((ch, i) => ch + (maddahAfter.has(i) ? MADDAH : ""))
+  res.plain = simChars
+    .map(
+      (ch, i) =>
+        ch +
+        (maddahAfter.has(i) ? MADDAH : "") +
+        (zeroAfter.get(i) ?? "") +
+        (saktahAfter.has(i) ? SAKTAH : "")
+    )
     .join("");
   return res;
 }
@@ -729,19 +966,23 @@ function range(a: number, b: number): number[] {
 /**
  * Pindahkan warna tajwid untuk satu surah penuh. `tajweedLines` = baris
  * mentah dari fetchSurahTajweed, `simpleLines` = teks Simple dari
- * fetchSurahText (sudah dinormalisasi). Mengembalikan per ayat:
- * `html` (teks Simple + warna tajwid + maddah) dan `plain` (teks Simple
- * + maddah, tanpa warna — dipakai saat toggle Warna Tajwid OFF dan di
- * Yasin). Bila jumlah baris tidak sama, kembalikan null (pemanggil
- * memakai teks polos).
+ * fetchSurahText (sudah dinormalisasi), `uthmaniLines` = teks Uthmani
+ * polos dari fetchSurahUthmani (sumber sifir; boleh tidak ada — sifir
+ * tidak dikembalikan bila tidak ada). Mengembalikan per ayat:
+ * `html` (teks Simple + warna tajwid + maddah + sifir + saktah) dan
+ * `plain` (teks Simple + tanda yang dikembalikan, tanpa warna — dipakai
+ * saat toggle Warna Tajwid OFF dan di Yasin). Bila jumlah baris tidak
+ * sama, kembalikan null (pemanggil memakai teks polos).
  */
 export function mapTajweedSurah(
   tajweedLines: string[],
-  simpleLines: string[]
+  simpleLines: string[],
+  uthmaniLines?: string[]
 ): { html: string; plain: string }[] | null {
   if (tajweedLines.length !== simpleLines.length) return null;
+  if (uthmaniLines !== undefined && uthmaniLines.length !== simpleLines.length) return null;
   return tajweedLines.map((line, i) => {
-    const r = mapVerse(line, normalizeArabicText(simpleLines[i]));
-    return { html: r.mappedHtml, plain: r.plainWithMaddah };
+    const r = mapVerse(line, normalizeArabicText(simpleLines[i]), uthmaniLines?.[i]);
+    return { html: r.mappedHtml, plain: r.plain };
   });
 }

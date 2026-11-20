@@ -89,3 +89,38 @@ export const TAJWEED_LEGEND: { swatch: string; name: string; desc: string }[] = 
   { swatch: "#EA580C", name: "Ghunnah", desc: "dengung" },
   { swatch: "#8A8A8A", name: "Abu-abu", desc: "hamzah wasal / lam syamsiah / huruf diam" },
 ];
+
+/**
+ * Legenda tanda waqaf — Mushaf Standar Indonesia (Kemenag RI, Pedoman
+ * Pentashihan Mushaf Al-Qur'an, Lajnah Pentashihan Mushaf Al-Qur'an).
+ * Enam tanda waqaf MSI + saktah (tanda ketujuh yang ada di data mushaf
+ * dan dipakai di mushaf Madinah; di MSI saktah termasuk tanda baca yang
+ * dicantumkan dalam pedoman).
+ *
+ * Tanda-tanda ini adalah BAGIAN TEKS (bukan warna): tampil di reader
+ * baik saat Warna Tajwid ON maupun OFF, dan di Yasin. Di HTML tiap tanda
+ * dibungkus <span class="wq"> supaya tampil besar dan terbaca
+ * (CSS .mushaf .wq). `mark` dirender dengan font mushaf (me_quran)
+ * supaya bentuknya benar.
+ */
+export const WAQAF_LEGEND: { mark: string; name: string; desc: string }[] = [
+  { mark: "ۘ", name: "م — Waqaf lazim", desc: "wajib berhenti" },
+  { mark: "ۙ", name: "لا — Laa", desc: "tidak boleh berhenti" },
+  { mark: "ۗ", name: "قلى — Qaly", desc: "lebih baik berhenti" },
+  { mark: "ۖ", name: "صلى — Shaly", desc: "lebih baik terus (tidak berhenti)" },
+  { mark: "ۚ", name: "ج — Jaiz", desc: "boleh berhenti atau terus" },
+  { mark: "ۛ", name: "∴ — Mu'anaqah", desc: "berhenti di salah satu dari dua tempat" },
+  { mark: "ۜ", name: "س — Saktah", desc: "berhenti sejenak tanpa mengambil napas" },
+];
+
+/**
+ * Legenda tanda sifir (صفر) — pasangan tanda pada huruf diam, juga
+ * sesuai Mushaf Standar Indonesia. Bukan tanda waqaf, tapi tanda baca
+ * yang menempel pada huruf: mustadir = huruf DIAM (tidak dibaca),
+ * mustathil = dibaca saat waqaf, diam saat wasal. Dikembalikan mapper
+ * dari teks Uthmani (3.988 mustadir + 66 mustathil di seluruh Qur'an).
+ */
+export const SIFIR_LEGEND: { mark: string; name: string; desc: string }[] = [
+  { mark: "۟", name: "صفر مستدير — Mustadir", desc: "huruf diam, tidak dibaca (mis. waw أُولَٰئِكَ, alif مِائَة)" },
+  { mark: "۠", name: "صفر مستطيل — Mustathil", desc: "dibaca saat waqaf, diam saat wasal (mis. alif أَنَا)" },
+];

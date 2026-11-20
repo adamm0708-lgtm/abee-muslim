@@ -20,10 +20,11 @@ import {
   embeddedSurahMeta,
   fetchSurahText,
   fetchSurahTajweed,
+  fetchSurahUthmani,
   getSurahList,
   type SurahMeta,
 } from "@/lib/api";
-import { TAJWEED_LEGEND } from "@/lib/tajweed";
+import { SIFIR_LEGEND, TAJWEED_LEGEND, WAQAF_LEGEND } from "@/lib/tajweed";
 import { mapTajweedSurah } from "@/lib/tajweed-map";
 import {
   CSS_FULLSCREEN_CLASS,
@@ -310,6 +311,7 @@ export function BacaPage() {
   const [showTranslation, setShowTranslation] = useState(true);
   const [showTajweed, setShowTajweed] = useState(true);
   const [tajweedLines, setTajweedLines] = useState<string[] | null>(null);
+  const [uthmaniLines, setUthmaniLines] = useState<string[] | null>(null);
   // Ukuran teks baca bersama (A- A A+ A++, tersimpan di localStorage).
   const { size: fontSize, setSize: setFontSize, arabicClass: fontSizeClass } =
     useReaderFontSize();
@@ -379,21 +381,28 @@ export function BacaPage() {
     };
   }, [readerSurah, embedded]);
 
-  // Warna tajwid + tanda maddah: dimuat terpisah dari teks polos (sumber
-  // sama, Quran.com), untuk semua surah termasuk yang tertanam di Juz 30.
-  // Dimuat setiap kali surah dibuka — BUKAN hanya saat toggle Warna
-  // Tajwid ON — karena pemetaan yang sama juga mengembalikan tanda
-  // maddah (mad panjang) ke teks, dan tanda itu harus tampil juga saat
-  // warna dimatikan. Gagal = teks polos.
+  // Warna tajwid + tanda maddah + tanda waqaf + sifir: dimuat terpisah
+  // dari teks polos (sumber sama, Quran.com), untuk semua surah termasuk
+  // yang tertanam di Juz 30. Dimuat setiap kali surah dibuka — BUKAN
+  // hanya saat toggle Warna Tajwid ON — karena pemetaan yang sama juga
+  // mengembalikan tanda maddah (mad panjang), saktah, dan sifir ke teks,
+  // dan tanda-tanda itu harus tampil juga saat warna dimatikan.
+  // Teks Uthmani polos = sumber sifir (teks tajwid HTML membuang hampir
+  // semua sifir). Gagal = teks polos (tanpa sifir, waqaf + maddah tetap
+  // dari jalur Simple bila tersedia).
   useEffect(() => {
     if (readerSurah == null) {
       setTajweedLines(null);
+      setUthmaniLines(null);
       return;
     }
     let alive = true;
     fetchSurahTajweed(readerSurah)
       .then((lines) => alive && setTajweedLines(lines))
       .catch(() => alive && setTajweedLines(null));
+    fetchSurahUthmani(readerSurah)
+      .then((lines) => alive && setUthmaniLines(lines))
+      .catch(() => alive && setUthmaniLines(null));
     return () => {
       alive = false;
     };
@@ -409,13 +418,14 @@ export function BacaPage() {
   // Warna tajwid dipetakan dari teks Uthmani sumber ke ejaan Simple yang
   // ditampilkan — ejaan TIDAK berubah saat toggle tajwid dimatikan atau
   // dinyalakan. Dihitung sekali per surah (memo, bukan per render).
-  // mapTajweedSurah mengembalikan per ayat: html (warna + maddah) dan
-  // plain (teks Simple + maddah, tanpa warna — dipakai saat toggle OFF,
-  // supaya tanda mad panjang tetap tampil).
+  // mapTajweedSurah mengembalikan per ayat: html (warna + maddah + sifir
+  // + saktah) dan plain (teks Simple + tanda yang dikembalikan, tanpa
+  // warna — dipakai saat toggle OFF, supaya tanda mad panjang, saktah,
+  // dan sifir tetap tampil).
   const mappedTajweedLines = useMemo(() => {
     if (!tajweedAvailable || tajweedLines == null) return null;
-    return mapTajweedSurah(tajweedLines, arabicLines);
-  }, [tajweedAvailable, tajweedLines, arabicLines]);
+    return mapTajweedSurah(tajweedLines, arabicLines, uthmaniLines ?? undefined);
+  }, [tajweedAvailable, tajweedLines, arabicLines, uthmaniLines]);
   const transLines = embedded ? embedded.translation : apiTrans;
   const readerMeta =
     surahs?.find((s) => s.number === readerSurah) ??
@@ -775,6 +785,47 @@ export function BacaPage() {
             </p>
           </Card>
         )}
+
+        {/* Tanda waqaf + sifir (Mushaf Standar Indonesia / Kemenag) — bagian
+            dari teks, tampil baik saat Warna Tajwid ON maupun OFF, dan di Yasin. */}
+        <Card className="mt-3">
+          <p className="mb-2 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+            Tanda waqaf
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {WAQAF_LEGEND.map((r) => (
+              <span
+                key={r.name}
+                className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1.5 text-xs font-bold text-neutral-700 dark:bg-white/5 dark:text-neutral-300"
+              >
+                <span className="mushaf text-lg leading-none text-neutral-900 dark:text-neutral-100">
+                  {r.mark}
+                </span>
+                {r.name} — {r.desc}
+              </span>
+            ))}
+          </div>
+          <p className="mb-2 mt-3 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+            Tanda sifir
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {SIFIR_LEGEND.map((r) => (
+              <span
+                key={r.name}
+                className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1.5 text-xs font-bold text-neutral-700 dark:bg-white/5 dark:text-neutral-300"
+              >
+                <span className="mushaf text-lg leading-none text-neutral-900 dark:text-neutral-100">
+                  {r.mark}
+                </span>
+                {r.name} — {r.desc}
+              </span>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+            Tanda waqaf dan sifir mengikuti Mushaf Standar Indonesia (Kemenag RI) dan
+            dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan.
+          </p>
+        </Card>
 
         <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
           Ketuk sebuah ayat untuk menandainya sebagai terakhir dibaca. {QURAN_SOURCE_NOTE}.

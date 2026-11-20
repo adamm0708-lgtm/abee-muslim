@@ -12,13 +12,16 @@ export type ReaderFontSize = "md" | "lg" | "xl" | "xxl";
  *  bukan hanya tajwid. Font lain (Amiri, Scheherazade, Noto) menggambar
  *  keduanya sebagai garis tegak, tapi normalisasi ini tetap diterapkan supaya
  *  teksnya konsisten apa pun font yang dipakai.
- *  Sekaligus membuang U+06DF (۟ — small high rounded zero, tanda huruf
- *  mati/diam: alif/waw ditulis tapi TIDAK dibaca). Adam 2026-11-20
- *  (bandingkan aplikasi lain): di aplikasi lain tidak ada bulatan ini,
- *  tampil bersih. Hurufnya tetap ada — hanya tanda bulatannya yang
- *  dihapus — jadi bacaan tidak berubah. */
+ *  CATATAN (2026-11-21): fungsi ini DULU juga membuang U+06DF (۟ — sifir
+ *  mustadir). Pembuangan itu DIHAPUS — sifir mustadir + mustathil kini
+ *  DIKEMBALIKAN oleh mapper (lib/tajweed-map.ts) dari teks Uthmani, dan
+ *  dirender benar oleh font me_quran (lingkaran kecil di atas huruf diam,
+ *  bukan bulatan besar seperti di UthmanicHafs dulu). Teks Simple tidak
+ *  mengandung U+06DF, jadi penghapusan ini tidak mengubah teks Simple;
+ *  satu-satunya teks yang kini memuat sifir adalah teks hasil mapper +
+ *  teks tertanam Juz 30 (109:4) — keduanya memang harus menampilkannya. */
 export function normalizeArabicText(s: string): string {
-  return s.replace(/\u0672/g, "\u0670").replace(/\u06DF/g, "");
+  return s.replace(/\u0672/g, "\u0670");
 }
 
 export const READER_FONT_SIZES: ReaderFontSize[] = ["md", "lg", "xl", "xxl"];

@@ -601,6 +601,28 @@ export async function fetchSurahTajweed(surahNo: number): Promise<string[]> {
   return lines;
 }
 
+/**
+ * Teks Uthmani polos satu surah (Quran.com API v4:
+ * `quran/verses/uthmani`, field `text_uthmani`) — SUMBER tanda sifir
+ * (mustadir U+06DF + mustathil U+06E0) dan saktah yang hilang di teks
+ * Simple. Teks tajwid HTML (`uthmani_tajweed`) TIDAK bisa dipakai untuk
+ * ini: ia membuang hampir semua sifir (hanya 66/3.988 mustadir + 1/66
+ * mustathil yang tersisa). Dipakai bersama fetchSurahTajweed sebagai
+ * masukan mapper (mapTajweedSurah). Tidak ada cadangan: kalau gagal,
+ * pemanggil memakai mapper tanpa teks Uthmani (sifir tidak kembali,
+ * waqaf + maddah tetap tampil).
+ */
+export async function fetchSurahUthmani(surahNo: number): Promise<string[]> {
+  const json = (await fetchJson(
+    `https://api.quran.com/api/v4/quran/verses/uthmani?chapter_number=${surahNo}&per_page=300`
+  )) as { verses?: { text_uthmani?: string }[] };
+  const verses = json.verses;
+  if (!verses || verses.length === 0) throw new Error("Quran.com Uthmani: tidak ada ayat");
+  const lines = verses.map((v) => (v.text_uthmani ?? "").trim());
+  if (lines.some((l) => !l)) throw new Error("Quran.com Uthmani: teks ayat kosong");
+  return lines;
+}
+
 export async function fetchSurahText(surahNo: number): Promise<SurahText> {
   try {
     const json = (await fetchJson(

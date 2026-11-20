@@ -11,6 +11,7 @@ import {
   QURAN_SOURCE_NOTE,
   fetchSurahTajweed,
   fetchSurahText,
+  fetchSurahUthmani,
   getHijriMonthCalendar,
   getHijriToday,
   getRamadhanInfo,
@@ -20,6 +21,7 @@ import {
   type Timings,
 } from "@/lib/api";
 import { mapTajweedSurah } from "@/lib/tajweed-map";
+import { SIFIR_LEGEND, WAQAF_LEGEND } from "@/lib/tajweed";
 import {
   AMAL_HARIAN,
   ASMAUL_HUSNA,
@@ -1672,14 +1674,24 @@ function YasinReader({
         if (!alive) return;
         setAyahs(arabic.map((text, i) => ({ numberInSurah: i + 1, text })));
         setTrans(translation);
-        // Tanda maddah (mad panjang) dikembalikan lewat pemetaan tajwid
+        // Tanda maddah + saktah + sifir dikembalikan lewat pemetaan tajwid
         // dari teks Uthmani ke teks Simple — Yasin tidak memakai warna
-        // tajwid, tapi tandanya harus tampil. Gagal = teks Simple polos.
+        // tajwid, tapi tandanya harus tampil. Teks Uthmani polos adalah
+        // sumber sifir. Gagal = teks Simple polos.
         fetchSurahTajweed(36)
           .then((lines) => {
             if (!alive) return;
-            const mapped = mapTajweedSurah(lines, arabic);
-            if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+            fetchSurahUthmani(36)
+              .then((uthmani) => {
+                if (!alive) return;
+                const mapped = mapTajweedSurah(lines, arabic, uthmani);
+                if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+              })
+              .catch(() => {
+                if (!alive) return;
+                const mapped = mapTajweedSurah(lines, arabic);
+                if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+              });
           })
           .catch(() => {});
       })
@@ -1825,6 +1837,47 @@ function YasinReader({
             )}
           </>
         )}
+      </Card>
+
+      {/* Tanda waqaf + sifir (Mushaf Standar Indonesia / Kemenag) — bagian
+          dari teks, tampil di Yasin seperti di reader. */}
+      <Card className="mt-3">
+        <p className="mb-2 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+          Tanda waqaf
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {WAQAF_LEGEND.map((r) => (
+            <span
+              key={r.name}
+              className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1.5 text-xs font-bold text-neutral-700 dark:bg-white/5 dark:text-neutral-300"
+            >
+              <span className="mushaf text-lg leading-none text-neutral-900 dark:text-neutral-100">
+                {r.mark}
+              </span>
+              {r.name} — {r.desc}
+            </span>
+          ))}
+        </div>
+        <p className="mb-2 mt-3 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+          Tanda sifir
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {SIFIR_LEGEND.map((r) => (
+            <span
+              key={r.name}
+              className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1.5 text-xs font-bold text-neutral-700 dark:bg-white/5 dark:text-neutral-300"
+            >
+              <span className="mushaf text-lg leading-none text-neutral-900 dark:text-neutral-100">
+                {r.mark}
+              </span>
+              {r.name} — {r.desc}
+            </span>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
+          Tanda waqaf dan sifir mengikuti Mushaf Standar Indonesia (Kemenag RI) dan
+          dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan.
+        </p>
       </Card>
     </div>
   );

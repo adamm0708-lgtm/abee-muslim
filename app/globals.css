@@ -141,6 +141,16 @@ body {
   padding: 0 0.1em;
 }
 
+/* Tanda waqaf (U+06D6–U+06DC): font me_quran menggambarnya kecil dan
+   melayang tinggi di atas teks — di HTML tiap tanda dibungkus
+   <span class="wq"> (lib/tajweed-map.ts) dan diperbesar di sini supaya
+   terbaca jelas, seperti di mushaf cetak. line-height .mushaf 2.5 memberi
+   ruang di atas baris; tanda saktah (U+06DC, di garis dasar) ikut
+   membesar secukupnya. */
+.mushaf .wq {
+  font-size: 1.4em;
+}
+
 /* Warna tajwid (palet standar Quran.com, disesuaikan agar terbaca di
    latar terang maupun gelap). Satu warna = satu kelompok hukum bacaan,
    supaya pemula langsung tahu cara membacanya — lihat TAJWEED_LEGEND
