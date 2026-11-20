@@ -15,7 +15,7 @@
 // - Niat rawatib: lafaz menurut tuntunan fikih mazhab Syafi'i (bukan riwayat
 //   hadis). Niat tempatnya di hati — lafaz hanya alat bantu belajar.
 
-export type BacaanStatus = "Shahih" | "Hasan" | "Dhaif" | "Doa umum" | "Al-Qur'an";
+export type BacaanStatus = "Shahih" | "Hasan" | "Dhaif" | "Doa umum" | "Al-Qur'an" | "Fikih Syafi'i";
 
 export type BacaanShalat = {
   id: string;
@@ -54,6 +54,16 @@ export type RawatibItem = {
 // "setelah-wudhu") — tidak diubah redaksinya.
 
 export const WUDHU_READINGS: BacaanShalat[] = [
+  {
+    id: "niat-wudhu",
+    title: "Niat Wudhu",
+    arabic: "نَوَيْتُ الْوُضُوءَ لِرَفْعِ الْحَدَثِ الْأَصْغَرِ فَرْضًا لِلَّهِ تَعَالَى",
+    latin: "Nawaitul wudhu'a liraf'il hadatsil ashghari fardhan lillaahi ta'aalaa.",
+    translation: "Aku berniat wudhu untuk menghilangkan hadats kecil, fardhu karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i (Minhajut Thalibin; Fathul Qarib)",
+    status: "Fikih Syafi'i",
+    note: "Niat adalah rukun pertama wudhu menurut mazhab Syafi'i — tempatnya di hati, dihadirkan saat air pertama mengenai wajah. Lafaz Arab ini susunan ulama mengikuti unsur niat dalam kitab fikih Syafi'i (bukan lafaz dari Nabi ﷺ); niat tetap sah dengan bahasa apa pun yang dipahami. Bentuk ringkasnya: \"Nawaitul wudhu'a\" (aku berniat wudhu).",
+  },
   {
     id: "bismillah-wudhu",
     title: "Bismillah di Awal Wudhu",
@@ -241,6 +251,67 @@ export const SHALAT_READINGS: BacaanShalat[] = [
   },
 ];
 
+// ---------- 2b. NIAT SHALAT FARDHU (USHOLLI) ----------
+// Ditambahkan atas permintaan Adam (2026-11-20 21:36 WIB):
+// "Shalat fardhu belum usolli." Lafaz niat ini susunan ulama mazhab
+// Syafi'i (bukan riwayat hadis) — niat tempatnya di hati dan dihadirkan
+// bersamaan dengan takbiratul ihram. Redaksi Arab + Latin + arti
+// diverifikasi silang dari beberapa sumber (NU Online, niyatapp,
+// lensahukum, theasianparent) — kelimanya konsisten.
+
+export const FARDHU_NIAT: BacaanShalat[] = [
+  {
+    id: "niat-subuh",
+    title: "Niat Shalat Subuh",
+    arabic: "أُصَلِّي فَرْضَ الصُّبْحِ رَكْعَتَيْنِ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلَّهِ تَعَالَى",
+    latin: "Ushallii fardhash-shubhi rak'ataini mustaqbilal qiblati adaa'an lillaahi ta'aalaa.",
+    translation: "Aku berniat shalat fardu Subuh dua rakaat menghadap kiblat, tunai, karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Niat dihadirkan di hati bersamaan dengan takbiratul ihram. Bila menjadi makmum, tambahkan \"ma'muman\" setelah \"mustaqbilal qiblati\"; bila menjadi imam, \"imaman\". Bila meng-qadha shalat yang terlewat, ganti \"adaa'an\" dengan \"qadhaa'an\".",
+  },
+  {
+    id: "niat-dzuhur",
+    title: "Niat Shalat Dzuhur",
+    arabic: "أُصَلِّي فَرْضَ الظُّهْرِ أَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلَّهِ تَعَالَى",
+    latin: "Ushallii fardhazh-zhuhri arba'a raka'aatin mustaqbilal qiblati adaa'an lillaahi ta'aalaa.",
+    translation: "Aku berniat shalat fardu Dzuhur empat rakaat menghadap kiblat, tunai, karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Niat dihadirkan di hati bersamaan dengan takbiratul ihram. Bila menjadi makmum, tambahkan \"ma'muman\" setelah \"mustaqbilal qiblati\"; bila menjadi imam, \"imaman\". Bila meng-qadha shalat yang terlewat, ganti \"adaa'an\" dengan \"qadhaa'an\".",
+  },
+  {
+    id: "niat-ashar",
+    title: "Niat Shalat Ashar",
+    arabic: "أُصَلِّي فَرْضَ الْعَصْرِ أَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلَّهِ تَعَالَى",
+    latin: "Ushallii fardhal-'ashri arba'a raka'aatin mustaqbilal qiblati adaa'an lillaahi ta'aalaa.",
+    translation: "Aku berniat shalat fardu Ashar empat rakaat menghadap kiblat, tunai, karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Niat dihadirkan di hati bersamaan dengan takbiratul ihram. Bila menjadi makmum, tambahkan \"ma'muman\" setelah \"mustaqbilal qiblati\"; bila menjadi imam, \"imaman\". Bila meng-qadha shalat yang terlewat, ganti \"adaa'an\" dengan \"qadhaa'an\".",
+  },
+  {
+    id: "niat-maghrib",
+    title: "Niat Shalat Maghrib",
+    arabic: "أُصَلِّي فَرْضَ الْمَغْرِبِ ثَلَاثَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلَّهِ تَعَالَى",
+    latin: "Ushallii fardhal-maghribi tsalaatsa raka'aatin mustaqbilal qiblati adaa'an lillaahi ta'aalaa.",
+    translation: "Aku berniat shalat fardu Maghrib tiga rakaat menghadap kiblat, tunai, karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Niat dihadirkan di hati bersamaan dengan takbiratul ihram. Bila menjadi makmum, tambahkan \"ma'muman\" setelah \"mustaqbilal qiblati\"; bila menjadi imam, \"imaman\". Bila meng-qadha shalat yang terlewat, ganti \"adaa'an\" dengan \"qadhaa'an\".",
+  },
+  {
+    id: "niat-isya",
+    title: "Niat Shalat Isya",
+    arabic: "أُصَلِّي فَرْضَ الْعِشَاءِ أَرْبَعَ رَكَعَاتٍ مُسْتَقْبِلَ الْقِبْلَةِ أَدَاءً لِلَّهِ تَعَالَى",
+    latin: "Ushallii fardhal-'isyaa'i arba'a raka'aatin mustaqbilal qiblati adaa'an lillaahi ta'aalaa.",
+    translation: "Aku berniat shalat fardu Isya empat rakaat menghadap kiblat, tunai, karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Niat dihadirkan di hati bersamaan dengan takbiratul ihram. Bila menjadi makmum, tambahkan \"ma'muman\" setelah \"mustaqbilal qiblati\"; bila menjadi imam, \"imaman\". Bila meng-qadha shalat yang terlewat, ganti \"adaa'an\" dengan \"qadhaa'an\".",
+  },
+];
+
 // ---------- 3. SUNNAH RAWATIB ----------
 // Keutamaan 12 rakaat (HR. Muslim 728): "Barangsiapa shalat 12 rakaat dalam
 // sehari semalam, dibangunkan baginya sebuah rumah di surga." Rinciannya
@@ -382,5 +453,97 @@ export const RAWATIB: RawatibItem[] = [
     keutamaan: "Termasuk 12 rakaat yang dijanjikan sebuah rumah di surga.",
     source: "HR. Muslim 728",
     status: "Shahih",
+  },
+];
+
+// ---------- 4. MANDI BESAR (GHUSL / MANDI WAJIB) ----------
+// Ditambahkan atas permintaan Adam (2026-11-20 21:36 WIB):
+// "Mandi besar juga."
+//
+// Rukun dan sebab-sebabnya dari kitab Safinatun Najah (Syekh Salim bin
+// Sumair Al-Hadhrami); tata cara sempurnanya mengikuti sunnah Nabi ﷺ
+// sebagaimana dirinci dalam kitab-kitab fikih Syafi'i (Taqrirat
+// as-Sadidah; Fiqh al-'Ibadat Syafi'i). Lafaz niat susunan ulama
+// mazhab Syafi'i (bukan riwayat hadis) — niat tempatnya di hati.
+
+export const MANDI_RUKUN = {
+  arabic: "فُرُوضُ الْغُسْلِ اثْنَانِ: النِّيَّةُ وَتَعْمِيمُ الْبَدَنِ بِالْمَاءِ",
+  latin: "Furuudhul ghusli itsnaani: an-niyyatu wa ta'miimul badani bil maa'i.",
+  translation: "Fardhu (rukun) mandi ada dua: niat dan meratakan air ke seluruh tubuh.",
+  source: "Safinatun Najah (Syekh Salim bin Sumair Al-Hadhrami)",
+  note: "Niat dihadirkan di hati bersamaan dengan air pertama yang menyentuh tubuh. Meratakan air berarti seluruh kulit dan rambut harus terkena air — termasuk lipatan tubuh, ketiak, pusar, telinga, sela-sela jari, dan pangkal rambut. Bila dua rukun ini terpenuhi, mandinya sah.",
+};
+
+// 6 perkara yang mewajibkan mandi (Safinatun Najah).
+export const MANDI_CAUSES = {
+  arabic:
+    "مُوجِبَاتُ الْغُسْلِ سِتَّةٌ: إِيْلَاجُ الْحَشَفَةِ فِي الْفَرْجِ، وَخُرُوجُ الْمَنِيِّ، وَالْحَيْضُ، وَالنِّفَاسُ، وَالْوِلَادَةُ، وَالْمَوْتُ",
+  latin:
+    "Muujibaatul ghusli sittatun: iilaajul hasyafati fil farji, wa khuruujul maniyyi, wal haidhu, wan nifaasu, wal wilaadatu, wal mautu.",
+  translation:
+    "Perkara yang mewajibkan mandi ada enam: bertemunya dua kemaluan, keluar mani, haid, nifas, melahirkan, dan mati.",
+  source: "Safinatun Najah — fasal yang mewajibkan mandi",
+  items: [
+    "Hubungan suami istri (bertemunya dua kemaluan) — wajib mandi bagi keduanya, baik keluar mani maupun tidak.",
+    "Keluar mani — baik karena mimpi basah maupun sebab lain, dalam keadaan sadar atau tidak.",
+    "Haid — mandi setelah darah haid berhenti dan telah suci.",
+    "Nifas — mandi setelah darah nifas berhenti dan telah suci.",
+    "Melahirkan (wiladah) — walaupun tidak keluar darah.",
+    "Meninggal dunia — mandi jenazah (kecuali mati syahid).",
+  ],
+};
+
+// Tata cara mandi yang sempurna (sunnah-sunnahnya).
+export const MANDI_STEPS = [
+  "Hilangkan dulu kotoran dan najis yang menempel di tubuh — bersihkan kemaluan dengan tangan kiri.",
+  "Membaca basmalah, lalu membasuh kedua telapak tangan 3 kali, berkumur, dan membersihkan hidung (istinsyaq) 3 kali.",
+  "Berwudhu seperti wudhu untuk shalat (boleh menunda membasuh kaki sampai akhir mandi).",
+  "Hadirkan niat mandi wajib di hati bersamaan dengan air pertama yang menyentuh tubuh.",
+  "Guyur kepala 3 kali sambil menyela-nyela rambut, pastikan air sampai ke kulit kepala.",
+  "Siram tubuh bagian kanan (depan dan belakang), lalu bagian kiri (depan dan belakang), sambil menggosok tubuh.",
+  "Pastikan air merata ke seluruh tubuh — ketiak, lipatan perut, pusar, telinga, sela-sela jari, dan semua lipatan kulit.",
+];
+
+// Niat mandi besar — lafaz menurut tuntunan fikih mazhab Syafi'i.
+export const MANDI_NIAT: BacaanShalat[] = [
+  {
+    id: "niat-mandi-umum",
+    title: "Niat Mandi Besar (Umum)",
+    arabic: "نَوَيْتُ الْغُسْلَ لِرَفْعِ الْحَدَثِ الْأَكْبَرِ فَرْضًا لِلَّهِ تَعَالَى",
+    latin: "Nawaitul ghusla liraf'il hadatsil akbari fardhan lillaahi ta'aalaa.",
+    translation: "Aku berniat mandi untuk menghilangkan hadats besar, fardhu karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Niat umum ini bisa dipakai untuk semua sebab mandi wajib — junub, mimpi basah, haid, maupun nifas.",
+  },
+  {
+    id: "niat-mandi-junub",
+    title: "Niat Mandi Junub",
+    arabic: "نَوَيْتُ الْغُسْلَ لِرَفْعِ الْحَدَثِ الْأَكْبَرِ مِنَ الْجِنَابَةِ فَرْضًا لِلَّهِ تَعَالَى",
+    latin: "Nawaitul ghusla liraf'il hadatsil akbari minal jinaabati fardhan lillaahi ta'aalaa.",
+    translation: "Aku berniat mandi untuk menghilangkan hadats besar dari janabah, fardhu karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i (lafaz junub — NU Online)",
+    status: "Fikih Syafi'i",
+    note: "Untuk mandi karena junub — keluar mani atau hubungan suami istri.",
+  },
+  {
+    id: "niat-mandi-haid",
+    title: "Niat Mandi Setelah Haid",
+    arabic: "نَوَيْتُ الْغُسْلَ لِرَفْعِ الْحَدَثِ الْأَكْبَرِ مِنَ الْحَيْضِ فَرْضًا لِلَّهِ تَعَالَى",
+    latin: "Nawaitul ghusla liraf'il hadatsil akbari minal haidhi fardhan lillaahi ta'aalaa.",
+    translation: "Aku berniat mandi untuk menghilangkan hadats besar dari haid, fardhu karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Untuk mandi setelah suci dari haid. Lafaznya mengikuti pola niat mandi yang sama, dengan menyebut sebabnya (haid).",
+  },
+  {
+    id: "niat-mandi-nifas",
+    title: "Niat Mandi Setelah Nifas",
+    arabic: "نَوَيْتُ الْغُسْلَ لِرَفْعِ الْحَدَثِ الْأَكْبَرِ مِنَ النِّفَاسِ فَرْضًا لِلَّهِ تَعَالَى",
+    latin: "Nawaitul ghusla liraf'il hadatsil akbari minan nifaasi fardhan lillaahi ta'aalaa.",
+    translation: "Aku berniat mandi untuk menghilangkan hadats besar dari nifas, fardhu karena Allah Ta'ala.",
+    source: "Tuntunan fikih mazhab Syafi'i",
+    status: "Fikih Syafi'i",
+    note: "Untuk mandi setelah suci dari nifas (darah setelah melahirkan). Lafaznya mengikuti pola niat mandi yang sama, dengan menyebut sebabnya (nifas).",
   },
 ];

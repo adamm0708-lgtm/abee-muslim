@@ -42,6 +42,11 @@ import {
   type WiridItem,
 } from "@/lib/data";
 import {
+  FARDHU_NIAT,
+  MANDI_CAUSES,
+  MANDI_NIAT,
+  MANDI_RUKUN,
+  MANDI_STEPS,
   RAWATIB,
   RAWATIB_KEUTAMAAN,
   SHALAT_READINGS,
@@ -58,6 +63,8 @@ const STATUS_BADGE: Record<string, string> = {
   Dhaif: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
   "Al-Qur'an":
     "bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300",
+  "Fikih Syafi'i":
+    "bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300",
   "Doa umum": "bg-neutral-200 text-neutral-700 dark:bg-white/10 dark:text-neutral-300",
 };
 
@@ -524,7 +531,8 @@ export function KalenderPage() {
 
 // ---------- Belajar Shalat & Wudhu ----------
 // Bacaan wudhu, bacaan shalat & sunnah rawatib (Adam 2026-11-20 20:45 WIB).
-// Teks Arab diverifikasi silang dari kitab hadis — lihat lib/shalat-wudhu.ts.
+// Niat wudhu, mandi besar & niat shalat fardhu (Adam 2026-11-20 21:36 WIB).
+// Teks Arab diverifikasi silang dari kitab hadis / fikih Syafi'i — lihat lib/shalat-wudhu.ts.
 
 function BacaanCard({
   b,
@@ -625,9 +633,10 @@ function RawatibCard({
 }
 
 export function ShalatWudhuPage() {
-  const [tab, setTab] = useState<"wudhu" | "shalat" | "rawatib">("wudhu");
+  const [tab, setTab] = useState<"wudhu" | "shalat" | "rawatib" | "mandi">("wudhu");
   const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
   const steps = tab === "wudhu" ? WUDHU_STEPS : SHALAT_STEPS;
+  const doaSetelahMandi = WUDHU_READINGS.find((b) => b.id === "doa-setelah-wudhu");
   const tabBtn = (active: boolean) =>
     `flex flex-1 items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold ${
       active
@@ -650,6 +659,9 @@ export function ShalatWudhuPage() {
         </button>
         <button onClick={() => setTab("rawatib")} className={tabBtn(tab === "rawatib")}>
           <Icon name="clock" className="h-4 w-4" /> Rawatib
+        </button>
+        <button onClick={() => setTab("mandi")} className={tabBtn(tab === "mandi")}>
+          <Icon name="droplet" className="h-4 w-4" /> Mandi
         </button>
       </div>
 
@@ -687,6 +699,106 @@ export function ShalatWudhuPage() {
             masing-masing dengan salam.
           </Note>
         </div>
+      ) : tab === "mandi" ? (
+        <div className="flex flex-col gap-3">
+          <Card>
+            <h3 className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+              Kapan Mandi Besar Wajib — 6 Perkara
+            </h3>
+            <p
+              className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}
+            >
+              {normalizeArabicText(MANDI_CAUSES.arabic)}
+            </p>
+            <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
+              {MANDI_CAUSES.latin}
+            </p>
+            <p className={`mt-1 text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
+              {MANDI_CAUSES.translation}
+            </p>
+            <div className="mt-3 flex flex-col gap-2">
+              {MANDI_CAUSES.items.map((c, i) => (
+                <div key={i} className="flex gap-3">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-xs font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+                    {i + 1}
+                  </span>
+                  <p className={`leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{c}</p>
+                </div>
+              ))}
+            </div>
+            <p className={`mt-2 text-xs font-semibold text-[#0B3D39] dark:text-[#D4AF37] ${bodyClass}`}>
+              {MANDI_CAUSES.source}
+            </p>
+          </Card>
+          <Card>
+            <h3 className="text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+              Rukun Mandi — 2 Perkara
+            </h3>
+            <p
+              className={`arabic mt-2 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}
+            >
+              {normalizeArabicText(MANDI_RUKUN.arabic)}
+            </p>
+            <p className={`mt-1 italic text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
+              {MANDI_RUKUN.latin}
+            </p>
+            <p className={`mt-1 text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
+              {MANDI_RUKUN.translation}
+            </p>
+            <p className={`mt-2 text-xs font-semibold text-[#0B3D39] dark:text-[#D4AF37] ${bodyClass}`}>
+              {MANDI_RUKUN.source}
+            </p>
+            <p className={`mt-1 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400 ${bodyClass}`}>
+              {MANDI_RUKUN.note}
+            </p>
+          </Card>
+
+          <h2 className="mt-2 text-base font-extrabold text-neutral-900 dark:text-neutral-100">
+            Langkah-Langkah Mandi yang Sempurna
+          </h2>
+          <div className="flex flex-col gap-2">
+            {MANDI_STEPS.map((s, i) => (
+              <Card key={i} className="flex gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#0A0A0A] text-sm font-extrabold text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+                  {i + 1}
+                </span>
+                <p className={`leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>{s}</p>
+              </Card>
+            ))}
+          </div>
+          <Note>
+            Sabun dan sampo bukan rukun mandi — yang mensucikan adalah air (air mutlak). Pakailah sabun/sampo
+            setelah air merata ke seluruh tubuh (panduan NU Online).
+          </Note>
+
+          <h2 className="mt-2 text-base font-extrabold text-neutral-900 dark:text-neutral-100">
+            Niat Mandi Besar
+          </h2>
+          <Note>
+            Niat tempatnya di hati — lafaz niat di bawah ini menurut tuntunan fikih mazhab Syafi&apos;i (bukan
+            riwayat hadis) dan hanya alat bantu belajar; mandi tetap sah tanpa melafazkannya, selama niat hadir di
+            hati saat air pertama menyentuh tubuh.
+          </Note>
+          {MANDI_NIAT.map((b, i) => (
+            <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
+          ))}
+
+          <h2 className="mt-2 text-base font-extrabold text-neutral-900 dark:text-neutral-100">
+            Doa Setelah Mandi
+          </h2>
+          {doaSetelahMandi && (
+            <BacaanCard
+              b={{
+                ...doaSetelahMandi,
+                title: "Doa Setelah Mandi",
+                note: "Doa ini adalah doa setelah wudhu (HR. Muslim 234, Tirmidzi 55). Dalam panduan mandi wajib yang diterbitkan Kemenag RI, doa yang sama dibaca setelah selesai mandi.",
+              }}
+              index={0}
+              arabicClass={arabicClass}
+              bodyClass={bodyClass}
+            />
+          )}
+        </div>
       ) : (
         <>
           <div className="flex flex-col gap-2">
@@ -703,6 +815,10 @@ export function ShalatWudhuPage() {
           {tab === "wudhu" ? (
             <div className="mt-5 flex flex-col gap-3">
               <h2 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">Bacaan Wudhu</h2>
+              <Note>
+                Niat wudhu tempatnya di hati — lafaz niat di bawah ini menurut tuntunan fikih mazhab Syafi&apos;i
+                (bukan riwayat hadis) dan hanya alat bantu belajar.
+              </Note>
               {WUDHU_READINGS.map((b, i) => (
                 <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
               ))}
@@ -715,29 +831,44 @@ export function ShalatWudhuPage() {
               </Note>
             </div>
           ) : (
-            <div className="mt-5 flex flex-col gap-3">
-              <h2 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">Bacaan Shalat</h2>
-              {SHALAT_READINGS.map((b, i) => (
-                <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
-              ))}
-              <Link
-                href="/ibadah/doa"
-                className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] dark:bg-[#171717] dark:ring-white/10"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B3D39] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
-                  <Icon name="hands" className="h-5 w-5" />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
-                    Doa Qunut Subuh
+            <>
+              <div className="mt-5 flex flex-col gap-3">
+                <h2 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">
+                  Niat Shalat Fardhu
+                </h2>
+                <Note>
+                  Niat tempatnya di hati dan dihadirkan bersamaan dengan takbiratul ihram — lafaz niat di bawah ini
+                  menurut tuntunan fikih mazhab Syafi&apos;i (bukan riwayat hadis) dan hanya alat bantu belajar;
+                  shalat tetap sah tanpa melafazkannya.
+                </Note>
+                {FARDHU_NIAT.map((b, i) => (
+                  <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
+                ))}
+              </div>
+              <div className="mt-5 flex flex-col gap-3">
+                <h2 className="text-base font-extrabold text-neutral-900 dark:text-neutral-100">Bacaan Shalat</h2>
+                {SHALAT_READINGS.map((b, i) => (
+                  <BacaanCard key={b.id} b={b} index={i} arabicClass={arabicClass} bodyClass={bodyClass} />
+                ))}
+                <Link
+                  href="/ibadah/doa"
+                  className="flex items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5 transition active:scale-[0.98] dark:bg-[#171717] dark:ring-white/10"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0B3D39] text-white dark:bg-[#D4AF37] dark:text-[#0A0A0A]">
+                    <Icon name="hands" className="h-5 w-5" />
                   </span>
-                  <span className="block text-xs text-neutral-500 dark:text-neutral-400">
-                    Sudah ada di Doa Harian — ketuk untuk membuka
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+                      Doa Qunut Subuh
+                    </span>
+                    <span className="block text-xs text-neutral-500 dark:text-neutral-400">
+                      Sudah ada di Doa Harian — ketuk untuk membuka
+                    </span>
                   </span>
-                </span>
-                <Icon name="chevron-right" className="h-4 w-4 shrink-0 text-neutral-400" />
-              </Link>
-            </div>
+                  <Icon name="chevron-right" className="h-4 w-4 shrink-0 text-neutral-400" />
+                </Link>
+              </div>
+            </>
           )}
         </>
       )}
