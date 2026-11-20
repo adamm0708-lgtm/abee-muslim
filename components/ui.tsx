@@ -427,7 +427,7 @@ export function SiteHeader() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-[#0A0A0A] text-white shadow-md">
-        <div className="mx-auto flex h-14 w-full max-w-md items-center gap-3 px-4">
+        <div className="mx-auto flex h-14 w-full max-w-md items-center gap-2 px-3">
           <button
             onClick={() => setOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10"
@@ -435,31 +435,23 @@ export function SiteHeader() {
           >
             <Icon name="menu" className="h-6 w-6" />
           </button>
-          <Link href="/" className="flex min-w-0 flex-1 items-center gap-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center" aria-hidden>
-              <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#D4AF37]">
-                <polygon
-                  points="12,1 14.6,8.4 22,9.2 16.5,14 18.2,21.5 12,17.5 5.8,21.5 7.5,14 2,9.2 9.4,8.4"
-                  fill="currentColor"
-                />
-              </svg>
-            </span>
+          <Link href="/" className="flex min-w-0 flex-1 items-center">
             <span className="leading-none">
-              <span className="font-wordmark block text-[17px] font-bold">
+              <span className="font-wordmark block whitespace-nowrap text-[17px] font-bold">
                 <span className="text-[#D4AF37]">ABEE</span> Muslim
               </span>
-              <span className="mt-1 block text-[8px] font-bold uppercase tracking-[0.22em] text-white/50">
+              <span className="mt-1 block whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.18em] text-white/50">
                 Belajar Islam &amp; Ibadah
               </span>
             </span>
           </Link>
-          <Link href="/quran/baca" className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10" aria-label="Cari surah">
+          <Link href="/quran/baca" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10" aria-label="Cari surah">
             <Icon name="search" className="h-5 w-5" />
           </Link>
-          <Link href="/ibadah/kiblat" className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10" aria-label="Arah kiblat">
+          <Link href="/ibadah/kiblat" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10" aria-label="Arah kiblat">
             <Icon name="compass" className="h-5 w-5" />
           </Link>
-          <Link href="/atur" className="flex h-10 w-10 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10" aria-label="Pengaturan">
+          <Link href="/atur" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/85 transition hover:bg-white/10" aria-label="Pengaturan">
             <Icon name="settings" className="h-5 w-5" />
           </Link>
         </div>
