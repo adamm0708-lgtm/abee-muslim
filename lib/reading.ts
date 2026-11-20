@@ -11,9 +11,14 @@ export type ReaderFontSize = "md" | "lg" | "xl" | "xxl";
  *  SEMUA teks Arab yang dirender — reader Qur'an, Yasin, doa, wirid, tahlil —
  *  bukan hanya tajwid. Font lain (Amiri, Scheherazade, Noto) menggambar
  *  keduanya sebagai garis tegak, tapi normalisasi ini tetap diterapkan supaya
- *  teksnya konsisten apa pun font yang dipakai. */
+ *  teksnya konsisten apa pun font yang dipakai.
+ *  Sekaligus membuang U+06DF (۟ — small high rounded zero, tanda huruf
+ *  mati/diam: alif/waw ditulis tapi TIDAK dibaca). Adam 2026-11-20
+ *  (bandingkan aplikasi lain): di aplikasi lain tidak ada bulatan ini,
+ *  tampil bersih. Hurufnya tetap ada — hanya tanda bulatannya yang
+ *  dihapus — jadi bacaan tidak berubah. */
 export function normalizeArabicText(s: string): string {
-  return s.replace(/\u0672/g, "\u0670");
+  return s.replace(/\u0672/g, "\u0670").replace(/\u06DF/g, "");
 }
 
 export const READER_FONT_SIZES: ReaderFontSize[] = ["md", "lg", "xl", "xxl"];

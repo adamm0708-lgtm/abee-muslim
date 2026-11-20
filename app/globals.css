@@ -26,11 +26,20 @@ body {
 }
 
 /* Teks Arab: dua font utama.
-   - Mushaf (Qur'an + Yasin): UthmanicHafs (font mushaf Madinah standar,
-     dipakai Quran.com untuk teks Uthmani; dihost Quran Foundation).
-     Render ayat 21-25 As-Sajdah sudah sama dengan contoh mushaf yang
-     dikirim Adam (2026-11-20): ornamen akhir ayat berisi angka, maddah
-     garis tegak — jadi font Qur'an TIDAK diganti.
+   - Mushaf (Qur'an + Yasin): me_quran (font Naskh tebal seperti di
+     aplikasi Qur'an lain yang dikirim Adam 2026-11-20; paling mirip dari
+     semua kandidat yang diuji — UthmanicHafs terlalu tipis/kaligrafis,
+     Amiri terlalu tipis). Lisensi: "Free for non commercial use"
+     © 2005 Meor Ridzuan (tertera di dalam file font); repo publik
+     icikiwir/me_quran, dihost jsDelivr (commit di-pin). UthmanicHafs
+     tetap dipakai untuk penanda akhir ayat (.ayah-mark) — angka
+     Arab-Indik di me_quran tidak membentuk ornamen berisi angka.
+     CATATAN (2026-11-20): alif penuh seperti di aplikasi lain
+     ("أَمْوَالَهُمْ") berasal dari EJAAN teksnya (teks Simple/imla'i),
+     bukan dari font — tidak ada font yang menggambar U+0670 sebagai
+     alif penuh (diuji: me_quran, UthmanicHafs, Amiri). Teks aplikasi
+     tetap Uthmani; ganti ejaan ke Simple butuh keputusan Adam karena
+     warna tajwid dibangun di atas teks Uthmani.
    - Doa / wirid / tahlil / asmaul husna: Amiri Bold — naskh tebal dari
      tradisi Bulaq yang sama dengan font di contoh aplikasi "Doa Setelah
      Sholat" (Mung Media) yang dikirim Adam 2026-11-20; paling mirip dari
@@ -40,6 +49,17 @@ body {
      jadi tidak ada bulatan maddah apa pun font yang akhirnya tampil.
      Amiri dihost Google Fonts (OFL, CDN stabil); UthmanicHafs tetap
      sebagai fallback terakhir bila Amiri gagal dimuat. */
+@font-face {
+  font-family: "me_quran";
+  src:
+    url("https://cdn.jsdelivr.net/gh/icikiwir/me_quran@e63123dc8fe82a25d8ec0699aa49a1fe4c99d204/me_quran.woff")
+      format("woff"),
+    url("https://cdn.jsdelivr.net/gh/icikiwir/me_quran@e63123dc8fe82a25d8ec0699aa49a1fe4c99d204/me_quran.ttf")
+      format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: "UthmanicHafs";
   src:
@@ -77,7 +97,7 @@ body {
 /* Teks mushaf: Arab besar, rata kanan, spasi antar kata natural (tidak
    direnggangkan seperti justify — seperti contoh mushaf yang dikirim Adam). */
 .mushaf {
-  font-family: "UthmanicHafs", "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
+  font-family: "me_quran", "UthmanicHafs", "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
   direction: rtl;
   text-align: right;
   line-height: 2.5;
@@ -110,6 +130,12 @@ body {
 
 .mushaf .ayah-mark {
   color: #c9a227;
+  /* Angka Arab-Indik digambar UthmanicHafs sebagai ornamen berisi angka.
+     me_quran TIDAK bisa: digitnya tampil sebagai garis-garis rusak, dan
+     "۝ + angka" menghasilkan ornamen kosong + angka terpisah. Jadi
+     penanda akhir ayat tetap memakai UthmanicHafs walau teks ayatnya
+     sudah me_quran — tampilannya sama seperti sebelumnya (emas). */
+  font-family: "UthmanicHafs", serif;
   font-weight: 700;
   white-space: nowrap;
   padding: 0 0.1em;
