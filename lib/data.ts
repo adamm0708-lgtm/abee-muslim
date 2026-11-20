@@ -2104,4 +2104,5 @@ export type MenuLink = MenuEntry & { href: string };
 
 export const MENU_TAMBAHAN: MenuLink[] = [
   { slug: "perpustakaan", label: "Perpustakaan", icon: "book-open", href: "/perpustakaan" },
+  { slug: "pengingat", label: "Pengingat Amalan", icon: "clock", href: "/pengingat" },
 ];

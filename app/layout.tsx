@@ -4,6 +4,8 @@ import { ThemeProvider, THEME_INIT_SCRIPT } from "@/lib/theme";
 import { BottomNav, SiteHeader } from "@/components/ui";
 import { PwaRegister, InstallPromptModal } from "@/components/pwa";
 import { AdhanReminder } from "@/components/adhan";
+import { PromoSlotProvider } from "@/components/promo-slot";
+import { PengingatPromo } from "@/components/pengingat";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -41,12 +43,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ProgressProvider>
           <ThemeProvider>
-            <SiteHeader />
-            <main className="mx-auto w-full max-w-md px-4 pb-24 pt-4">{children}</main>
-            <BottomNav />
-            <PwaRegister />
-            <InstallPromptModal />
-            <AdhanReminder />
+            <PromoSlotProvider>
+              <SiteHeader />
+              <main className="mx-auto w-full max-w-md px-4 pb-24 pt-4">{children}</main>
+              <BottomNav />
+              <PwaRegister />
+              <InstallPromptModal />
+              <AdhanReminder />
+              <PengingatPromo />
+            </PromoSlotProvider>
           </ThemeProvider>
         </ProgressProvider>
       </body>

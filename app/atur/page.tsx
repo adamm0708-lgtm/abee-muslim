@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme";
 import { CITIES, QURAN_SOURCE_NOTE } from "@/lib/api";
 import { InstallButton } from "@/components/pwa";
 import { ADHAN_CREDIT, ADHAN_FILE_URL, ADHAN_PRAYERS, ADHAN_URL } from "@/components/adhan";
+import { PENGINGAT } from "@/lib/pengingat";
 import { supabaseConfigured } from "@/lib/supabase";
 import type { IconName } from "@/lib/data";
 
@@ -32,7 +33,7 @@ function Toggle({ on, disabled, onChange, label }: { on: boolean; disabled?: boo
 }
 
 export default function AturPage() {
-  const { progress, setName, setCity, setAdhanEnabled, setAdhanPrayer, resetProgress } = useProgress();
+  const { progress, setName, setCity, setAdhanEnabled, setAdhanPrayer, setPengingatEnabled, setPengingatToggle, resetProgress } = useProgress();
   const { choice, setChoice, effective } = useTheme();
   const [name, setNameInput] = useState(progress.name);
   const [saved, setSaved] = useState(false);
@@ -160,6 +161,36 @@ export default function AturPage() {
             </a>{" "}
             — Wikimedia Commons.
           </p>
+        </Card>
+
+        <Card>
+          <p className="mb-1 text-sm font-bold text-neutral-900 dark:text-neutral-100">Pengingat Amalan</p>
+          <p className="mb-3 text-xs leading-relaxed text-neutral-500 dark:text-neutral-400">
+            Kartu pengingat di beranda saat waktunya tiba — hanya ketika aplikasi dibuka. Al-Kahfi di hari Jumat,
+            Yasin di malam Jumat, Al-Mulk setiap malam, mengaji dan istighfar setiap hari, Ar-Rahman setiap Ahad.
+          </p>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">Pengingat Amalan</span>
+            <Toggle on={progress.pengingatEnabled} onChange={setPengingatEnabled} label="Pengingat Amalan" />
+          </div>
+          <div className={`mt-3 flex flex-col gap-2 border-t border-black/5 pt-3 dark:border-white/10 ${progress.pengingatEnabled ? "" : "opacity-40"}`}>
+            {PENGINGAT.map((p) => (
+              <div key={p.id} className="flex items-center justify-between gap-3">
+                <span className="text-sm text-neutral-700 dark:text-neutral-300">
+                  {p.title.length > 40 ? p.title.slice(0, 40) + "…" : p.title}
+                  <span className="block text-[11px] font-bold text-neutral-400 dark:text-neutral-500">
+                    {p.scheduleLabel}
+                  </span>
+                </span>
+                <Toggle
+                  on={progress.pengingatToggles[p.id] !== false}
+                  disabled={!progress.pengingatEnabled}
+                  onChange={(b) => setPengingatToggle(p.id, b)}
+                  label={`Pengingat ${p.id}`}
+                />
+              </div>
+            ))}
+          </div>
         </Card>
 
         <Card>

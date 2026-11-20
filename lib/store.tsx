@@ -39,6 +39,11 @@ export type Progress = {
   adhanEnabled: boolean;
   adhanPrayers: Record<string, boolean>; // nama shalat -> aktif
   adhanDismissed: Record<string, string[]>; // "YYYY-MM-DD" -> nama shalat yang di-dismiss
+  /** Pengingat amalan: master toggle + per-pengingat + dismiss/selesai per siklus. */
+  pengingatEnabled: boolean;
+  pengingatToggles: Record<string, boolean>; // id pengingat -> aktif
+  pengingatDismissed: Record<string, string[]>; // cycleKey -> id pengingat yang ditutup
+  pengingatDone: Record<string, string[]>; // cycleKey -> id pengingat yang ditandai selesai
 };
 
 export const DEFAULT_ADHAN_PRAYERS: Record<string, boolean> = {
@@ -47,6 +52,16 @@ export const DEFAULT_ADHAN_PRAYERS: Record<string, boolean> = {
   Ashar: true,
   Maghrib: true,
   Isya: true,
+};
+
+/** Semua pengingat amalan aktif secara default. */
+export const DEFAULT_PENGINGAT_TOGGLES: Record<string, boolean> = {
+  kahfi: true,
+  yasin: true,
+  mulk: true,
+  ngaji: true,
+  istighfar: true,
+  arrahman: true,
 };
 
 const DEFAULT_PROGRESS: Progress = {
@@ -66,6 +81,10 @@ const DEFAULT_PROGRESS: Progress = {
   adhanEnabled: true,
   adhanPrayers: { ...DEFAULT_ADHAN_PRAYERS },
   adhanDismissed: {},
+  pengingatEnabled: true,
+  pengingatToggles: { ...DEFAULT_PENGINGAT_TOGGLES },
+  pengingatDismissed: {},
+  pengingatDone: {},
 };
 
 const KEY = "abee-muslim-progress-v1";
@@ -117,6 +136,10 @@ type Store = {
   setAdhanEnabled: (b: boolean) => void;
   setAdhanPrayer: (name: string, b: boolean) => void;
   dismissAdhan: (name: string) => void;
+  setPengingatEnabled: (b: boolean) => void;
+  setPengingatToggle: (id: string, b: boolean) => void;
+  dismissPengingat: (id: string, key: string) => void;
+  markPengingatDone: (id: string, key: string) => void;
   resetProgress: () => void;
 };
 
@@ -159,6 +182,12 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           ...parsed,
           adhanPrayers: { ...DEFAULT_ADHAN_PRAYERS, ...(parsed.adhanPrayers ?? {}) },
           adhanDismissed: parsed.adhanDismissed ?? {},
+          pengingatToggles: {
+            ...DEFAULT_PENGINGAT_TOGGLES,
+            ...(parsed.pengingatToggles ?? {}),
+          },
+          pengingatDismissed: parsed.pengingatDismissed ?? {},
+          pengingatDone: parsed.pengingatDone ?? {},
         });
       }
     } catch {
@@ -268,6 +297,27 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
           const list = p.adhanDismissed[t] ?? [];
           if (list.includes(name)) return p;
           return { ...p, adhanDismissed: { ...p.adhanDismissed, [t]: [...list, name] } };
+        }),
+      setPengingatEnabled: (b) => update((p) => ({ ...p, pengingatEnabled: b })),
+      setPengingatToggle: (id, b) =>
+        update((p) => ({ ...p, pengingatToggles: { ...p.pengingatToggles, [id]: b } })),
+      dismissPengingat: (id, key) =>
+        update((p) => {
+          const list = p.pengingatDismissed[key] ?? [];
+          if (list.includes(id)) return p;
+          return {
+            ...p,
+            pengingatDismissed: { ...p.pengingatDismissed, [key]: [...list, id] },
+          };
+        }),
+      markPengingatDone: (id, key) =>
+        update((p) => {
+          const list = p.pengingatDone[key] ?? [];
+          if (list.includes(id)) return p;
+          return {
+            ...p,
+            pengingatDone: { ...p.pengingatDone, [key]: [...list, id] },
+          };
         }),
       resetProgress: () => {
         try {

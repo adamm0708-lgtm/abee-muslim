@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { getTimings, type Timings } from "@/lib/api";
 import { useProgress, todayKey } from "@/lib/store";
 import { Icon } from "@/components/ui";
+import { usePromoSlot } from "@/components/promo-slot";
 
 export const ADHAN_URL =
   "https://upload.wikimedia.org/wikipedia/commons/7/7d/The_Adhan_-_Muslim_Call_to_Prayer_-_Aaqib_Azeez.mp3";
@@ -28,16 +29,72 @@ function toMinutes(hhmm: string): number {
   return h * 60 + m;
 }
 
+/**
+ * Logika audio adzan bersama — dipakai AdhanReminder DAN iklan pengingat
+ * shalat di modal (supaya tidak ada dua pemutar/logika yang diduplikasi).
+ */
+export function useAdhanAudio() {
+  const [playing, setPlaying] = useState(false);
+  const [audioError, setAudioError] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const getAudio = () => {
+    if (!audioRef.current) {
+      const a = new Audio(ADHAN_URL);
+      a.preload = "none";
+      a.onended = () => setPlaying(false);
+      audioRef.current = a;
+    }
+    return audioRef.current;
+  };
+
+  const play = () => {
+    setAudioError(false);
+    const a = getAudio();
+    a.play()
+      .then(() => setPlaying(true))
+      .catch(() => setAudioError(true));
+  };
+
+  const stop = () => {
+    const a = audioRef.current;
+    if (a) {
+      a.pause();
+      a.currentTime = 0;
+    }
+    setPlaying(false);
+  };
+
+  /** Percobaan autoplay: gagal diam-diam (aturan browser), tanpa pesan error. */
+  const autoplay = () => {
+    const a = getAudio();
+    a.play()
+      .then(() => setPlaying(true))
+      .catch(() => {
+        /* autoplay ditolak browser — pengguna menekan tombol */
+      });
+  };
+
+  // Berhenti memutar saat komponen dilepas.
+  useEffect(
+    () => () => {
+      audioRef.current?.pause();
+    },
+    []
+  );
+
+  return { playing, audioError, play, stop, autoplay };
+}
+
 export function AdhanReminder() {
   const { progress, dismissAdhan } = useProgress();
+  const { promoOpen } = usePromoSlot();
   const [mounted, setMounted] = useState(false);
   const [timings, setTimings] = useState<Timings | null>(null);
   const [now, setNow] = useState(() => new Date());
   const [shown, setShown] = useState<string | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [audioError, setAudioError] = useState(false);
+  const { playing, audioError, play, stop, autoplay } = useAdhanAudio();
   const [interacted, setInteracted] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const autoplayTried = useRef<Record<string, boolean>>({});
 
   useEffect(() => setMounted(true), []);
@@ -70,7 +127,10 @@ export function AdhanReminder() {
   }, []);
 
   // Shalat yang sedang dalam jendela 15 menit (paling lama satu yang cocok).
+  // Selama ada modal promo terbuka (mis. iklan pengingat shalat), banner
+  // disembunyikan supaya tidak muncul dua pengingat shalat sekaligus.
   const active = useMemo(() => {
+    if (promoOpen) return null;
     if (!progress.adhanEnabled || !timings) return null;
     const nowMin = now.getHours() * 60 + now.getMinutes();
     const dismissed = progress.adhanDismissed[todayKey()] ?? [];
@@ -81,62 +141,28 @@ export function AdhanReminder() {
       if (diff >= 0 && diff < WINDOW_MIN) return name;
     }
     return null;
-  }, [progress.adhanEnabled, progress.adhanPrayers, progress.adhanDismissed, timings, now]);
+  }, [promoOpen, progress.adhanEnabled, progress.adhanPrayers, progress.adhanDismissed, timings, now]);
 
   useEffect(() => {
     if (active && shown !== active) setShown(active);
     if (!active && !playing) setShown(null);
   }, [active, playing, shown]);
 
-  const getAudio = () => {
-    if (!audioRef.current) {
-      const a = new Audio(ADHAN_URL);
-      a.preload = "none";
-      a.onended = () => setPlaying(false);
-      audioRef.current = a;
-    }
-    return audioRef.current;
-  };
-
-  const play = () => {
-    setAudioError(false);
-    const a = getAudio();
-    a.play()
-      .then(() => setPlaying(true))
-      .catch(() => setAudioError(true));
-  };
-
-  const stop = () => {
-    const a = audioRef.current;
-    if (a) {
-      a.pause();
-      a.currentTime = 0;
-    }
-    setPlaying(false);
-  };
+  // Berhenti memutar bila modal promo terbuka (iklan shalat mengambil alih).
+  useEffect(() => {
+    if (promoOpen) stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [promoOpen]);
 
   // Coba putar otomatis sekali per shalat, hanya bila pengguna sudah
   // berinteraksi dengan halaman (aturan autoplay browser). Gagal = diam,
   // tombol "Putar Adzan" tetap jadi jalan utama.
   useEffect(() => {
-    if (!shown || !interacted || autoplayTried.current[shown]) return;
+    if (!shown || !interacted || promoOpen || autoplayTried.current[shown]) return;
     autoplayTried.current[shown] = true;
-    const a = getAudio();
-    a.play()
-      .then(() => setPlaying(true))
-      .catch(() => {
-        /* autoplay ditolak browser — pengguna menekan tombol */
-      });
+    autoplay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shown, interacted]);
-
-  // Berhenti memutar saat komponen dilepas.
-  useEffect(
-    () => () => {
-      audioRef.current?.pause();
-    },
-    []
-  );
+  }, [shown, interacted, promoOpen]);
 
   const dismiss = () => {
     stop();
