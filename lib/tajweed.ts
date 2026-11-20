@@ -62,9 +62,26 @@ export function tajweedToSafeHtml(html: string): string {
   );
 }
 
-/** Legenda warna untuk pemula: satu warna = satu kelompok hukum tajwid. */
+/**
+ * Legenda warna untuk pemula: satu warna = satu kelompok hukum tajwid.
+ *
+ * "Mad" dipecah jadi 4 entri — karena keempat kelas madda di data
+ * Quran.com memang hukum yang BERBEDA (diverifikasi dari datanya, bukan
+ * dikarang): madda_normal = mad thabi'i (2 ketukan); madda_obligatory =
+ * mad wajib muttasil + mad jaiz munfasil (4–5 ketukan; jaiz boleh 2/4/5);
+ * madda_permissible = mad 'arid lissukun (dibaca 2, 4, atau 6 ketukan
+ * SAAT WAQF — 4.534 dari 4.543 kemunculannya ada di akhir ayat, sisanya
+ * sebelum tanda sajdah, juga titik berhenti — jadi BUKAN "mad jaiz" dan
+ * tidak boleh digabung ke "Mad 4 ketukan"); madda_necessary = mad lazim
+ * (6 ketukan). Warna swatch = warna teks .tj-madda_* di globals.css
+ * (mode terang); keempatnya sudah punya nuansa biru berbeda di CSS,
+ * jadi tidak perlu ubah CSS.
+ */
 export const TAJWEED_LEGEND: { swatch: string; name: string; desc: string }[] = [
-  { swatch: "#537FFF", name: "Mad", desc: "dibaca panjang" },
+  { swatch: "#537FFF", name: "Mad 2 ketukan", desc: "thabi'i" },
+  { swatch: "#2144C1", name: "Mad 4 ketukan", desc: "wajib & jaiz (4–5)" },
+  { swatch: "#4050B5", name: "Mad 'arid 2/4/6", desc: "saat waqf di akhir ayat" },
+  { swatch: "#1E3A8A", name: "Mad 6 ketukan", desc: "lazim" },
   { swatch: "#DD0008", name: "Qalqalah", desc: "memantul" },
   { swatch: "#9400A8", name: "Ikhfa", desc: "dibaca samar" },
   { swatch: "#15803d", name: "Idgham", desc: "melebur ke huruf berikut" },

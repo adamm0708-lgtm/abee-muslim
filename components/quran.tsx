@@ -379,10 +379,14 @@ export function BacaPage() {
     };
   }, [readerSurah, embedded]);
 
-  // Warna tajwid: dimuat terpisah dari teks polos (sumber sama, Quran.com),
-  // untuk semua surah termasuk yang tertanam di Juz 30. Gagal = teks polos.
+  // Warna tajwid + tanda maddah: dimuat terpisah dari teks polos (sumber
+  // sama, Quran.com), untuk semua surah termasuk yang tertanam di Juz 30.
+  // Dimuat setiap kali surah dibuka — BUKAN hanya saat toggle Warna
+  // Tajwid ON — karena pemetaan yang sama juga mengembalikan tanda
+  // maddah (mad panjang) ke teks, dan tanda itu harus tampil juga saat
+  // warna dimatikan. Gagal = teks polos.
   useEffect(() => {
-    if (readerSurah == null || !showTajweed) {
+    if (readerSurah == null) {
       setTajweedLines(null);
       return;
     }
@@ -393,21 +397,25 @@ export function BacaPage() {
     return () => {
       alive = false;
     };
-  }, [readerSurah, showTajweed]);
+  }, [readerSurah]);
 
   const arabicLines = useMemo(
     () => (embedded ? embedded.arabic : apiSurah?.ayahs.map((a) => a.text) ?? []),
     [embedded, apiSurah]
   );
-  const tajweedOn =
-    showTajweed && tajweedLines != null && tajweedLines.length === arabicLines.length;
+  const tajweedAvailable =
+    tajweedLines != null && tajweedLines.length === arabicLines.length;
+  const tajweedOn = showTajweed && tajweedAvailable;
   // Warna tajwid dipetakan dari teks Uthmani sumber ke ejaan Simple yang
   // ditampilkan — ejaan TIDAK berubah saat toggle tajwid dimatikan atau
   // dinyalakan. Dihitung sekali per surah (memo, bukan per render).
+  // mapTajweedSurah mengembalikan per ayat: html (warna + maddah) dan
+  // plain (teks Simple + maddah, tanpa warna — dipakai saat toggle OFF,
+  // supaya tanda mad panjang tetap tampil).
   const mappedTajweedLines = useMemo(() => {
-    if (!tajweedOn || tajweedLines == null) return null;
+    if (!tajweedAvailable || tajweedLines == null) return null;
     return mapTajweedSurah(tajweedLines, arabicLines);
-  }, [tajweedOn, tajweedLines, arabicLines]);
+  }, [tajweedAvailable, tajweedLines, arabicLines]);
   const transLines = embedded ? embedded.translation : apiTrans;
   const readerMeta =
     surahs?.find((s) => s.number === readerSurah) ??
@@ -709,12 +717,14 @@ export function BacaPage() {
                     className={`ayah ${lastReadAyah === i + 1 ? "last-read" : ""}`}
                     title={`Ketuk untuk menandai Ayat ${i + 1} sebagai terakhir dibaca`}
                   >
-                    {mappedTajweedLines ? (
+                    {mappedTajweedLines && showTajweed ? (
                       <span
                         dangerouslySetInnerHTML={{
-                          __html: mappedTajweedLines[i],
+                          __html: mappedTajweedLines[i].html,
                         }}
                       />
+                    ) : mappedTajweedLines ? (
+                      mappedTajweedLines[i].plain
                     ) : (
                       line
                     )}{" "}

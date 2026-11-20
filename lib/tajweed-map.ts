@@ -12,9 +12,19 @@
 //   hamza combining U+0654/U+0655 -> hamza.
 // - U+0649/U+064A (alef maksura/yeh) disamakan -> yeh.
 // - U+0622 (alef maddah) -> alif.
+// - U+06E5 (waw kecil) -> waw; U+06E6 (yeh kecil) -> yeh — keduanya
+//   HURUF (dhamir -hu/-hi), bukan tanda; diperlukan untuk 327 tanda
+//   maddah yang menempel padanya.
 // - Iqlab/tanwin Uthmani [vokal + ۢ U+06E2 / ۭ U+06ED] -> satu tanwin.
-// - Buang: tatweel, maddah U+0653, U+06DF, small-high U+06DD-U+06ED, ZWNJ.
+// - Buang: tatweel, U+06DF, small-high U+06DD-U+06ED (KECUALI waw
+//   kecil U+06E5 -> waw dan yeh kecil U+06E6 -> yeh), ZWNJ.
 //   Tanda waqf U+06D6-U+06DC TETAP (ada di Simple).
+// - Tanda maddah (U+0653) DIKEMBALIKAN ke teks Simple: setiap U+0653
+//   di teks Uthmani adalah tanda mad panjang yang ditulis mushaf
+//   (wajib/jaiz/lazim); teks Simple membuangnya. Posisi diambil dari
+//   teks Uthmani lewat alignment (huruf pembawa maddah), BUKAN dari
+//   tebakan. Pengecualian: bila huruf Simple-nya آ (U+0622, maddah
+//   menyatu — mad badal, 2 ketukan) tidak ditambah lagi.
 // - Sisi tajwid: [alif, tanwin] -> [tanwin, alif]; [alif, syaddah, tanwin]
 //   -> [syaddah, tanwin, alif].
 
@@ -38,6 +48,23 @@ const VOWEL_TO_TANWIN: Record<string, string> = {
   "\u0650": "\u064d",
 };
 
+// Combining marks yang dilewati saat mencari huruf pembawa tanda maddah
+// (U+0653 menempel tepat setelah huruf mad-nya). HURUF pembawa (alif,
+// waw, ya, alef maksura, dagger alif, waw/yeh kecil, huruf muqatta'at)
+// TIDAK ada di set ini — walk-back berhenti di huruf pertama.
+const MADDAH_CARRIER_SKIP = new Set<string>([
+  ..."\u064b\u064c\u064d\u064e\u064f\u0650\u0651\u0652", // tanwin, vokal, syaddah, sukun
+  "\u0654",
+  "\u0655",
+  TATWEEL,
+  SMALL_ZERO,
+  SMALL_MEEM,
+  SMALL_TANWIN_MARK,
+  ...Array.from({ length: 0x06ee - 0x06dd }, (_, k) =>
+    String.fromCodePoint(0x06dd + k)
+  ).filter((c) => c !== "\u06e5" && c !== "\u06e6"),
+]);
+
 function isSmallHigh(ch: string): boolean {
   return ch >= "\u06dd" && ch <= "\u06ed";
 }
@@ -46,6 +73,8 @@ function coreExpansion(ch: string): string[] {
   if (ch === "\u0671") return [ALIF]; // alif waslah
   if (ch === "\u0670" || ch === "\u0672") return [ALIF]; // dagger alif
   if (ch === "\u066e") return [ALIF]; // dotless beh -> alif
+  if (ch === "\u06e5") return ["\u0648"]; // waw kecil (superscript) -> waw
+  if (ch === "\u06e6") return ["\u064a"]; // yeh kecil (superscript) -> yeh
   if (ch === "\u0623") return [ALIF, "\u0621"]; // alif + hamza above
   if (ch === "\u0625") return [ALIF, "\u0621"]; // alif + hamza below
   if (ch === "\u0626") return ["\u064a", "\u0621"]; // yeh + hamza
@@ -344,6 +373,7 @@ function buildCore(
 
 export type MapResult = {
   mappedHtml: string;
+  plainWithMaddah: string; // teks Simple + tanda maddah (tanpa warna)
   kept: number;
   replaced: number;
   lost: number;
@@ -351,6 +381,12 @@ export type MapResult = {
   errors: string[];
   problems: string[];
   splitMaps: number;
+  maddahPlaced: number; // tanda maddah U+0653 yang dikembalikan
+  maddahSkippedAlef: number; // maddah tidak ditambah (huruf Simple sudah آ U+0622)
+  maddahAlreadyPresent: number; // maddah sudah ada di teks Simple (idempotensi)
+  maddahFallback: number; // maddah dijangkar ke huruf sebelumnya (silah kubra)
+  maddahUnplaced: string[]; // maddah gagal dipetakan (harus KOSONG)
+  maddahByCarrierClass: Record<string, number>; // kelas huruf pembawa -> jumlah
 };
 
 function neighborKeepsColor(
@@ -510,6 +546,7 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
   const simClasses = new Map<number, Set<string>>();
   const res: MapResult = {
     mappedHtml: "",
+    plainWithMaddah: "",
     kept: 0,
     replaced: 0,
     lost: 0,
@@ -517,11 +554,23 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
     errors: [],
     problems: [...parsed.problems],
     splitMaps: 0,
+    maddahPlaced: 0,
+    maddahSkippedAlef: 0,
+    maddahAlreadyPresent: 0,
+    maddahFallback: 0,
+    maddahUnplaced: [],
+    maddahByCarrierClass: {},
   };
   const mapped = new Set<number>();
   const lostItems: [number, TajweedChar][] = [];
   parsed.chars.forEach((tc, idx) => {
     if (tc.classes.size === 0) return;
+    if (tc.ch === MADDAH) {
+      // Tanda maddah bukan huruf: warnanya tidak ditransfer sebagai
+      // huruf; nasibnya diaudit terpisah di logika maddah di bawah
+      // (dikembalikan / sudah ada di آ / gagal) — bukan "lost".
+      return;
+    }
     const cls = pickClass(tc.classes)!;
     const corePositions = uthCorePositionsOfChar.get(idx) ?? [];
     const targetChars = new Set<number>();
@@ -561,7 +610,96 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
     res.lostReasons[reason] = (res.lostReasons[reason] ?? 0) + 1;
   }
 
+  // --- Kembalikan tanda maddah (U+0653) ---
+  // Setiap U+0653 di teks Uthmani adalah tanda mad panjang yang ditulis
+  // mushaf (wajib 4–5, jaiz 2/4/5, lazim 6 ketukan); teks Simple
+  // membuangnya. Kembalikan tepat setelah huruf Simple yang bersesuaian
+  // dengan huruf pembawa maddah di Uthmani (lewat alignment di atas —
+  // BUKAN tebakan posisi). Dua pengecualian, keduanya terverifikasi:
+  // (a) huruf Simple-nya آ (U+0622, maddah menyatu — mad badal,
+  // 2 ketukan): tandanya sudah ada di huruf itu, jangan ditambah;
+  // (b) teks Simple sudah mengandung U+0653 tepat setelah huruf itu
+  // (idempotensi — mis. teks tertanam yang sudah dibubuhi maddah).
+  // Tanda maddah adalah BAGIAN TEKS (bukan warna): ia masuk ke
+  // plainWithMaddah (dipakai mode tajwid OFF + Yasin) DAN ke
+  // mappedHtml (di dalam span warna huruf pembawanya, mode ON).
+  const maddahAfter = new Set<number>();
+  parsed.chars.forEach((tc, idx) => {
+    if (tc.ch !== MADDAH) return;
+    // Cari huruf pembawa: mundur melewati combining marks.
+    let j = idx - 1;
+    while (j >= 0 && MADDAH_CARRIER_SKIP.has(parsed.chars[j].ch)) j -= 1;
+    if (j < 0) {
+      res.maddahUnplaced.push(`maddah idx ${idx} tanpa huruf pembawa`);
+      return;
+    }
+    const carrier = parsed.chars[j];
+    const corePositions = uthCorePositionsOfChar.get(j) ?? [];
+    // Jalur normal: posisi core pembawa terpetakan ke Simple.
+    let simPos: number | undefined;
+    for (const cp of corePositions) {
+      if (u2s.has(cp)) {
+        simPos = u2s.get(cp);
+        break;
+      }
+    }
+    let fallbackUsed = false;
+    if (simPos === undefined) {
+      // Fallback: huruf pembawa TIDAK punya padanan huruf di Simple.
+      // Kasus nyatanya: waw/yeh kecil ۥ/ۦ pada dhamir ـهُ/ـهِ (mad
+      // silah kubra, 4–5 ketukan) — di Simple, vokal panjang itu
+      // ditulis sebagai harakat pendek (kasra/damma) pada huruf
+      // dhamir, tanpa huruf. Jangkar maddah: karakter Uthmani
+      // terdekat SEBELUM pembawa yang punya posisi core terpetakan
+      // (praktiknya selalu harakat pada huruf dhamir itu, tepat
+      // sebelum pembawa). Posisi ini ditentukan alignment, bukan
+      // tebakan; pencarian dibatasi 3 karakter ke belakang supaya
+      // jangkar tidak pernah jauh dari pembawa.
+      for (let k = j - 1; k >= Math.max(j - 3, 0); k--) {
+        for (const cp of uthCorePositionsOfChar.get(k) ?? []) {
+          if (u2s.has(cp)) {
+            simPos = u2s.get(cp);
+            fallbackUsed = true;
+            break;
+          }
+        }
+        if (simPos !== undefined) break;
+      }
+    }
+    if (simPos === undefined) {
+      res.maddahUnplaced.push(
+        `maddah idx ${idx} pembawa ${JSON.stringify(carrier.ch)} tidak terpetakan ke Simple`
+      );
+      return;
+    }
+    const target = simCharOfCorePos.get(simPos);
+    if (target === undefined) {
+      res.maddahUnplaced.push(
+        `maddah idx ${idx} pembawa ${JSON.stringify(carrier.ch)} tanpa huruf Simple`
+      );
+      return;
+    }
+    const targetCh = simChars[target];
+    if (targetCh === "\u0622") {
+      // alef maddah — tandanya sudah menyatu
+      res.maddahSkippedAlef += 1;
+      return;
+    }
+    if (target + 1 < simChars.length && simChars[target + 1] === MADDAH) {
+      res.maddahAlreadyPresent += 1;
+      return;
+    }
+    maddahAfter.add(target);
+    res.maddahPlaced += 1;
+    if (fallbackUsed) res.maddahFallback += 1;
+    const key = pickClass(carrier.classes) ?? "(tanpa kelas)";
+    res.maddahByCarrierClass[key] = (res.maddahByCarrierClass[key] ?? 0) + 1;
+  });
+
   // Render HTML: gabungkan run huruf berurutan dengan kelas yang sama.
+  // Tanda maddah disisipkan tepat setelah huruf pembawanya — di dalam
+  // span warna yang sama bila hurufnya berwarna, sebagai teks polos
+  // bila tidak.
   const out: string[] = [];
   let cur: string | null = null;
   simChars.forEach((ch, idx) => {
@@ -572,9 +710,13 @@ export function mapVerse(tajweedHtml: string, simpleText: string): MapResult {
       cur = cls;
     }
     out.push(ch);
+    if (maddahAfter.has(idx)) out.push(MADDAH);
   });
   if (cur !== null) out.push("</span>");
   res.mappedHtml = out.join("");
+  res.plainWithMaddah = simChars
+    .map((ch, i) => ch + (maddahAfter.has(i) ? MADDAH : ""))
+    .join("");
   return res;
 }
 
@@ -587,13 +729,19 @@ function range(a: number, b: number): number[] {
 /**
  * Pindahkan warna tajwid untuk satu surah penuh. `tajweedLines` = baris
  * mentah dari fetchSurahTajweed, `simpleLines` = teks Simple dari
- * fetchSurahText (sudah dinormalisasi). Mengembalikan HTML per ayat.
- * Bila jumlah baris tidak sama, kembalikan null (pemanggil memakai teks polos).
+ * fetchSurahText (sudah dinormalisasi). Mengembalikan per ayat:
+ * `html` (teks Simple + warna tajwid + maddah) dan `plain` (teks Simple
+ * + maddah, tanpa warna — dipakai saat toggle Warna Tajwid OFF dan di
+ * Yasin). Bila jumlah baris tidak sama, kembalikan null (pemanggil
+ * memakai teks polos).
  */
 export function mapTajweedSurah(
   tajweedLines: string[],
   simpleLines: string[]
-): string[] | null {
+): { html: string; plain: string }[] | null {
   if (tajweedLines.length !== simpleLines.length) return null;
-  return tajweedLines.map((line, i) => mapVerse(line, normalizeArabicText(simpleLines[i])).mappedHtml);
+  return tajweedLines.map((line, i) => {
+    const r = mapVerse(line, normalizeArabicText(simpleLines[i]));
+    return { html: r.mappedHtml, plain: r.plainWithMaddah };
+  });
 }

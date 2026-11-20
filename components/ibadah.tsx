@@ -9,6 +9,7 @@ import {
   HIJRI_MONTHS_SHORT_ID,
   JADWAL_ORDER,
   QURAN_SOURCE_NOTE,
+  fetchSurahTajweed,
   fetchSurahText,
   getHijriMonthCalendar,
   getHijriToday,
@@ -18,6 +19,7 @@ import {
   type HijriParts,
   type Timings,
 } from "@/lib/api";
+import { mapTajweedSurah } from "@/lib/tajweed-map";
 import {
   AMAL_HARIAN,
   ASMAUL_HUSNA,
@@ -1085,6 +1087,7 @@ function YasinReader({
 }) {
   const { progress, setLastRead } = useProgress();
   const [ayahs, setAyahs] = useState<YasinAyah[]>([]);
+  const [yasinPlain, setYasinPlain] = useState<string[] | null>(null);
   const [trans, setTrans] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -1102,6 +1105,16 @@ function YasinReader({
         if (!alive) return;
         setAyahs(arabic.map((text, i) => ({ numberInSurah: i + 1, text })));
         setTrans(translation);
+        // Tanda maddah (mad panjang) dikembalikan lewat pemetaan tajwid
+        // dari teks Uthmani ke teks Simple — Yasin tidak memakai warna
+        // tajwid, tapi tandanya harus tampil. Gagal = teks Simple polos.
+        fetchSurahTajweed(36)
+          .then((lines) => {
+            if (!alive) return;
+            const mapped = mapTajweedSurah(lines, arabic);
+            if (mapped) setYasinPlain(mapped.map((m) => m.plain));
+          })
+          .catch(() => {});
       })
       .catch(
         () =>
@@ -1221,7 +1234,9 @@ function YasinReader({
                   className={`ayah ${lastReadAyah === a.numberInSurah ? "last-read" : ""}`}
                   title={`Ketuk untuk menandai Ayat ${a.numberInSurah} sebagai terakhir dibaca`}
                 >
-                  {a.text}{" "}
+                  {yasinPlain && yasinPlain.length === ayahs.length
+                    ? yasinPlain[a.numberInSurah - 1]
+                    : a.text}{" "}
                   <span className="ayah-mark">{toArabicIndic(a.numberInSurah)}</span>{" "}
                 </span>
               ))}
