@@ -134,3 +134,16 @@ export const SIFIR_LEGEND: { mark: string; name: string; desc: string }[] = [
   { mark: "۟", name: "صفر مستدير — Mustadir", desc: "huruf diam, tidak dibaca (mis. waw أُولَٰئِكَ, alif مِائَة)" },
   { mark: "۠", name: "صفر مستطيل — Mustathil", desc: "dibaca saat waqaf, diam saat wasal (mis. alif أَنَا)" },
 ];
+
+/**
+ * Legenda penanda juz (rub') + sajdah — dikembalikan mapper dari teks
+ * Uthmani (199 penanda di awal ayat + 15 penanda sajdah di akhir ayat).
+ * Keduanya ornamen ukuran penuh di font me_quran, jadi tampil apa adanya
+ * tanpa pembesaran seperti tanda waqaf. Catatan jujur: ۞ menandai awal
+ * tiap rub' (perempat juz) — 30 awal juz adalah subsetnya; di aplikasi
+ * ini disebut "penanda juz" mengikuti sebutan yang umum dipakai.
+ */
+export const JUZ_SAJDAH_LEGEND: { mark: string; name: string; desc: string }[] = [
+  { mark: "۞", name: "Penanda juz (rub')", desc: "awal rub' — perempat juz" },
+  { mark: "۩", name: "Ayat sajdah", desc: "disunnahkan sujud tilawah" },
+];

@@ -104,6 +104,14 @@ export function cycleKeyFor(p: PengingatDef, now: Date): string {
 
 // ---------- Shell modal generik (dipakai ulang untuk konten lain) ----------
 
+/**
+ * Modal generik. Menutupnya HARUS mudah — laporan Adam 2026-11-21:
+ * popup menutupi layar dan menu di belakangnya tidak bisa diketuk
+ * selama popup terbuka. Karena itu modal ini bisa ditutup dengan TIGA
+ * cara: (1) ketuk area gelap di luar kartu, (2) tombol "Tutup" yang
+ * jelas di bawah kartu, (3) tombol X di pojok + tombol Esc. Menutup =
+ * dismiss pengingat itu untuk siklus hari ini (perilaku lama tombol X).
+ */
 export function PromoModal({
   accent,
   kicker,
@@ -119,14 +127,27 @@ export function PromoModal({
   onClose: () => void;
   children: ReactNode;
 }) {
+  // Esc menutup modal (desktop).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-4 backdrop-blur-[2px] sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      onClick={onClose}
     >
-      <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-[#171717]">
+      <div
+        className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-[#171717]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div
           className={`relative bg-gradient-to-br px-5 pb-5 pt-6 text-white ${accent}`}
         >
@@ -147,6 +168,14 @@ export function PromoModal({
         </div>
         <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto px-5 py-4">
           {children}
+        </div>
+        <div className="border-t border-black/5 px-5 py-3 dark:border-white/10">
+          <button
+            onClick={onClose}
+            className="w-full rounded-2xl bg-neutral-100 px-4 py-2.5 text-sm font-extrabold text-neutral-700 transition active:scale-95 dark:bg-white/10 dark:text-neutral-200"
+          >
+            Tutup
+          </button>
         </div>
       </div>
     </div>

@@ -25,7 +25,7 @@ import {
   getSurahList,
   type SurahMeta,
 } from "@/lib/api";
-import { SIFIR_LEGEND, TAJWEED_LEGEND, WAQAF_LEGEND } from "@/lib/tajweed";
+import { JUZ_SAJDAH_LEGEND, SIFIR_LEGEND, TAJWEED_LEGEND, WAQAF_LEGEND } from "@/lib/tajweed";
 import { mapTajweedSurah } from "@/lib/tajweed-map";
 import {
   CSS_FULLSCREEN_CLASS,
@@ -835,12 +835,29 @@ export function BacaPage() {
               </span>
             ))}
           </div>
+          <p className="mb-2 mt-3 text-sm font-extrabold text-neutral-900 dark:text-neutral-100">
+            Penanda juz &amp; sajdah
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {JUZ_SAJDAH_LEGEND.map((r) => (
+              <span
+                key={r.name}
+                className="flex items-center gap-1.5 rounded-full bg-black/[0.04] px-2.5 py-1.5 text-xs font-bold text-neutral-700 dark:bg-white/5 dark:text-neutral-300"
+              >
+                <span className="mushaf text-lg leading-none text-neutral-900 dark:text-neutral-100">
+                  {r.mark}
+                </span>
+                {r.name} — {r.desc}
+              </span>
+            ))}
+          </div>
           <p className="mt-2 text-[11px] leading-relaxed text-neutral-400 dark:text-neutral-500">
             Tanda waqaf dan sifir mengikuti Mushaf Standar Indonesia (Kemenag RI) dan
             dipetakan dari teks Uthmani ke ejaan Simple yang ditampilkan. Tanda waqaf
             juga ada di akhir ayat (mis. لا di akhir ayat Al-Waqi&apos;ah) — karena
             MSI memang menaruh tanda waqaf di akhir ayat, berbeda dengan Mushaf
-            Madinah yang tidak.
+            Madinah yang tidak. Penanda juz (۞, awal rub&apos;/perempat juz) dan
+            sajdah (۩, akhir ayat sajdah) dikembalikan dari teks Uthmani.
           </p>
         </Card>
 

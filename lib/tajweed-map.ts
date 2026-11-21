@@ -44,6 +44,10 @@
 //   supaya tampil BESAR dan terbaca (font me_quran menggambarnya kecil
 //   dan melayang tinggi di atas teks; CSS `.mushaf .wq { font-size:
 //   1.4em }`). Di teks polos ia tampil apa adanya (bagian dari teks).
+// - Penanda juz (rub') U+06DE dan sajdah U+06E9 DIKEMBALIKAN dari teks
+//   Uthmani polos (199 awal ayat + 15 akhir ayat sajdah); keduanya
+//   SELALU di tepi ayat, jadi penempatannya posisional. Render test
+//   me_quran: keduanya ornamen ukuran penuh, TIDAK perlu span pembesar.
 // - Sisi tajwid: [alif, tanwin] -> [tanwin, alif]; [alif, syaddah, tanwin]
 //   -> [syaddah, tanwin, alif].
 
@@ -60,6 +64,8 @@ const MADDAH = "\u0653";
 const SMALL_ZERO = "\u06df"; // sifir mustadir
 const SMALL_RECT = "\u06e0"; // sifir mustathil
 const SAKTAH = "\u06dc"; // saktah
+const JUZ_MARK = "\u06de"; // rub' (perempat hizb) — disebut "penanda juz" oleh pengguna
+const SAJDAH_MARK = "\u06e9"; // penanda ayat sajdah (sujud tilawah)
 // Tanda waqaf Mushaf Standar Indonesia (Kemenag): U+06D6–U+06DC.
 const WAQAF_MARKS = new Set(["\u06d6", "\u06d7", "\u06d8", "\u06d9", "\u06da", "\u06db", "\u06dc"]);
 
@@ -494,6 +500,12 @@ export type MapResult = {
   msiUnplaced: string[]; // tanda MSI gagal dipetakan (harus KOSONG)
   msiByMark: Record<string, number>; // tanda MSI -> jumlah placed
   msiConflictByPair: Record<string, number>; // "MSI -> Madinah" -> jumlah
+  juzPlaced: number; // penanda juz U+06DE yang dikembalikan (199 ayat)
+  juzAlreadyPresent: number; // penanda juz sudah ada di teks Simple (idempotensi — teks tertanam)
+  juzUnplaced: string[]; // harus KOSONG (penempatan di tepi ayat, tidak bisa gagal)
+  sajdahPlaced: number; // penanda sajdah U+06E9 yang dikembalikan (15 ayat)
+  sajdahAlreadyPresent: number; // penanda sajdah sudah ada di teks Simple (idempotensi)
+  sajdahUnplaced: string[]; // harus KOSONG
 };
 
 function neighborKeepsColor(
@@ -918,6 +930,12 @@ export function mapVerse(
     msiUnplaced: [],
     msiByMark: {},
     msiConflictByPair: {},
+    juzPlaced: 0,
+    juzAlreadyPresent: 0,
+    juzUnplaced: [],
+    sajdahPlaced: 0,
+    sajdahAlreadyPresent: 0,
+    sajdahUnplaced: [],
   };
   const mapped = new Set<number>();
   const lostItems: [number, TajweedChar][] = [];
@@ -1216,6 +1234,54 @@ export function mapVerse(
     });
   }
 
+  // --- Kembalikan penanda juz (rub') U+06DE dan sajdah U+06E9 ---
+  // Sumber: teks Uthmani polos (uthmaniText) — sama seperti sifir.
+  // Keduanya SELALU di tepi ayat, jadi penempatannya posisional
+  // (BUKAN alignment): ۞ di AWAL ayat (199 ayat — awal tiap rub' /
+  // perempat hizb; disebut "penanda juz" oleh pengguna; 30 awal juz
+  // adalah subsetnya), ۩ di AKHIR ayat sajdah (15 ayat, termasuk
+  // 22:77 yang sajdah_number-nya null di Quran.com tapi ۩-nya ada
+  // di teks Uthmani). Satu pengecualian data: 37:22 punya ۞ di
+  // Uthmani tapi TIDAK di teks MSI equran.id (celah data MSI, bukan
+  // kesalahan penempatan — sumber di sini Uthmani, jadi 37:22 tetap
+  // dapat ۞). Render test me_quran: keduanya ornamen ukuran penuh
+  // (۞ 27x31px, ۩ 22x29px pada 28px — setinggi huruf), TIDAK perlu
+  // span pembesar seperti tanda waqaf. Keduanya BAGIAN TEKS: masuk
+  // ke plain DAN ke mappedHtml, sebagai teks polos tanpa span.
+  // Bila uthmaniText tidak diberikan, penanda tidak dikembalikan
+  // (degradasi anggun — sama seperti sifir).
+  let juzAdd = false;
+  let sajdahAdd = false;
+  if (uthmaniText !== undefined) {
+    const u = uthmaniText.trim();
+    if (u.startsWith(JUZ_MARK)) {
+      // Idempotensi: teks Simple/tertanam sudah diawali ۞.
+      const first = simChars.find((c) => c !== " ");
+      if (first === JUZ_MARK) {
+        res.juzAlreadyPresent += 1;
+      } else {
+        res.juzPlaced += 1;
+        juzAdd = true;
+      }
+    }
+    if (u.endsWith(SAJDAH_MARK)) {
+      // Idempotensi: teks sudah diakhiri ۩.
+      let last: string | undefined;
+      for (let k = simChars.length - 1; k >= 0; k--) {
+        if (simChars[k] !== " ") {
+          last = simChars[k];
+          break;
+        }
+      }
+      if (last === SAJDAH_MARK) {
+        res.sajdahAlreadyPresent += 1;
+      } else {
+        res.sajdahPlaced += 1;
+        sajdahAdd = true;
+      }
+    }
+  }
+
   // Render HTML: gabungkan run huruf berurutan dengan kelas yang sama.
   // Tanda maddah + sifir disisipkan tepat setelah huruf pembawanya —
   // di dalam span warna yang sama bila hurufnya berwarna, sebagai teks
@@ -1228,6 +1294,7 @@ export function mapVerse(
   // mengubah kelas warna tajwid huruf di sekitarnya.
   const out: string[] = [];
   let cur: string | null = null; // kelas span yang sedang terbuka: nama kelas tj, "wq", atau null
+  if (juzAdd) out.push(JUZ_MARK + " ");
   simChars.forEach((ch, idx) => {
     // Conflict MSI: tanda Madinah di posisi ini diganti tanda MSI.
     const renderCh = msiReplace.get(idx) ?? ch;
@@ -1270,17 +1337,21 @@ export function mapVerse(
     }
   });
   if (cur !== null) out.push("</span>");
+  if (sajdahAdd) out.push(" " + SAJDAH_MARK);
   res.mappedHtml = out.join("");
-  res.plain = simChars
-    .map(
-      (ch, i) =>
-        (msiReplace.get(i) ?? ch) +
-        (maddahAfter.has(i) ? MADDAH : "") +
-        (zeroAfter.get(i) ?? "") +
-        (saktahAfter.has(i) ? SAKTAH : "") +
-        (msiInsert.get(i) ?? "")
-    )
-    .join("");
+  res.plain =
+    (juzAdd ? JUZ_MARK + " " : "") +
+    simChars
+      .map(
+        (ch, i) =>
+          (msiReplace.get(i) ?? ch) +
+          (maddahAfter.has(i) ? MADDAH : "") +
+          (zeroAfter.get(i) ?? "") +
+          (saktahAfter.has(i) ? SAKTAH : "") +
+          (msiInsert.get(i) ?? "")
+      )
+      .join("") +
+    (sajdahAdd ? " " + SAJDAH_MARK : "");
   return res;
 }
 
@@ -1299,7 +1370,7 @@ function range(a: number, b: number): number[] {
  * fetchSurahMsi (sumber tanda waqaf MSI, termasuk akhir ayat; boleh
  * tidak ada — waqaf MSI tidak ditambahkan bila tidak ada). Mengembalikan
  * per ayat: `html` (teks Simple + warna tajwid + maddah + sifir +
- * saktah + waqaf MSI) dan `plain` (teks Simple + tanda yang
+ * saktah + waqaf MSI + penanda juz/sajdah) dan `plain` (teks Simple + tanda yang
  * dikembalikan, tanpa warna — dipakai saat toggle Warna Tajwid OFF dan
  * di Yasin). Bila jumlah baris tidak sama, kembalikan null (pemanggil
  * memakai teks polos).
