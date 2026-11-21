@@ -47,6 +47,27 @@ const ISLAM_KEYWORDS = [
   "khutbah", "jumat", "jum'at", "buka puasa", "sahur", "shahih", "shohih",
 ];
 
+// Istilah olahraga — artikel olahraga dikecualikan walau mengandung kata
+// kunci Islam (mis. nama orang "Imam"/"Muslim", atau hari "Jumat" di tanggal).
+const SPORTS_KEYWORDS = [
+  "suporter", "laga", "skor", "semifinal", "perempat final", "badminton",
+  "sepak bola", "timnas", "pssi", "pertandingan", "liga",
+];
+// Kata pendek — hanya cocok bila berdiri sendiri ("golongan" bukan "gol").
+const SPORTS_WORDS = [/\bgol\b/];
+
+function isIslamic(title: string, description: string): boolean {
+  // Hapus "Jumat" yang diikuti tanggal ("Jumat (20/11/2026)",
+  // "Jumat, 20 November 2026") — itu nama hari, bukan topik Islam.
+  // "Shalat Jumat" / "Jumat Berkah" (tanpa tanggal) tetap dihitung.
+  const hay = ` ${title} ${description} `
+    .toLowerCase()
+    .replace(/\bjum['’]?at\b\s*[,(\[]?\s*\d/g, " ");
+  if (SPORTS_KEYWORDS.some((k) => hay.includes(k))) return false;
+  if (SPORTS_WORDS.some((re) => re.test(hay))) return false;
+  return ISLAM_KEYWORDS.some((k) => hay.includes(k));
+}
+
 function decodeEntities(s: string): string {
   return s
     .replace(/&amp;/g, "&")
@@ -174,10 +195,7 @@ async function fetchSource(src: (typeof SOURCES)[number]): Promise<BeritaItem[]>
     try {
       const items = parseRss(await fetchOne(url));
       const kept = src.islamOnly
-        ? items.filter((it) => {
-            const hay = `${it.title} ${it.description}`.toLowerCase();
-            return ISLAM_KEYWORDS.some((k) => hay.includes(k));
-          })
+        ? items.filter((it) => isIslamic(it.title, it.description))
         : items;
       return kept.map((it) => ({
         title: it.title,
