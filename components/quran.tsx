@@ -27,6 +27,7 @@ import {
 } from "@/lib/api";
 import { JUZ_SAJDAH_LEGEND, SIFIR_LEGEND, TAJWEED_LEGEND, WAQAF_LEGEND } from "@/lib/tajweed";
 import { mapTajweedSurah } from "@/lib/tajweed-map";
+import { useAutoScrollLoop } from "@/lib/autoscroll";
 import {
   CSS_FULLSCREEN_CLASS,
   normalizeArabicText,
@@ -319,10 +320,10 @@ export function BacaPage() {
     useReaderFontSize();
   const fs = useFullscreen();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // Gulir otomatis pelan di mode baca (8 px/detik — kira-kira 1 baris
-  // tiap 7 detik di ukuran teks sedang), supaya pengguna tidak perlu
-  // sering menggulir sendiri.
-  const [autoScroll, setAutoScroll] = useState(false);
+  // Gulir otomatis langsung jalan saat buka surah — tidak perlu buka
+  // pengaturan dulu (permintaan Adam 2026-11-23). Tombol pill di bawah
+  // untuk berhenti; buka surah lain langsung jalan lagi.
+  const [autoScroll, setAutoScroll] = useState(true);
   const [ayahJumpOpen, setAyahJumpOpen] = useState(false);
   const [ayahInput, setAyahInput] = useState("");
   const [qari, setQari] = useState(QARIS[0]);
@@ -343,47 +344,13 @@ export function BacaPage() {
     };
   }, []);
 
-  // Gulir otomatis pelan di mode baca: menggulir halaman ~8 px/detik,
-  // berhenti sendiri di ujung halaman, dan berhenti begitu pengguna
-  // menggulir sendiri (roda mouse / sentuhan) supaya tidak berebut.
-  // Pecahan piksel dikumpulkan dulu lalu digulir per piksel bulat —
-  // scrollBy pecahan (0,13 px/frame) ternyata tidak menggerakkan halaman.
-  useEffect(() => {
-    if (!autoScroll || readerSurah == null) return;
-    const SPEED_PX_PER_SEC = 8;
-    const el = document.documentElement;
-    let raf = 0;
-    let last = performance.now();
-    let acc = 0;
-    const tick = (now: number) => {
-      const dt = Math.min((now - last) / 1000, 0.1);
-      last = now;
-      const atBottom =
-        window.innerHeight + window.scrollY >= el.scrollHeight - 4;
-      if (atBottom) {
-        setAutoScroll(false);
-        return;
-      }
-      acc += SPEED_PX_PER_SEC * dt;
-      const step = Math.floor(acc);
-      if (step >= 1) {
-        acc -= step;
-        const before = el.scrollTop;
-        el.scrollTop += step;
-        if (el.scrollTop === before) document.body.scrollTop += step;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    const stop = () => setAutoScroll(false);
-    window.addEventListener("wheel", stop, { passive: true });
-    window.addEventListener("touchmove", stop, { passive: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("wheel", stop);
-      window.removeEventListener("touchmove", stop);
-    };
-  }, [autoScroll, readerSurah]);
+  // Gulir otomatis langsung jalan saat buka surah (tanpa buka pengaturan).
+  // Hanya di mode baca — daftar surah tidak ikut menggulir.
+  useAutoScrollLoop({
+    running: autoScroll && readerSurah != null,
+    ready: !loading,
+    onStop: () => setAutoScroll(false),
+  });
 
   // Buka surah langsung dari menu Surat Pilihan (?surah=N). Query dibersihkan
   // setelah dibaca supaya refresh tidak membuka surah lama.
@@ -517,6 +484,23 @@ export function BacaPage() {
     const el = document.getElementById(`ayah-${ayah}`);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   };
+
+  // Buka surah langsung di ayat terakhir dibaca (sekali per surah),
+  // begitu teksnya selesai dimuat — tidak perlu mencari dengan menggulir
+  // (permintaan Adam 2026-11-23).
+  const jumpedToLastReadRef = useRef(false);
+  useEffect(() => {
+    jumpedToLastReadRef.current = false;
+  }, [readerSurah]);
+  useEffect(() => {
+    if (readerSurah == null || loading) return;
+    if (arabicLines.length === 0) return;
+    if (lastReadAyah == null || jumpedToLastReadRef.current) return;
+    jumpedToLastReadRef.current = true;
+    const t = window.setTimeout(() => jumpToAyah(lastReadAyah), 150);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readerSurah, loading, arabicLines, lastReadAyah]);
 
   const toggleAudio = () => {
     const el = audioRef.current;

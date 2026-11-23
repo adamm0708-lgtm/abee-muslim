@@ -22,6 +22,7 @@ import {
   type Timings,
 } from "@/lib/api";
 import { mapTajweedSurah } from "@/lib/tajweed-map";
+import { useAutoScrollLoop } from "@/lib/autoscroll";
 import { JUZ_SAJDAH_LEGEND, SIFIR_LEGEND, WAQAF_LEGEND } from "@/lib/tajweed";
 import {
   AMAL_HARIAN,
@@ -1664,6 +1665,15 @@ function YasinReader({
   const [qari, setQari] = useState(QARIS[0]);
   const [audioError, setAudioError] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
+  // Gulir otomatis langsung jalan saat buka Yasin — tidak perlu buka
+  // pengaturan dulu (permintaan Adam 2026-11-23). Tombol pill di bawah
+  // untuk berhenti; buka lagi langsung jalan lagi.
+  const [autoScroll, setAutoScroll] = useState(true);
+  useAutoScrollLoop({
+    running: autoScroll,
+    ready: !loading,
+    onStop: () => setAutoScroll(false),
+  });
   const audioUrl = surahAudioUrl(qari.edition, 36);
   const lastReadAyah = progress.lastRead?.surahNo === 36 ? progress.lastRead.ayah : null;
 
@@ -1729,6 +1739,19 @@ function YasinReader({
       .getElementById(`yasin-ayah-${ayah}`)
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
+
+  // Buka Yasin langsung di ayat terakhir dibaca, begitu teksnya selesai
+  // dimuat — tidak perlu mencari dengan menggulir (permintaan Adam 2026-11-23).
+  const jumpedToLastReadRef = useRef(false);
+  useEffect(() => {
+    if (loading) return;
+    if (ayahs.length === 0) return;
+    if (lastReadAyah == null || jumpedToLastReadRef.current) return;
+    jumpedToLastReadRef.current = true;
+    const t = window.setTimeout(() => jumpToAyah(lastReadAyah), 150);
+    return () => window.clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, ayahs, lastReadAyah]);
 
   return (
     <div>
@@ -1910,6 +1933,16 @@ function YasinReader({
           dari teks Uthmani.
         </p>
       </Card>
+
+      {/* Tombol berhenti gulir otomatis (muncul saat gulir aktif) */}
+      {autoScroll && (
+        <button
+          onClick={() => setAutoScroll(false)}
+          className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#0A0A0A] px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-[#D4AF37]/60 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+        >
+          Menggulir pelan — ketuk untuk berhenti
+        </button>
+      )}
     </div>
   );
 }
