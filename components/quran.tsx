@@ -346,22 +346,32 @@ export function BacaPage() {
   // Gulir otomatis pelan di mode baca: menggulir halaman ~8 px/detik,
   // berhenti sendiri di ujung halaman, dan berhenti begitu pengguna
   // menggulir sendiri (roda mouse / sentuhan) supaya tidak berebut.
+  // Pecahan piksel dikumpulkan dulu lalu digulir per piksel bulat —
+  // scrollBy pecahan (0,13 px/frame) ternyata tidak menggerakkan halaman.
   useEffect(() => {
     if (!autoScroll || readerSurah == null) return;
     const SPEED_PX_PER_SEC = 8;
+    const el = document.documentElement;
     let raf = 0;
     let last = performance.now();
+    let acc = 0;
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
       const atBottom =
-        window.innerHeight + window.scrollY >=
-        document.documentElement.scrollHeight - 4;
+        window.innerHeight + window.scrollY >= el.scrollHeight - 4;
       if (atBottom) {
         setAutoScroll(false);
         return;
       }
-      window.scrollBy(0, SPEED_PX_PER_SEC * dt);
+      acc += SPEED_PX_PER_SEC * dt;
+      const step = Math.floor(acc);
+      if (step >= 1) {
+        acc -= step;
+        const before = el.scrollTop;
+        el.scrollTop += step;
+        if (el.scrollTop === before) document.body.scrollTop += step;
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -915,7 +925,7 @@ export function BacaPage() {
         {autoScroll && (
           <button
             onClick={() => setAutoScroll(false)}
-            className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#0A0A0A] px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-[#D4AF37]/60 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+            className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#0A0A0A] px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-[#D4AF37]/60 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
           >
             Menggulir pelan — ketuk untuk berhenti
           </button>
