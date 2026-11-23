@@ -2092,10 +2092,8 @@ function DoaSetelahSurat({
         <Note>
           Doa yang dibaca setelah selesai membaca surat Yasin, Al-Mulk,
           Al-Waqi&apos;ah, dan Al-Kahf — plus doa khatam Al-Qur&apos;an
-          (versi pendek). Sumber: Yasin — Kitab Abwabul Faraj (Habib
-          Abdullah al-Haddad), disamakan dengan aplikasi Mung Media
-          kecuali kata أَدْيَانَنَا yang dipertahankan sesuai cetakan
-          Majmu&apos; Syarif; Al-Mulk — Kitab Al-Minahus Saniyah
+          (versi pendek). Sumber: Yasin — disamakan persis dengan
+          aplikasi Mung Media; Al-Mulk — Kitab Al-Minahus Saniyah
           &apos;ala Al-Washiyah Al-Matbuliyah; Al-Waqi&apos;ah — Kitab
           Khulashah Al-Madad An-Nabawi (Habib Umar bin Hafidz) dan Kitab
           Nubdzatul Anwar wa Fawaidul Akhyar hlm. 85; Al-Kahf — susunan
