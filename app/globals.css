@@ -100,7 +100,7 @@ body {
   font-family: "me_quran", "UthmanicHafs", "Amiri Quran", "Scheherazade New", "Amiri", "Traditional Arabic", serif;
   direction: rtl;
   text-align: right;
-  line-height: 2.2;
+  line-height: 1.9;
   word-spacing: 0.05em;
 }
 
@@ -144,7 +144,7 @@ body {
 /* Tanda waqaf (U+06D6–U+06DC): font me_quran menggambarnya kecil dan
    melayang tinggi di atas teks — di HTML tiap tanda dibungkus
    <span class="wq"> (lib/tajweed-map.ts) dan diperbesar di sini supaya
-   terbaca jelas, seperti di mushaf cetak. line-height .mushaf 2.2 memberi
+   terbaca jelas, seperti di mushaf cetak. line-height .mushaf 1.9 memberi
    ruang di atas baris; tanda saktah (U+06DC, di garis dasar) ikut
    membesar secukupnya. */
 .mushaf .wq {

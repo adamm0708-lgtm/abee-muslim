@@ -319,6 +319,10 @@ export function BacaPage() {
     useReaderFontSize();
   const fs = useFullscreen();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Gulir otomatis pelan di mode baca (14 px/detik — kira-kira 1 baris
+  // tiap 4 detik di ukuran teks sedang), supaya pengguna tidak perlu
+  // sering menggulir sendiri.
+  const [autoScroll, setAutoScroll] = useState(false);
   const [ayahJumpOpen, setAyahJumpOpen] = useState(false);
   const [ayahInput, setAyahInput] = useState("");
   const [qari, setQari] = useState(QARIS[0]);
@@ -338,6 +342,38 @@ export function BacaPage() {
       alive = false;
     };
   }, []);
+
+  // Gulir otomatis pelan di mode baca: menggulir halaman ~14 px/detik,
+  // berhenti sendiri di ujung halaman, dan berhenti begitu pengguna
+  // menggulir sendiri (roda mouse / sentuhan) supaya tidak berebut.
+  useEffect(() => {
+    if (!autoScroll || readerSurah == null) return;
+    const SPEED_PX_PER_SEC = 14;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4;
+      if (atBottom) {
+        setAutoScroll(false);
+        return;
+      }
+      window.scrollBy(0, SPEED_PX_PER_SEC * dt);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    const stop = () => setAutoScroll(false);
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchmove", stop, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchmove", stop);
+    };
+  }, [autoScroll, readerSurah]);
 
   // Buka surah langsung dari menu Surat Pilihan (?surah=N). Query dibersihkan
   // setelah dibaca supaya refresh tidak membuka surah lama.
@@ -597,6 +633,20 @@ export function BacaPage() {
                     </span>
                     <span className="text-xs text-[#0B3D39] dark:text-[#D4AF37]">
                       {showTajweed ? "Tampil" : "Sembunyi"}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAutoScroll((v) => !v);
+                      setSettingsOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-sm font-bold hover:bg-black/5 dark:hover:bg-white/5"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Icon name="play" className="h-4 w-4" /> Gulir Otomatis
+                    </span>
+                    <span className="text-xs text-[#0B3D39] dark:text-[#D4AF37]">
+                      {autoScroll ? "Aktif (pelan)" : "Mati"}
                     </span>
                   </button>
                   <div className="mt-1 flex items-center justify-between rounded-xl px-2 py-2">
@@ -860,6 +910,16 @@ export function BacaPage() {
             sajdah (۩, akhir ayat sajdah) dikembalikan dari teks Uthmani.
           </p>
         </Card>
+
+        {/* Tombol berhenti gulir otomatis (muncul saat gulir aktif) */}
+        {autoScroll && (
+          <button
+            onClick={() => setAutoScroll(false)}
+            className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#0A0A0A] px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-[#D4AF37]/60 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
+          >
+            Menggulir pelan — ketuk untuk berhenti
+          </button>
+        )}
 
         <p className="mt-3 text-center text-xs text-neutral-400 dark:text-neutral-500">
           Ketuk sebuah ayat untuk menandainya sebagai terakhir dibaca. {QURAN_SOURCE_NOTE}.
