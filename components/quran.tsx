@@ -319,8 +319,8 @@ export function BacaPage() {
     useReaderFontSize();
   const fs = useFullscreen();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  // Gulir otomatis pelan di mode baca (14 px/detik — kira-kira 1 baris
-  // tiap 4 detik di ukuran teks sedang), supaya pengguna tidak perlu
+  // Gulir otomatis pelan di mode baca (8 px/detik — kira-kira 1 baris
+  // tiap 7 detik di ukuran teks sedang), supaya pengguna tidak perlu
   // sering menggulir sendiri.
   const [autoScroll, setAutoScroll] = useState(false);
   const [ayahJumpOpen, setAyahJumpOpen] = useState(false);
@@ -343,12 +343,12 @@ export function BacaPage() {
     };
   }, []);
 
-  // Gulir otomatis pelan di mode baca: menggulir halaman ~14 px/detik,
+  // Gulir otomatis pelan di mode baca: menggulir halaman ~8 px/detik,
   // berhenti sendiri di ujung halaman, dan berhenti begitu pengguna
   // menggulir sendiri (roda mouse / sentuhan) supaya tidak berebut.
   useEffect(() => {
     if (!autoScroll || readerSurah == null) return;
-    const SPEED_PX_PER_SEC = 14;
+    const SPEED_PX_PER_SEC = 8;
     let raf = 0;
     let last = performance.now();
     const tick = (now: number) => {
