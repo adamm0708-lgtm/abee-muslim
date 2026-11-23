@@ -5,8 +5,12 @@ import { useEffect, useRef } from "react";
  *
  * Dipakai bersama: kecepatan 8 px/detik (kira-kira 1 baris tiap 7 detik di
  * ukuran teks sedang). Langsung jalan saat halaman baca dibuka — tidak perlu
- * buka pengaturan dulu. Berhenti sendiri di ujung halaman, dan berhenti
- * begitu pengguna menggulir sendiri (roda mouse / sentuhan).
+ * buka pengaturan dulu. Berhenti sendiri di ujung halaman (atau kalau
+ * halaman memang pendek). Ketuk layar atau geser manual TIDAK
+ * memberhentikannya — geser hanya memindah posisi, gulir pelan lanjut
+ * dari posisi baru. Satu-satunya cara mematikan: tombol "Gulir Otomatis"
+ * di pengaturan baca (permintaan Adam 2026-11-24: pill "ketuk untuk
+ * berhenti" dihapus).
  *
  * Pelajaran dari bug 2026-11-23: scrollBy dengan pecahan piksel (0,13 px
  * per frame) ternyata tidak menggerakkan halaman — pecahan dikumpulkan dulu
@@ -65,13 +69,8 @@ export function useAutoScrollLoop(opts: {
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    const stop = () => onStopRef.current();
-    window.addEventListener("wheel", stop, { passive: true });
-    window.addEventListener("touchmove", stop, { passive: true });
     return () => {
       cancelAnimationFrame(raf);
-      window.removeEventListener("wheel", stop);
-      window.removeEventListener("touchmove", stop);
     };
   }, [running, ready]);
 }

@@ -1667,8 +1667,9 @@ function YasinReader({
   const [audioError, setAudioError] = useState(false);
   const [showTranslation, setShowTranslation] = useState(true);
   // Gulir otomatis langsung jalan saat buka Yasin — tidak perlu buka
-  // pengaturan dulu (permintaan Adam 2026-11-23). Tombol pill di bawah
-  // untuk berhenti; buka lagi langsung jalan lagi.
+  // pengaturan dulu (permintaan Adam 2026-11-23). Berhenti hanya lewat
+  // tombol "Gulir Otomatis" di bawah (permintaan Adam 2026-11-24:
+  // pill "ketuk untuk berhenti" dihapus, ketuk/geser tidak menghentikan).
   const [autoScroll, setAutoScroll] = useState(true);
   useAutoScrollLoop({
     running: autoScroll,
@@ -1815,6 +1816,17 @@ function YasinReader({
             Ukuran teks &amp; layar penuh ada di toolbar di atas
           </span>
         </div>
+        <div className="mt-1 flex items-center justify-between gap-2">
+          <button
+            onClick={() => setAutoScroll((v) => !v)}
+            className="flex items-center gap-2 text-sm font-bold text-neutral-700 dark:text-neutral-300"
+          >
+            <Icon name="play" className="h-4 w-4" /> Gulir Otomatis
+            <span className="text-xs text-[#0B3D39] dark:text-[#D4AF37]">
+              {autoScroll ? "Aktif (pelan)" : "Mati"}
+            </span>
+          </button>
+        </div>
       </Card>
 
       {lastReadAyah != null && (
@@ -1937,15 +1949,6 @@ function YasinReader({
         </p>
       </Card>
 
-      {/* Tombol berhenti gulir otomatis (muncul saat gulir aktif) */}
-      {autoScroll && (
-        <button
-          onClick={() => setAutoScroll(false)}
-          className="fixed bottom-24 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#0A0A0A] px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-[#D4AF37]/60 dark:bg-[#D4AF37] dark:text-[#0A0A0A]"
-        >
-          Menggulir pelan — ketuk untuk berhenti
-        </button>
-      )}
     </div>
   );
 }
