@@ -1737,7 +1737,9 @@ function YasinReader({
     markAyah(ayah);
     document
       .getElementById(`yasin-ayah-${ayah}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Langsung (auto), bukan smooth: gulir halus dibatalkan oleh loop
+      // gulir otomatis yang menulis scrollTop tiap frame (2026-11-23).
+      ?.scrollIntoView({ behavior: "auto", block: "center" });
   };
 
   // Buka Yasin langsung di ayat terakhir dibaca, begitu teksnya selesai

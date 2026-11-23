@@ -482,7 +482,9 @@ export function BacaPage() {
   const jumpToAyah = (ayah: number) => {
     markAyah(ayah);
     const el = document.getElementById(`ayah-${ayah}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    // Langsung (auto), bukan smooth: gulir halus dibatalkan oleh loop
+    // gulir otomatis yang menulis scrollTop tiap frame (2026-11-23).
+    if (el) el.scrollIntoView({ behavior: "auto", block: "center" });
   };
 
   // Buka surah langsung di ayat terakhir dibaca (sekali per surah),
