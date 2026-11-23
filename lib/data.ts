@@ -1360,6 +1360,54 @@ export const DOA_TAHLIL: DoaTahlilPart[] = [
   },
 ];
 
+// ---------- Doa Setelah Membaca Surat (Yasin, Al-Mulk, Al-Waqi'ah) ----------
+// Sumber per bagian:
+// - Yasin: Kitab Abwabul Faraj karya Habib Abdullah al-Haddad (juga dalam
+//   Majmu Syarif); lazim dibaca di majelis NU setelah Yasin.
+// - Al-Mulk: Kitab Al-Minahus Saniyah 'ala Al-Washiyah Al-Matbuliyah
+//   (redaksi jamak "kami", sesuai mayoritas sumber).
+// - Al-Waqi'ah: Kitab Khulashah Al-Madad An-Nabawi karya Habib Umar bin
+//   Hafidz; juga Kitab Nubdzatul Anwar wa Fawaidul Akhyar hlm. 85.
+// Teks Arab disalin dari sumber-sumber di atas; bukan karangan.
+export const DOA_SETELAH_SURAT: DoaTahlilPart[] = [
+  {
+    title: "Doa Setelah Membaca Surat Yasin",
+    arabic:
+      "اَللّٰهُمَّ إِنَّا نَسْتَحْفِظُكَ وَنَسْتَوْدِعُكَ أَدْيَانَنَا وَأَنْفُسَنَا وَأَهْلَنَا وَأَوْلَادَنَا وَأَمْوَالَنَا وَكُلَّ شَيْءٍ أَعْطَيْتَنَا. اَللّٰهُمَّ اجْعَلْنَا وَإِيَّاهُمْ فِي كَنَفِكَ وَأَمَانِكَ وَجِوَارِكَ وَعِيَاذِكَ مِنْ كُلِّ شَيْطَانٍ مَرِيدٍ وَجَبَّارٍ عَنِيدٍ وَذِي عَيْنٍ وَذِي بَغْيٍ وَمِنْ شَرِّ كُلِّ ذِي شَرٍّ إِنَّكَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ. اَللّٰهُمَّ جَمِّلْنَا بِالْعَافِيَةِ وَالسَّلَامَةِ وَحَقِّقْنَا بِالتَّقْوَى وَالْاِسْتِقَامَةِ وَأَعِذْنَا مِنْ مُوجِبَاتِ النَّدَامَةِ إِنَّكَ سَمِيعُ الدُّعَاءِ. اَللّٰهُمَّ اغْفِرْ لَنَا وَلِوَالِدَيْنَا وَلِأَوْلَادِنَا وَمَشَايِخِنَا وَلِإِخْوَانِنَا فِي الدِّينِ وَلِأَصْحَابِنَا وَأَحْبَابِنَا وَلِمَنْ أَحَبَّنَا فِيكَ وَلِمَنْ أَحْسَنَ إِلَيْنَا وَلِلْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ وَالْمُسْلِمِينَ وَالْمُسْلِمَاتِ يَا رَبَّ الْعَالَمِينَ. وَصَلِّ اللّٰهُمَّ عَلَى عَبْدِكَ وَرَسُولِكَ سَيِّدِنَا وَمَوْلَانَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلِّمْ. وَارْزُقْنَا كَمَالَ الْمُتَابَعَةِ لَهُ ظَاهِرًا وَبَاطِنًا فِي عَافِيَةٍ وَسَلَامَةٍ بِرَحْمَتِكَ يَا أَرْحَمَ الرَّاحِمِينَ",
+    latin:
+      "Allahumma innaa nastahfidzhuka wa nastaudi'uka diinanaa wa anfusanaa wa ahlanaa wa aulaadanaa wa amwaalanaa wa kulla syai'in a'thaitanaa. Allahummaj'alnaa wa iyyaahum fii kanafika wa amaanika wa jiwaarika wa 'iyaadzika min kulli syaithaanim mariid wa jabbaarin 'aniid wa dzii 'ainin wa dzii baghyin wa min syarri kulli dzii syarrin innaka 'alaa kulli syai'in qadiir. Allahumma jammilnaa bil'aafiyati was salaamati wa haqqiqnaa bit taqwaa wal istiqaamati wa a'idznaa min muujibaatin nadaamati innaka samii'ud du'aa'i. Allahummaghfirlanaa wa li waalidiinaa wa li aulaadinaa wa li masyaayikhinaa wa li ikhwaaniaa fiddiini wa li ashhaabinaa wa ahbaabinaa wa liman ahabbanaa fiika wa liman ahsana ilainaa wa lil mukminiina wal mukminaati wal musliminiina wal muslimaati yaa rabbal 'aalamiin. Washalli allahumma 'alaa 'abdika wa rasuulika sayyidinaa wa maulaanaa muhammadin wa 'alaa aalihi wa shahbihi wa sallam. Warzuqnaa kamaalal mutaaba'ati lahu dhaahiran wa baathinan fii 'aafiyatin wa salaamatin birahmatika yaa arhamar raahimiin.",
+    translation:
+      "Ya Allah, kami memohon penjagaan-Mu dan menitipkan kepada-Mu agama kami, diri kami, keluarga kami, anak-anak kami, harta benda kami, dan apa saja yang telah Engkau berikan kepada kami. Ya Allah, jadikanlah kami dan mereka dalam lindungan, keamanan, kedekatan, dan perlindungan-Mu dari godaan setan yang durhaka, orang yang kejam dan membangkang, dari pengaruh 'ain (mata jahat), dari kezaliman, dan dari kejahatan setiap orang yang berbuat jahat. Sesungguhnya Engkau Maha Kuasa atas segala sesuatu. Ya Allah, hiasilah kami dengan kesehatan dan keselamatan, wujudkanlah ketakwaan dan keistiqamahan dalam diri kami, lindungilah kami dari hal-hal yang menyebabkan penyesalan. Sesungguhnya Engkau Maha Mendengar doa. Ya Allah, ampunilah kami, kedua orang tua kami, anak-anak kami, guru-guru kami, saudara-saudara kami seagama, sahabat-sahabat kami, kekasih-kekasih kami, orang yang mengasihi kami karena Engkau, dan siapa saja yang berbuat baik kepada kami, orang-orang mukmin laki-laki dan perempuan, dan orang-orang muslim laki-laki dan perempuan, wahai Tuhan semesta alam. Ya Allah, limpahkanlah rahmat dan keselamatan kepada hamba dan utusan-Mu, junjungan kami Nabi Muhammad saw., beserta keluarga dan para sahabatnya. Dan limpahkanlah kepada kami kesempurnaan mengikuti ajarannya, lahir dan batin, dalam kesehatan dan keselamatan, dengan rahmat-Mu, wahai Yang Maha Penyayang di antara para penyayang.",
+  },
+  {
+    title: "Doa Setelah Membaca Surat Al-Mulk",
+    arabic:
+      "اَللّٰهُمَّ اعْصِمْنَا بِالْإِسْلَامِ قَاعِدًا وَرَاقِدًا وَلَا تُشْمِتْ فِيْنَا عَدُوًّا وَلَا حَاسِدًا اَللّٰهُمَّ إِنَّا نَعُوْذُبِكَ مِنْ شَرِّ كُلِّ دَآبَّةٍ اَنْتَ اٰخِذٌ بِنَاصِيَتِهَا، وَنَسْئَلُكَ الْخَيْرَ الَّذِيْ بِيَدِكَ",
+    latin:
+      "Allahumma'shimnaa bil Islaami qoo'idan wa rooqidan walaa tusymit fiinaa 'aduwwan walaa haasidan. Allahumma innaa na'uudzu bika min syarri kulli daabbatin anta aakhidzun binaashiyatihaa wa nas-alukal khoirol ladzi biyadika.",
+    translation:
+      "Ya Allah, jagalah kami dengan tetap memeluk Islam, baik ketika duduk dan tidur. Janganlah Engkau bahagiakan hati musuh dan orang yang hasad kepada kami. Ya Allah, sesungguhnya kami memohon perlindungan kepada-Mu dari kejahatan setiap makhluk. Engkau adalah Dzat yang mengendalikan mereka. Dan kami memohon kepada-Mu kebaikan-kebaikan yang ada pada-Mu.",
+  },
+  {
+    title: "Doa Setelah Membaca Surat Al-Waqi'ah (Bagian 1)",
+    arabic:
+      "اَللَّهُمَّ صُنْ وُجُوْهَنَا بِالْيَسَارِ، وَلَا تُوهِنَّا بِالْإِقْتَارِ، فَنَسْتَرْزِقَ طَالِبِيْ رِزْقِكَ، وَنَسْتَعْطِفَ شِرَارَ خَلْقِكَ، وَنَشْتَغِلَ بِحَمْدِ مَنْ أَعْطَانَا، وَنُبْتَلَى بِذَمِّ مَنْ مَنَعَنَا، وَأَنْتَ مِنْ وَرَاءِ ذَلِكَ كُلِّهِ أَهْلُ الْعَطَاءِ وَالْمَنْعِ. اَللَّهُمَّ كَمَا صُنْتَ وُجُوْهَنَا عَنِ السُّجُوْدِ إِلَّا لَكَ، فَصُنَّا عَنِ الْحَاجَةِ إِلَّا إِلَيْكَ، بِجُوْدِكَ وَكَرَمِكَ وَفَضْلِكَ، يَا أَرْحَمَ الرَّاحِمِيْنَ. أَغْنِنَا بِفَضْلِكَ عَمَّنْ سِوَاكَ. وَصَلَّى اللهُ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلَّمَ",
+    latin:
+      "Allahumma shun wujuhana bil yasar, wa la tuwhinna bil iqtar, fanastarziqa thalibi rizqika, wa nasta'thifa syirara khalqika, wa nasytaghila bi-hamdi man a'thana, wa nubtala bi-dzammi man mana'ana, wa anta min wara'i dzalika kullihi ahlul 'atha'i wal man'i. Allahumma kama shunta wujuhana 'anis-sujudi illa laka, fashunna 'anil-hajati illa ilaika, bi-judika wa karamika wa fadhlika, yaa arhamar raahimiin (dibaca 3 kali). Aghninaa bifadhlika 'amman siwaaka. Wa shallallahu 'alaa sayyidinaa muhammadin wa 'alaa aalihi wa shahbihi wa sallam.",
+    translation:
+      "Ya Allah, jagalah wajah kami dengan kekayaan, dan jangan hinakan kami dengan kemiskinan sehingga kami harus mencari rezeki dari para pencari rezeki-Mu, dan minta dikasihani oleh manusia ciptaan-Mu yang berbudi buruk, dan sibuk memuji orang yang memberi kami dan tergoda untuk mengecam yang tidak mau memberi kami. Padahal Engkau di balik semua itu adalah yang berwenang untuk memberi atau tidak memberi. Ya Allah, sebagaimana Engkau menjaga wajah kami dari sujud kecuali kepada-Mu, maka jagalah kami dari keperluan selain kepada-Mu, dengan kedermawanan-Mu, kemurahan-Mu, dan karunia-Mu, wahai Yang Paling Penyayang di antara semua penyayang (dibaca 3 kali). Cukupkanlah kami dengan karunia-Mu dari siapa pun selain Engkau. Semoga Allah merahmati junjungan kami Nabi Muhammad beserta keluarganya dan para sahabatnya, juga semoga Allah memberi keselamatan.",
+  },
+  {
+    title: "Doa Setelah Membaca Surat Al-Waqi'ah (Bagian 2 — Doa Pendek)",
+    arabic:
+      "اَللّٰهُمَّ إِنِّى أَسْأَلُكَ بِحَقِّ سُوْرَةِ الْوَاقِعَةِ وَأَسْرَارِهَا أَنْ تُيَسِّرَ لِىْ رِزْقِىْ كَمَا يَسَّرْتَهُ لِكَثِيْرٍ مِنْ خَلْقِكَ يَا أَللهُ يَا رَبَّ الْعَالَمِيْنَ",
+    latin:
+      "Allahumma inni as'aluka bihaqqi suuratil waaqi'ah wa asroorihaa an tuyassiro lii rizqii kamaa yassartahu likatsiirin min khalqika yaa Alloh yaa robbal 'aalamiin.",
+    translation:
+      "Ya Allah, sesungguhnya aku memohon kepada-Mu dengan kebenaran surat Waqiah dan rahasia-rahasianya, agar Engkau berkenan memudahkan rezekiku sebagaimana Engkau memudahkannya untuk kebanyakan makhluk-Mu, ya Allah, ya Tuhan semesta alam.",
+  },
+];
+
 export type AsmaulHusna = { no: number; arabic: string; latin: string; meaning: string };
 
 export const ASMAUL_HUSNA: AsmaulHusna[] = [

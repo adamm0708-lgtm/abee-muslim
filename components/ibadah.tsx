@@ -28,6 +28,7 @@ import {
   AMAL_HARIAN,
   ASMAUL_HUSNA,
   DOA_SETELAH_SHALAT,
+  DOA_SETELAH_SURAT,
   DOA_TAHLIL,
   DUAS,
   DUA_CATEGORIES,
@@ -2078,14 +2079,54 @@ function DoaTahlil({
   );
 }
 
+function DoaSetelahSurat({
+  arabicClass,
+  bodyClass,
+}: {
+  arabicClass: string;
+  bodyClass: string;
+}) {
+  return (
+    <div>
+      <div className="mb-3">
+        <Note>
+          Doa yang dibaca setelah selesai membaca surat Yasin, Al-Mulk, dan
+          Al-Waqi&apos;ah. Sumber: Yasin — Kitab Abwabul Faraj (Habib Abdullah
+          al-Haddad); Al-Mulk — Kitab Al-Minahus Saniyah &apos;ala
+          Al-Washiyah Al-Matbuliyah; Al-Waqi&apos;ah — Kitab Khulashah
+          Al-Madad An-Nabawi (Habib Umar bin Hafidz) dan Kitab Nubdzatul
+          Anwar wa Fawaidul Akhyar hlm. 85.
+        </Note>
+      </div>
+      <div className="flex flex-col gap-3">
+        {DOA_SETELAH_SURAT.map((d) => (
+          <Card key={d.title}>
+            <h2 className="font-extrabold text-neutral-900 dark:text-neutral-100">{d.title}</h2>
+            <p className={`arabic mt-3 text-right leading-loose text-neutral-900 dark:text-neutral-100 ${arabicClass}`}>
+              {normalizeArabicText(d.arabic)}
+            </p>
+            <p className={`mt-2 italic leading-relaxed text-neutral-600 dark:text-neutral-400 ${bodyClass}`}>
+              {d.latin}
+            </p>
+            <p className={`mt-2 leading-relaxed text-neutral-700 dark:text-neutral-300 ${bodyClass}`}>
+              {d.translation}
+            </p>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function YasinTahlilPage() {
-  const [tab, setTab] = useState<"yasin" | "tahlil" | "doa">("yasin");
+  const [tab, setTab] = useState<"yasin" | "tahlil" | "doa" | "doa-surat">("yasin");
   const { size, setSize, arabicClass, bodyClass } = useReaderFontSize();
   const fs = useFullscreen();
   const tabs = [
     { id: "yasin", label: "Surat Yasin" },
     { id: "tahlil", label: "Tahlil" },
     { id: "doa", label: "Doa Tahlil" },
+    { id: "doa-surat", label: "Doa Sesudah Baca" },
   ] as const;
   return (
     <div>
@@ -2119,6 +2160,7 @@ export function YasinTahlilPage() {
         {tab === "yasin" && <YasinReader arabicClass={arabicClass} bodyClass={bodyClass} />}
         {tab === "tahlil" && <TahlilSteps arabicClass={arabicClass} bodyClass={bodyClass} />}
         {tab === "doa" && <DoaTahlil arabicClass={arabicClass} bodyClass={bodyClass} />}
+        {tab === "doa-surat" && <DoaSetelahSurat arabicClass={arabicClass} bodyClass={bodyClass} />}
       </div>
     </div>
   );
