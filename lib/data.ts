@@ -1368,6 +1368,10 @@ export const DOA_TAHLIL: DoaTahlilPart[] = [
 //   (redaksi jamak "kami", sesuai mayoritas sumber).
 // - Al-Waqi'ah: Kitab Khulashah Al-Madad An-Nabawi karya Habib Umar bin
 //   Hafidz; juga Kitab Nubdzatul Anwar wa Fawaidul Akhyar hlm. 85.
+// - Al-Kahf: susunan Al-Habib Abubakar al-Adni bin Ali al-Masyhur
+//   (NU Online Jawa Barat).
+// - Doa Khatam (versi pendek): "Allahummarhamni bil Qur'an" —
+//   dibaca setelah khatam 30 juz, bukan doa surat tertentu.
 // Teks Arab disalin dari sumber-sumber di atas; bukan karangan.
 export const DOA_SETELAH_SURAT: DoaTahlilPart[] = [
   {
@@ -1405,6 +1409,24 @@ export const DOA_SETELAH_SURAT: DoaTahlilPart[] = [
       "Allahumma inni as'aluka bihaqqi suuratil waaqi'ah wa asroorihaa an tuyassiro lii rizqii kamaa yassartahu likatsiirin min khalqika yaa Alloh yaa robbal 'aalamiin.",
     translation:
       "Ya Allah, sesungguhnya aku memohon kepada-Mu dengan kebenaran surat Waqiah dan rahasia-rahasianya, agar Engkau berkenan memudahkan rezekiku sebagaimana Engkau memudahkannya untuk kebanyakan makhluk-Mu, ya Allah, ya Tuhan semesta alam.",
+  },
+  {
+    title: "Doa Setelah Membaca Surat Al-Kahf",
+    arabic:
+      "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ، اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَ، اَللّٰهُمَّ صَلِّ عَلٰى سَيِّدِنَا مُحَمَّدٍ وَاٰلِهِ وَصَحْبِهِ وَسَلَّمَ، اَللّٰهُمَّ يَا ذَا الْجَلَالِ وَالْإِكْرَامِ، وَالْمَوَاهِبِ الْعِظَامِ، وَخَالِقِ الْحَلَالِ وَالْحَرَامِ، وَالْمُوَفِّقِ مَنْ يَشَاءُ مِنْ عِبَادِهِ إِلَى أَسْبَابِ وَمُوجِبَاتِ الْاِلْتِزَامِ. نَسْأَلُكَ اللّٰهُمَّ أَنْ تُحْيِيَنَا عَلَى الْإِسْلَامِ وَتُمِيتَنَا عَلَى الْإِيمَانِ وَتُرَقِّيَنَا بَيْنَهُمَا فِي مَرَاتِبِ الْإِحْسَانِ وَالْإِيقَانِ وَالْعِرْفَانِ يَا كَرِيمُ يَا مَنَّانُ. اَللّٰهُمَّ احْفَظْنَا مِنْ كُلِّ فِتْنَةٍ مُضِلَّةٍ وَاشْفِنَا مِنْ كُلِّ سَقَمٍ وَعِلَّةٍ وَاغْفِرْ لَنَا كُلَّ مَعْصِيَّةٍ وَزَلَّةٍ، وَثَبِّتْنَا عَلَى الْحَقِّ وَالْمِلَّةِ وَاجْعَلْ لَنَا مُذَكِّرًا وَمُعِينًا مِنْ عِبَادِكَ الْأَدِلَّةِ. وَإِذَا أَرَدْتَ بِعِبَادِكَ فِتْنَةً فَاقْبِضْنَا إِلَيْكَ غَيْرَ مَفْتُونِينَ، وَلَا الضَّالِّينَ، وَلَا مُضِلِّينَ بِمَنِّكَ وَكَرَمِكَ يَا أَرْحَمَ الرَّاحِمِينَ. اَللّٰهُمَّ اعْصِمْنَا بِفَضْلِكَ مِنْ فِتْنَةِ الْمَسِيحِ الدَّجَّالِ، وَمِنْ سُوءِ الْأَعْمَالِ وَفَسَادِ الْأَحْوَالِ، وَفُضُولِ الْأَقْوَالِ، وَاهْدِنَا لِمَا يُرْضِيكَ عَنَّا فِي كُلِّ حَالٍ، وَاخْتِمْ أَعْمَارَنَا بِالْحُسْنَى فِي خَيْرٍ وَعَافِيَةٍ وَسَلَامَةٍ يَا ذَا الْجَلَالِ. وَصَلَّى اللّٰهُ عَلَى سَيِّدِنَا وَنَبِيِّنَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلَّمَ وَالْحَمْدُ لِلّٰهِ رَبِّ الْعَالَمِينَ",
+    latin:
+      "Bismillahirrahmanirrahim, alhamdulillahi rabbil 'alamin, Allahumma shalli 'ala sayyidina Muhammadin wa alihi wa shahbihi wa sallam. Allahumma yaa dzal jalaali wal ikraam, wal mawaahibil 'izhaam, wa khaaliqil halaali wal haraam, wal muwaffiqi man yasyaa-u min 'ibaadihi ilaa asbaabi wa muujibaatil iltizaam. Nas'alukallaahumma an tuhyiyanaa 'alal islaam, wa tumiitanaa 'alal iimaan, wa turaqqiyanaa bainahumaa fii maraatibil ihsaani wal iiqaani wal 'irfaani yaa kariimu yaa mannaan. Allahummahfazhnaa min kulli fitnatim mudhillah, wasyfinaa min kulli saqamin wa 'illah, waghfirlanaa kulla ma'shiyatin wa zallah, wa tsabbitnaa 'alal haqqi wal millah, waj'al lanaa mudzakkiran wa mu'iinan min 'ibaadikal adillah. Wa idzaa aradta bi'ibaadika fitnatan faqbidznaa ilaika ghaira maftuuniin, wa laadh dhaalliin, wa laa mudhilliin, bimannika wa karamika yaa arhamar raahimiin. Allahumma'shimnaa bifadhlika min fitnatil masiihid dajjaal, wa min suu'il a'maali wa fasaadil ahwaali, wa fudhuulil aqwaal, wahdinaa limaa yurdhiika 'annaa fii kulli haal, wakhtim a'maaranaa bil husnaa fii khairin wa 'aafiyatin wa salaamatin yaa dzal jalaal. Wa shallallaahu 'alaa sayyidinaa wa nabiyyinaa muhammadin wa 'alaa aalihi wa shahbihi wa sallam, walhamdulillaahi rabbil 'aalamiin.",
+    translation:
+      "Dengan menyebut nama Allah yang Maha Pengasih lagi Maha Penyayang. Segala puji bagi Allah, Tuhan semesta alam. Ya Allah, limpahkanlah rahmat dan keselamatan kepada junjungan kami Nabi Muhammad, keluarga dan para sahabatnya. Ya Allah, wahai Dzat Pemilik keagungan dan kemuliaan, Pemilik anugerah yang agung, Pencipta perkara halal dan haram, serta Dzat yang memberi taufik kepada siapa saja yang Dia kehendaki di antara hamba-Nya menuju sebab dan kewajiban ketaatan. Kami memohon kepada-Mu, ya Allah, hidupkanlah kami di atas Islam, matikanlah kami dalam keadaan beriman, dan angkatlah derajat kami di antara keduanya menuju tingkatan ihsan, keyakinan yang mantap, dan makrifat, wahai Dzat Yang Mahamulia lagi Maha Pemberi anugerah. Ya Allah, lindungilah kami dari setiap fitnah yang menyesatkan, sembuhkanlah kami dari setiap penyakit dan kelemahan, ampunilah kami dari setiap maksiat dan kesalahan, tetapkanlah kami di atas kebenaran dan agama, dan jadikanlah bagi kami orang yang mengingatkan dan menolong dari hamba-hamba-Mu yang memberi petunjuk. Dan apabila Engkau menghendaki fitnah menimpa hamba-hamba-Mu, maka wafatkanlah kami kepada-Mu tanpa terkena fitnah, tidak tersesat, dan tidak menyesatkan, dengan anugerah dan kemurahan-Mu, wahai Yang Maha Penyayang. Ya Allah, lindungilah kami dengan karunia-Mu dari fitnah Dajjal, dari buruknya perbuatan, rusaknya keadaan, dan perkataan yang berlebihan, dan tunjukkanlah kami kepada apa yang Engkau ridai dari kami dalam setiap keadaan, dan akhirilah umur kami dengan kebaikan, dalam kebaikan, kesehatan, dan keselamatan, wahai Dzat Pemilik keagungan. Semoga Allah melimpahkan rahmat dan keselamatan kepada junjungan kami Nabi Muhammad, keluarga dan para sahabatnya, dan segala puji bagi Allah, Tuhan semesta alam.",
+  },
+  {
+    title: "Doa Setelah Khatam Al-Qur'an (Versi Pendek)",
+    arabic:
+      "اَللّٰهُمَّ ارْحَمْنِي بِالْقُرْآنِ وَاجْعَلْهُ لِي إِمَامًا وَنُورًا وَهُدًى وَرَحْمَةً، اَللّٰهُمَّ ذَكِّرْنِي مِنْهُ مَا نَسِيْتُ وَعَلِّمْنِي مِنْهُ مَا جَهِلْتُ وَارْزُقْنِي تِلَاوَتَهُ آنَاءَ اللَّيْلِ وَأَطْرَافَ النَّهَارِ وَاجْعَلْهُ لِي حُجَّةً يَا رَبَّ الْعَالَمِينَ",
+    latin:
+      "Allahummarhamnii bil qur'aan, waj'alhu lii imaaman wa nuuran wa hudan wa rahmah. Allahumma dzakkirnii minhu maa nasiitu wa 'allimnii minhu maa jahiltu warzuqnii tilaawatahu aanaa-al laili wa athraafan nahaar, waj'alhu lii hujjatan yaa rabbal 'aalamiin.",
+    translation:
+      "Ya Allah, rahmatilah aku dengan Al-Qur'an. Jadikanlah ia sebagai pemimpin, cahaya, petunjuk, dan rahmat bagiku. Ya Allah, ingatkanlah aku atas apa yang terlupakan darinya. Ajarilah aku atas apa yang belum tahu darinya. Berikanlah aku kemampuan membacanya sepanjang malam dan ujung siang. Jadikanlah ia sebagai pembelaku, wahai Tuhan semesta alam.",
   },
 ];
 

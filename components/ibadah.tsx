@@ -2090,12 +2090,16 @@ function DoaSetelahSurat({
     <div>
       <div className="mb-3">
         <Note>
-          Doa yang dibaca setelah selesai membaca surat Yasin, Al-Mulk, dan
-          Al-Waqi&apos;ah. Sumber: Yasin — Kitab Abwabul Faraj (Habib Abdullah
-          al-Haddad); Al-Mulk — Kitab Al-Minahus Saniyah &apos;ala
-          Al-Washiyah Al-Matbuliyah; Al-Waqi&apos;ah — Kitab Khulashah
-          Al-Madad An-Nabawi (Habib Umar bin Hafidz) dan Kitab Nubdzatul
-          Anwar wa Fawaidul Akhyar hlm. 85.
+          Doa yang dibaca setelah selesai membaca surat Yasin, Al-Mulk,
+          Al-Waqi&apos;ah, dan Al-Kahf — plus doa khatam Al-Qur&apos;an
+          (versi pendek). Sumber: Yasin — Kitab Abwabul Faraj (Habib
+          Abdullah al-Haddad); Al-Mulk — Kitab Al-Minahus Saniyah
+          &apos;ala Al-Washiyah Al-Matbuliyah; Al-Waqi&apos;ah — Kitab
+          Khulashah Al-Madad An-Nabawi (Habib Umar bin Hafidz) dan Kitab
+          Nubdzatul Anwar wa Fawaidul Akhyar hlm. 85; Al-Kahf — susunan
+          Al-Habib Abubakar al-Adni bin Ali al-Masyhur (NU Online).
+          Ar-Rahman dan surah-surah Juz Amma tidak punya doa khusus
+          sesudah baca — jadi tidak ditambahkan.
         </Note>
       </div>
       <div className="flex flex-col gap-3">
