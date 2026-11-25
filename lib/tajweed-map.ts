@@ -39,6 +39,22 @@
 //   (core Uthmani polos <-> Simple) + fallback jangkar ≤3 karakter.
 //   Bila `uthmaniText` tidak diberikan, sifir tidak dikembalikan
 //   (degradasi anggun — waqaf + maddah tetap).
+// - Tanda mad silah DIKEMBALIKAN dari teks Uthmani POLOS (argumen
+//   `uthmaniText`, sumber ketiga — sama seperti sifir): waw saghir
+//   U+06E5 (huu, 2 harakat — dhamir ـهُ + dammah, mis. وَمَلَائِكَتُهُۥ
+//   33:43, إِنَّهُۥ 110:3, لَّهُۥ 112:4) dan yeh saghir U+06E6 (hii,
+//   2 harakat — dhamir ـهِ + kasrah, mis. بِهِۦ 2:22). Teks Simple
+//   membuang KEDUANYA (0 dari 1.257 waw + 995 yeh di seluruh Qur'an —
+//   terverifikasi dari teks Uthmani AlQuran Cloud), sehingga reader
+//   menampilkan "hu"/"hi" 1 ketukan padahal mushaf menulis 2 ketukan.
+//   Posisi lewat alignment kedua (core Uthmani polos <-> Simple) +
+//   fallback jangkar ≤3 karakter — sama seperti sifir. Titik sisip:
+//   SETELAH vokal pembawa (dammah/kasrah pada ha' dhamir), BUKAN
+//   langsung setelah hurufnya — memakai advancePastTrailing (seperti
+//   waqaf MSI). Urutan render: silah DULU, baru maddah — pada mad
+//   silah KUBRA (327 tempat, maddah menempel pada waw/yeh kecil,
+//   mis. يَسْتَحْىِۦٓ 2:26) maddah-nya dijangkar ke vokal yang sama,
+//   dan urutan Uthmani adalah [vokal][silah][maddah].
 // - Tanda waqaf (U+06D6–U+06DC) sudah ada di teks Simple, jadi TIDAK
 //   perlu dikembalikan — tapi di HTML ia dibungkus `<span class="wq">`
 //   supaya tampil BESAR dan terbaca (font me_quran menggambarnya kecil
@@ -63,6 +79,8 @@ const TATWEEL = "\u0640";
 const MADDAH = "\u0653";
 const SMALL_ZERO = "\u06df"; // sifir mustadir
 const SMALL_RECT = "\u06e0"; // sifir mustathil
+const SILAH_WAW = "\u06e5"; // waw saghir — mad silah sughra (huu, 2 harakat)
+const SILAH_YEH = "\u06e6"; // yeh saghir — mad silah sughra (hii, 2 harakat)
 const SAKTAH = "\u06dc"; // saktah
 const JUZ_MARK = "\u06de"; // rub' (perempat hizb) — disebut "penanda juz" oleh pengguna
 const SAJDAH_MARK = "\u06e9"; // penanda ayat sajdah (sujud tilawah)
@@ -491,6 +509,12 @@ export type MapResult = {
   zeroAlreadyPresent: number; // sifir sudah ada di teks Simple (idempotensi)
   zeroFallback: number; // sifir dijangkar ke huruf sebelumnya
   zeroUnplaced: string[]; // sifir gagal dipetakan (harus KOSONG)
+  silahWawPlaced: number; // waw saghir U+06E5 yang dikembalikan (huu 2 harakat)
+  silahYehPlaced: number; // yeh saghir U+06E6 yang dikembalikan (hii 2 harakat)
+  silahAlreadyPresent: number; // silah sudah ada di teks Simple (idempotensi)
+  silahRepresented: number; // silah dilewati — Simple sudah punya huruf waw/yeh penuh (mis. يستحيي 2:26)
+  silahFallback: number; // silah dijangkar ke huruf sebelumnya
+  silahUnplaced: string[]; // silah gagal dipetakan (harus KOSONG)
   msiPlaced: number; // tanda waqaf MSI yang ditambahkan (baru)
   msiAlready: number; // tanda waqaf MSI yang sudah ada (posisi + lambang sama)
   msiConflict: number; // tanda Madinah yang DIGANTI tanda MSI (MSI menang)
@@ -921,6 +945,12 @@ export function mapVerse(
     zeroAlreadyPresent: 0,
     zeroFallback: 0,
     zeroUnplaced: [],
+    silahWawPlaced: 0,
+    silahYehPlaced: 0,
+    silahAlreadyPresent: 0,
+    silahRepresented: 0,
+    silahFallback: 0,
+    silahUnplaced: [],
     msiPlaced: 0,
     msiAlready: 0,
     msiConflict: 0,
@@ -1116,6 +1146,7 @@ export function mapVerse(
   // sifir pada alif fariqah berikutnya yang dibuang di Simple, mis.
   // 2:221 ادْعُوٓا۟ -> وٓ۟).
   const zeroAfter = new Map<number, string>(); // target idx -> tanda (U+06DF / U+06E0)
+  const silahAfter = new Map<number, string>(); // insertAt idx -> tanda mad silah (U+06E5 / U+06E6)
   if (uthmaniText) {
     const uthPlainChars = Array.from(uthmaniText);
     const uth2 = buildCore(uthPlainChars, true);
@@ -1148,6 +1179,64 @@ export function mapVerse(
         res.zeroAlreadyPresent += 1;
       } else {
         res.zeroUnplaced.push(`sifir ${JSON.stringify(ch)} idx ${idx} pembawa tidak terpetakan ke Simple`);
+      }
+    });
+
+    // --- Kembalikan tanda mad silah (waw saghir U+06E5, yeh saghir U+06E6) ---
+    // Sumbernya teks Uthmani POLOS (uthmaniText) — sama seperti sifir.
+    // Teks Simple membuang keduanya (0 dari 1.257 waw + 995 yeh di
+    // seluruh Qur'an), padahal keduanya adalah BAGIAN BACAAN: dhamir
+    // ـهُ/ـهِ yang dibaca panjang 2 ketukan (mad silah sughra).
+    // Titik sisip: SETELAH vokal pembawa (dammah/kasrah pada ha'
+    // dhamir) — advancePastTrailing, seperti waqaf MSI — BUKAN
+    // langsung setelah hurufnya (yang benar هُۥ, bukan هۥُ).
+    uthPlainChars.forEach((ch, idx) => {
+      if (ch !== SILAH_WAW && ch !== SILAH_YEH) return;
+      // Pengecualian: tanda ini SUDAH terwakili huruf waw/yeh PENUH di
+      // Simple — jangan digandakan. Kasus nyatanya kata kerja berakhiran
+      // vokal panjang, mis. يَسْتَحْىِۦٓ (2:26): Uthmani menulis
+      // [alef maksura][kasrah][yeh kecil][maddah], Simple menulis
+      // [yeh][kasrah][yeh] ("يستحيي") — vokal panjang "ii" SUDAH ada
+      // sebagai yeh penuh; menambah ۦ akan menggandakan vokal. Ciri
+      // pembedanya: posisi core tanda ini TERPETAKAN ke huruf waw/yeh
+      // di Simple. Sebaliknya pada dhamir (هُ/هِ) posisi core tanda
+      // TIDAK terpetakan — Simple hanya punya ha' + dammah/kasrah —
+      // sehingga tanda WAJIB ditambahkan.
+      const corePositions = uth2CorePositionsOfChar.get(idx) ?? [];
+      let represented = false;
+      for (const cp of corePositions) {
+        const simPos = u2sUth.get(cp);
+        if (simPos !== undefined) {
+          const simIdx = simCharOfCorePos.get(simPos);
+          if (simIdx !== undefined) {
+            const simCh = simChars[simIdx];
+            if (simCh === "\u0648" || simCh === "\u064a") represented = true;
+          }
+        }
+      }
+      if (represented) {
+        res.silahRepresented += 1;
+        return;
+      }
+      const { target, fallbackUsed, status } = placeRestoredMark(
+        ch,
+        idx,
+        uthPlainChars,
+        uth2CorePositionsOfChar,
+        u2sUth,
+        simCharOfCorePos,
+        simChars
+      );
+      if (status === "placed" && target !== null) {
+        const insertAt = advancePastTrailing(simChars, target);
+        silahAfter.set(insertAt, ch);
+        if (ch === SILAH_WAW) res.silahWawPlaced += 1;
+        else res.silahYehPlaced += 1;
+        if (fallbackUsed) res.silahFallback += 1;
+      } else if (status === "already") {
+        res.silahAlreadyPresent += 1;
+      } else {
+        res.silahUnplaced.push(`silah ${JSON.stringify(ch)} idx ${idx} pembawa tidak terpetakan ke Simple`);
       }
     });
   }
@@ -1283,9 +1372,12 @@ export function mapVerse(
   }
 
   // Render HTML: gabungkan run huruf berurutan dengan kelas yang sama.
-  // Tanda maddah + sifir disisipkan tepat setelah huruf pembawanya —
-  // di dalam span warna yang sama bila hurufnya berwarna, sebagai teks
-  // polos bila tidak (urutan: maddah dulu, lalu sifir — urutan Uthmani).
+  // Tanda maddah + sifir + silah disisipkan tepat setelah huruf
+  // pembawanya — di dalam span warna yang sama bila hurufnya berwarna,
+  // sebagai teks polos bila tidak (urutan: silah dulu, lalu maddah,
+  // lalu sifir — urutan Uthmani; silah sebelum maddah supaya pada mad
+  // silah kubra maddah-nya menempel pada waw/yeh kecil, bukan pada
+  // vokal dhamir).
   // Tanda saktah yang disisipkan (2 tempat) dirender dalam span wq
   // sendiri (tutup span warna sementara, lalu buka lagi) — sama seperti
   // tanda waqaf yang sudah ada di teks Simple: tiap tanda waqaf
@@ -1310,6 +1402,8 @@ export function mapVerse(
       cur = cls;
     }
     out.push(renderCh);
+    const silah = silahAfter.get(idx);
+    if (silah !== undefined) out.push(silah);
     if (maddahAfter.has(idx)) out.push(MADDAH);
     const zero = zeroAfter.get(idx);
     if (zero !== undefined) out.push(zero);
@@ -1345,6 +1439,7 @@ export function mapVerse(
       .map(
         (ch, i) =>
           (msiReplace.get(i) ?? ch) +
+          (silahAfter.get(i) ?? "") +
           (maddahAfter.has(i) ? MADDAH : "") +
           (zeroAfter.get(i) ?? "") +
           (saktahAfter.has(i) ? SAKTAH : "") +
