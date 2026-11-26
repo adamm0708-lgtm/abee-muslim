@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 /**
  * Gulir otomatis pelan di mode baca (Qur'an & Yasin).
  *
- * Dipakai bersama: kecepatan 8 px/detik (kira-kira 1 baris tiap 7 detik di
+ * Dipakai bersama: kecepatan 11 px/detik (kira-kira 1 baris tiap 5 detik di
  * ukuran teks sedang). Langsung jalan saat halaman baca dibuka — tidak perlu
  * buka pengaturan dulu. Berhenti sendiri di ujung halaman (atau kalau
  * halaman memang pendek). Ketuk layar atau geser manual TIDAK
@@ -17,7 +17,7 @@ import { useEffect, useRef } from "react";
  * lalu digulir per piksel bulat, dan scrollTop ditulis langsung ke
  * documentElement (dengan fallback ke body).
  */
-export const AUTO_SCROLL_SPEED_PX_PER_SEC = 8;
+export const AUTO_SCROLL_SPEED_PX_PER_SEC = 11;
 
 export function useAutoScrollLoop(opts: {
   /** Apakah gulir otomatis sedang menyala (state di komponen pemilik). */
